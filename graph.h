@@ -21,7 +21,7 @@ public:
 	}	
 
 	void show() {
-		for (int i=1; i<=n; ++i) {
+		for (int i=0; i<=n; ++i) {
 			cout << "macro " << i << "'s neighbors:\n";
 			for (auto e:g[i]) {
 				cout << "\tmacro " << e.to << " with weight " << e.weight << endl;

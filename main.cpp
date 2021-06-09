@@ -11,7 +11,26 @@ double chip_height = 10.0;
 const int V = 7;
 vector<Macro*> macros;
 
+
+void add_st_nodes(Graph& Gh, Graph& Gv) {
+	// id 0 for source, V+1 for sink
+	for (int i=0; i<V; i++) {
+		if (macros[i]->is_fixed()) {
+			Gh.add_edge(0, macros[i]->id(), macros[i]->cx()-0);
+			Gh.add_edge(macros[i]->id(), V+1, chip_width - macros[i]->cx());
+			Gv.add_edge(0, macros[i]->id(), macros[i]->cy()-0);
+			Gv.add_edge(macros[i]->id(), V+1, chip_height - macros[i]->cy());	
+		} else {
+			Gh.add_edge(0, macros[i]->id(), macros[i]->w()/2);
+			Gh.add_edge(macros[i]->id(), V+1, macros[i]->w()/2);
+			Gv.add_edge(0, macros[i]->id(), macros[i]->h()/2);
+			Gv.add_edge(macros[i]->id(), V+1, macros[i]->h()/2);
+		}
+	}
+}
+
 void build_init_constraint_graph(Graph& Gh, Graph& Gv) {
+	add_st_nodes(Gh, Gv);
 	for (int i=0; i<V; ++i) {
 		for (int j=i+1; j<V; ++j) {
 			double h_weight = (macros[i]->w()+ macros[j]->w())/2;
