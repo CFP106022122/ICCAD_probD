@@ -88,6 +88,8 @@ int main(int argc, char* argv[]) {
 	macros.push_back(&m7);	
 	Graph Gh(V), Gv(V);
 	build_init_constraint_graph(Gh, Gv);	
+	Gh.transitive_reduction();
+	Gv.transitive_reduction();
 	cout << "In horizontal constraint graph:\n";
 	Gh.show();
 	cout << "\nIn vertical constraint graph:\n";
