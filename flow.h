@@ -1,4 +1,8 @@
+#ifndef _FLOW_H_
+#define _FLOW_H_
+
 #include <algorithm>
+#include <iostream>
 #include <limits.h>
 #include <queue>
 #include <string.h>
@@ -94,11 +98,12 @@ struct DICNIC
 			ans += dfs(s, t);
 		return ans;
 	}
-	std::vector<int> cut_e; //最小割邊集
+	std::vector<edge> cut_e; //最小割邊集
 	bool vis[MAXN];
 	void dfs_cut(int u)
 	{
 		vis[u] = 1; //表示u屬於source的最小割集
+		// std::cout << u << '\n';
 		for (int i = g[u]; ~i; i = e[i].pre)
 		{
 			if (e[i].flow < e[i].cap && !vis[e[i].v])
@@ -116,9 +121,14 @@ struct DICNIC
 				for (int i = g[u]; ~i; i = e[i].pre)
 				{
 					if (!vis[e[i].v])
-						cut_e.push_back(i);
+					{
+						// std::cout << u << ' ' << e[i].v << '\n';
+						cut_e.push_back(edge(e[i].v, u, 5487.87));
+					}
 				}
 		}
 		return ans;
 	}
 };
+
+#endif

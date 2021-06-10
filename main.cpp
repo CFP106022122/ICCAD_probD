@@ -1,9 +1,13 @@
+#include "flow.h"
 #include "graph.h"
 #include "macro.h"
 #include <iostream>
 #include <vector>
 
 using namespace std;
+
+#define min(a, b) ((a) < (b) ? (a) : (b))
+#define max(a, b) ((a) > (b) ? (a) : (b))
 
 double chip_width = 25.0;
 double chip_height = 10.0;
@@ -91,6 +95,72 @@ void build_init_constraint_graph(Graph &Gh, Graph &Gv)
 	}
 }
 
+void adjustment(Graph &Gh, Graph &Gv)
+{
+	double longest_path_h = Gh.longest_path(true);
+	double longest_path_v = Gv.longest_path(false);
+	while (longest_path_h > chip_width || longest_path_v > chip_height)
+	{
+		if (longest_path_h > chip_width && longest_path_v <= chip_height)
+		{
+			vector<edge> zero_slack_edges = Gh.zero_slack_edges();
+			DICNIC<double> Gc;
+			Gc.init(V);
+			for (auto &e : zero_slack_edges)
+			{
+				if (e.from == 0 || e.to == V + 1)
+				{
+					Gc.add_edge(e.from, e.to, DBL_MAX, true);
+					// cout << "adding edge from " << e.from << " to " << e.to << " with weight " << DBL_MAX << '\n';
+				}
+				else
+				{
+					Gv.add_edge(e.from, e.to, e.weight);
+					double Rvj = Gh.R[e.to];
+					double Lvi = Gh.L[e.from];
+					double test_vertical_longest_path = Gv.longest_path(false);
+					if (test_vertical_longest_path > chip_height)
+					{
+						Gc.add_edge(e.from, e.to, DBL_MAX, true);
+						// cout << "adding edge from " << e.from << " to " << e.to << " with weight " << DBL_MAX << '\n';
+					}
+					else
+					{
+						double height_avg = (macros[e.from]->h() + macros[e.to]->h()) / 2;
+						double w = max(macros[e.from]->cy() - Rvj + height_avg, 0) + max(Lvi + height_avg - macros[e.to]->cy(), 0);
+						Gc.add_edge(e.from, e.to, w, true);
+						// cout << "adding edge from " << e.from << " to " << e.to << " with weight " << w << '\n';
+					}
+					Gv.remove_edge(e.from, e.to);
+				}
+			}
+			Gc.min_cut(0, V + 1);
+			for (auto &e : Gc.cut_e)
+			{
+				Gv.add_edge(e.pre, e.v, (macros[e.pre]->h() + macros[e.v]->h()) / 2);
+				Gh.remove_edge(e.pre, e.v);
+			}
+			longest_path_h = Gh.longest_path(true);
+			longest_path_v = Gv.longest_path(false);
+		}
+		else if (longest_path_h <= chip_width && longest_path_v > chip_height)
+		{
+		}
+		else
+		{
+		}
+	}
+}
+
+void re_index(vector<Macro *> &macros)
+{
+	vector<Macro *> tmp{macros};
+	for (int i = 0; i < tmp.size(); ++i)
+	{
+		macros[tmp[i]->id()] = tmp[i];
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	Macro m1(4.0, 4.0, 0.0, 3.0, false, 1);
@@ -109,7 +179,10 @@ int main(int argc, char *argv[])
 	macros.push_back(&m7);
 	Graph Gh(V), Gv(V);
 	build_init_constraint_graph(Gh, Gv);
-	Gh.transitive_reduction();
-	Gv.transitive_reduction();
+	// Gh.transitive_reduction();
+	// Gv.transitive_reduction();
+	re_index(macros);
+	adjustment(Gh, Gv);
+	cout << "QQQQ\n";
 	return 0;
 }
