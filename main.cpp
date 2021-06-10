@@ -111,10 +111,5 @@ int main(int argc, char *argv[])
 	build_init_constraint_graph(Gh, Gv);
 	Gh.transitive_reduction();
 	Gv.transitive_reduction();
-	cout << "In horizontal constraint graph:\n";
-	Gh.show();
-	cout << "\nIn vertical constraint graph:\n";
-	Gv.show();
-
 	return 0;
 }
