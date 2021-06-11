@@ -240,10 +240,10 @@ int main(int argc, char *argv[])
 	macros.push_back(&m7);
 	Graph Gh(V), Gv(V);
 	build_init_constraint_graph(Gh, Gv, rebuild_cnt);
-
-	// Gh.transitive_reduction();
-	// Gv.transitive_reduction();
 	re_index(macros);
 	adjustment(Gh, Gv);
+	Gh.transitive_reduction();
+	Gv.transitive_reduction();
+	// Gh, Gv are ready.
 	return 0;
 }
