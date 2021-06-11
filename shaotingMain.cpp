@@ -105,7 +105,7 @@ IoData *shoatingMain(int argc, char *argv[])
     iodata->buffer_constraint *= iodata->dbu_per_micron;
 
     //iodata->output(output_filename);
-    cout << "tim end" << endl;
+    // cout << "tim end" << endl;
 
     return iodata;
 }

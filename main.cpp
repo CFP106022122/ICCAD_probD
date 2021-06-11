@@ -19,30 +19,24 @@ double beta;			// = 4.0;
 double powerplan_width; // = 0.0,
 double min_spacing;		// = 0.0;
 vector<Macro *> macros;
+vector<Macro *> og_macros;
 IoData *shoatingMain(int argc, char *argv[]);
 
-double hyper_parmeter = 0.1;
-int rebuild_cnt = 0;
+double hyper_parameter = 0.1;
+int rebuild_cnt;
 
 mt19937_64 rng;
 std::uniform_real_distribution<double> unif(0.0, 1.0);
-bool lucky(double ratio, int rebuild_cnt, double hyper_parameter)
+
+void rebuild_constraint_graph(Graph &Gh, Graph &Gv);
+bool lucky(double ratio)
 {
 	double x = unif(rng);
-	double y = ratio / (ratio + 1.0) - (double)rebuild_cnt * hyper_parameter;
+	double y = max(ratio / (ratio + 1.0) - (double)rebuild_cnt * hyper_parameter, 0);
 	return x < y;
 }
 
-void re_index(vector<Macro *> &macros)
-{
-	vector<Macro *> tmp{macros};
-	for (int i = 0; i < tmp.size(); ++i)
-	{
-		macros[tmp[i]->id()] = tmp[i];
-	}
-}
-
-void add_st_nodes(Graph &Gh, Graph &Gv)
+void add_st_nodes(Graph &Gh, Graph &Gv, vector<Macro *> macros)
 {
 	// id 0 for source, V+1 for sink
 	for (int i = 0; i < V; i++)
@@ -64,46 +58,40 @@ void add_st_nodes(Graph &Gh, Graph &Gv)
 	}
 }
 
-void build_init_constraint_graph(Graph &Gh, Graph &Gv, int rebuild_cnt)
+void build_init_constraint_graph(Graph &Gh, Graph &Gv, vector<Macro *> macros)
 {
-	add_st_nodes(Gh, Gv);
+	add_st_nodes(Gh, Gv, macros);
 	for (int i = 0; i < V; ++i)
 	{
 		for (int j = i + 1; j < V; ++j)
 		{
-			double h_weight = (macros[i]->w() + macros[j]->w()) / 2 + ((lucky(beta / alpha, rebuild_cnt, hyper_parmeter)) ? (powerplan_width / 2) : (min_spacing / 2));
-			double v_weight = (macros[i]->h() + macros[j]->h()) / 2 + ((lucky(beta / alpha, rebuild_cnt, hyper_parmeter)) ? (powerplan_width / 2) : (min_spacing / 2));
+			double h_weight = (macros[i]->w() + macros[j]->w()) / 2 + ((lucky(beta / alpha)) ? powerplan_width : min_spacing);
+			double v_weight = (macros[i]->h() + macros[j]->h()) / 2 + ((lucky(beta / alpha)) ? powerplan_width : min_spacing);
+			bool i_is_at_the_bottom = false, i_is_at_the_left = false;
+			if (macros[i]->cx() < macros[j]->cx())
+				i_is_at_the_left = true;
+			if (macros[i]->cy() < macros[j]->cy())
+				i_is_at_the_bottom = true;
 			if (is_overlapped(*macros[i], *macros[j]))
 			{
-				// cout << macros[i]->name() << ' ' << macros[j]->name() << " are overlapped\n";
-				cout << macros[i]->id() << ' ' << macros[j]->id() << '\n';
 				if (x_dir_is_overlapped_less(*macros[i], *macros[j]))
 				{
-					Gh.add_edge(macros[i]->id(), macros[j]->id(), h_weight);
+					(i_is_at_the_left) ? Gh.add_edge(macros[i]->id(), macros[j]->id(), h_weight)
+									   : Gh.add_edge(macros[j]->id(), macros[i]->id(), h_weight);
 				}
 				else
 				{
-					(macros[i]->cy() < macros[j]->cy()) ? Gv.add_edge(macros[i]->id(), macros[j]->id(), v_weight)
-														: Gv.add_edge(macros[j]->id(), macros[i]->id(), v_weight);
+					(i_is_at_the_bottom) ? Gv.add_edge(macros[i]->id(), macros[j]->id(), v_weight)
+										 : Gv.add_edge(macros[j]->id(), macros[i]->id(), v_weight);
 				}
-				cout << macros[i]->id() << ' ' << macros[j]->id() << '\n';
 			}
 			else if (projection_no_overlapped(*macros[i], *macros[j]))
 			{
-				if (macros[i]->cx() > macros[j]->cy())
-					swap(*macros[i], *macros[j]);
 				double diff_x, diff_y;
-				bool i_is_at_the_bottom = false;
-				diff_x = macros[j]->x1() - macros[i]->x2();
-				if (macros[i]->cy() < macros[j]->cy())
-				{
-					diff_y = macros[j]->y1() - macros[i]->y2();
-					i_is_at_the_bottom = true;
-				}
-				else
-				{
-					diff_y = macros[i]->y1() - macros[j]->y2();
-				}
+				diff_x = (i_is_at_the_left) ? macros[j]->x1() - macros[i]->x2()
+											: macros[i]->x1() - macros[j]->x2();
+				diff_y = (i_is_at_the_bottom) ? macros[j]->y1() - macros[i]->y2()
+											  : macros[i]->y1() - macros[j]->y2();
 				if (diff_x < diff_y)
 				{
 					(i_is_at_the_bottom) ? Gv.add_edge(macros[i]->id(), macros[j]->id(), v_weight)
@@ -111,21 +99,33 @@ void build_init_constraint_graph(Graph &Gh, Graph &Gv, int rebuild_cnt)
 				}
 				else
 				{
-					Gh.add_edge(macros[i]->id(), macros[j]->id(), h_weight);
+					(i_is_at_the_left) ? Gh.add_edge(macros[i]->id(), macros[j]->id(), h_weight)
+									   : Gh.add_edge(macros[j]->id(), macros[i]->id(), h_weight);
 				}
 			}
 			else
 			{
 				if (x_dir_projection_no_overlapped(*macros[i], *macros[j]))
-					Gh.add_edge(macros[i]->id(), macros[j]->id(), h_weight);
+				{
+
+					(i_is_at_the_left) ? Gh.add_edge(macros[i]->id(), macros[j]->id(), h_weight)
+									   : Gh.add_edge(macros[j]->id(), macros[i]->id(), h_weight);
+				}
 				else if (y_dir_projection_no_overlapped(*macros[i], *macros[j]))
-					Gv.add_edge(macros[i]->id(), macros[j]->id(), v_weight);
+				{
+					(i_is_at_the_bottom) ? Gv.add_edge(macros[i]->id(), macros[j]->id(), v_weight)
+										 : Gv.add_edge(macros[j]->id(), macros[i]->id(), v_weight);
+				}
+				else
+				{
+					throw "error";
+				}
 			}
 		}
 	}
 }
 
-void build_Gc(Graph &G, DICNIC<double> &Gc, Graph &G_the_other_dir)
+void build_Gc(Graph &G, DICNIC<double> &Gc, Graph &G_the_other_dir, bool test_g_is_horizontal)
 {
 	vector<edge> zero_slack_edges = G.zero_slack_edges();
 	for (auto &e : zero_slack_edges)
@@ -140,15 +140,16 @@ void build_Gc(Graph &G, DICNIC<double> &Gc, Graph &G_the_other_dir)
 			G_the_other_dir.add_edge(e.from, e.to, e.weight);
 			double Rvj = G.R[e.to];
 			double Lvi = G.L[e.from];
-			double test_vertical_longest_path = G_the_other_dir.longest_path(false);
+			double test_vertical_longest_path = G_the_other_dir.longest_path(test_g_is_horizontal);
 			if (test_vertical_longest_path > chip_height)
 			{
+
 				Gc.add_edge(e.from, e.to, DBL_MAX, true);
 				// cout << "adding edge from " << e.from << " to " << e.to << " with weight " << DBL_MAX << '\n';
 			}
 			else
 			{
-				double height_avg = (macros[e.from]->h() + macros[e.to]->h()) / 2;
+				double height_avg = (macros[e.from]->h() + macros[e.to]->h()) / 2 + min_spacing;
 				double w = max(macros[e.from]->cy() - Rvj + height_avg, 0) + max(Lvi + height_avg - macros[e.to]->cy(), 0);
 				Gc.add_edge(e.from, e.to, w, true);
 				// cout << "adding edge from " << e.from << " to " << e.to << " with weight " << w << '\n';
@@ -158,109 +159,141 @@ void build_Gc(Graph &G, DICNIC<double> &Gc, Graph &G_the_other_dir)
 	}
 }
 
-void adjustment_helper(Graph &G, DICNIC<double> &Gc, Graph &G_the_other_dir)
+void adjustment_helper(Graph &G, DICNIC<double> &Gc, Graph &G_the_other_dir, bool adjust_g_is_horizontal)
 {
-	Gc.min_cut(0, V + 1);
 	for (auto &e : Gc.cut_e)
 	{
-		G_the_other_dir.add_edge(e.pre, e.v, (macros[e.pre]->h() + macros[e.v]->h()) / 2);
+		double w = (adjust_g_is_horizontal) ? (macros[e.pre]->h() + macros[e.v]->h()) / 2
+											: (macros[e.pre]->w() + macros[e.v]->w()) / 2;
+		w += ((lucky(beta / alpha)) ? powerplan_width : min_spacing);
+		if (adjust_g_is_horizontal)
+		{
+			if (macros[e.pre]->cy() < macros[e.v]->cy())
+			{
+				G_the_other_dir.add_edge(e.pre, e.v, w);
+			}
+			else
+			{
+				G_the_other_dir.add_edge(e.v, e.pre, w);
+			}
+		}
+		else
+		{
+			if (macros[e.pre]->cx() < macros[e.v]->cx())
+			{
+				G_the_other_dir.add_edge(e.pre, e.v, w);
+			}
+			else
+			{
+				G_the_other_dir.add_edge(e.v, e.pre, w);
+			}
+		}
 		G.remove_edge(e.pre, e.v);
 	}
 }
 
 void adjustment(Graph &Gh, Graph &Gv)
 {
-	bool need_to_rebuild = false;
+	bool has_changed_chip_height = false;
 	double tmp;
 	double longest_path_h = Gh.longest_path(true);
 	double longest_path_v = Gv.longest_path(false);
-
+	double copy_of_chip_height = chip_height; // for safety
 	cout << "Before adjustment:\n";
 	cout << "Horizontal constraint graph has longest path: " << longest_path_h << '\n';
 	cout << "Vertical constraint graph has longest path: " << longest_path_v << "\n\n";
 
 	while (longest_path_h > chip_width || longest_path_v > chip_height)
 	{
+		cout << "Now:\n";
+		cout << "Horizontal constraint graph has longest path: " << longest_path_h << '\n';
+		cout << "Vertical constraint graph has longest path: " << longest_path_v << "\n\n";
+
 		double prev_longest_path_h = longest_path_h, prev_longest_path_v = longest_path_v;
 		DICNIC<double> Gc;
-		Gc.init(V);
+		Gc.init(V + 2);
 		if (longest_path_h > chip_width && longest_path_v <= chip_height)
 		{
-			build_Gc(Gh, Gc, Gv);
-			adjustment_helper(Gh, Gc, Gv);
+			build_Gc(Gh, Gc, Gv, false);
+			adjustment_helper(Gh, Gc, Gv, true);
 			longest_path_h = Gh.longest_path(true);
 			longest_path_v = Gv.longest_path(false);
-			if (need_to_rebuild && longest_path_h < prev_longest_path_h)
+			if (longest_path_h >= prev_longest_path_h)
 			{
-				need_to_rebuild = false;
+				rebuild_constraint_graph(Gh, Gv);
+				return;
+			}
+			if (has_changed_chip_height)
+			{
+				has_changed_chip_height = false;
 				chip_height = tmp;
 			}
 		}
 		else if (longest_path_h <= chip_width && longest_path_v > chip_height)
 		{
-			build_Gc(Gv, Gc, Gh);
-			adjustment_helper(Gv, Gc, Gh);
+			build_Gc(Gv, Gc, Gh, true);
+			adjustment_helper(Gv, Gc, Gh, false);
 			longest_path_h = Gh.longest_path(true);
 			longest_path_v = Gv.longest_path(false);
+			if (longest_path_v >= prev_longest_path_v)
+			{
+				rebuild_constraint_graph(Gh, Gv);
+				return;
+			}
 		}
 		else
 		{
-			if (!need_to_rebuild)
+			if (!has_changed_chip_height)
 			{
 				tmp = chip_height;
 				chip_height = longest_path_v;
-				need_to_rebuild = true;
-			}
-			else
-			{
-				// need to rebuild constraint graph
-				Gh.rebuild();
-				Gv.rebuild();
-				build_init_constraint_graph(Gh, Gv, ++rebuild_cnt);
-				re_index(macros);
-				adjustment(Gh, Gv);
-				return;
+				has_changed_chip_height = true;
 			}
 		}
 	}
 	cout << "After adjustment:\n";
-	cout << "Horizontal constraint graph has longest path: " << longest_path_h << '\n';
-	cout << "Vertical constraint graph has longest path: " << longest_path_v << '\n';
+	cout << "Horizontal constraint graph has longest path: " << longest_path_h << " less than chip_width: " << chip_width << '\n';
+	cout << "Vertical constraint graph has longest path: " << longest_path_v << " less than chip_height: " << copy_of_chip_height << '\n';
+	chip_height = copy_of_chip_height;
+}
+
+void rebuild_constraint_graph(Graph &Gh, Graph &Gv)
+{
+	if (++rebuild_cnt > 10)
+	{
+		cout << "End of the world\n";
+		return;
+	}
+	cout << rebuild_cnt << "th time rebuild\n";
+	Gh.rebuild();
+	Gv.rebuild();
+	build_init_constraint_graph(Gh, Gv, og_macros);
+	adjustment(Gh, Gv);
 }
 
 int main(int argc, char *argv[])
 {
 	rng.seed(87);
+
 	IoData *iodata;
 	iodata = shoatingMain(argc, argv);
+	chip_width = (double)iodata->die_width;						  // = 25.0;
+	chip_height = (double)iodata->die_height;					  // = 10.0;
+	V = iodata->macros.size();									  // = 7; // #macros;
+	alpha = (double)iodata->weight_alpha;						  // = 1.0,
+	beta = (double)iodata->weight_beta;							  // = 4.0 ;
+	powerplan_width = (double)iodata->powerplan_width_constraint; // = 0.0,
+	min_spacing = (double)iodata->minimum_spacing;				  // = 0.0;
+	og_macros = iodata->macros;
+	macros.reserve(og_macros.size() + 5);
+	for (int i = 0; i < og_macros.size(); ++i)
+		macros[og_macros[i]->id()] = og_macros[i];
 
-	chip_width = iodata->die_width;						  // = 25.0;
-	chip_height = iodata->die_height;					  // = 10.0;
-	V = iodata->macros.size();							  // = 7; // #macros;
-	alpha = iodata->weight_alpha;						  // = 1.0,
-	beta = iodata->weight_beta;							  // = 4.0 ;
-	powerplan_width = iodata->powerplan_width_constraint; // = 0.0,
-	min_spacing = iodata->minimum_spacing;				  // = 0.0;
-	macros = iodata->macros;
-
-	// for (int i = 0; i < macros.size(); i++)
-	// {
-	// 	cout << "id: " << macros[i]->id() << endl; // << " name: " << macros[i]->name() << " shape: " << macros[i]->shape();
-	// 	// cout << " type: " << macros[i]->type() << endl
-	// 	cout << " x1: " << macros[i]->x1() << " y1: " << macros[i]->y1() << "\n";
-	// 	// cout << "; x2: " << macros[i]->x2() << " y2: " << macros[i]->y2() << "\n";
-	// 	cout << "width: " << macros[i]->w() << " height: " << macros[i]->h() << " isfixed:  " << macros[i]->is_fixed() << "\n";
-	// 	cout << endl
-	// 		 << endl;
-	// }
 	Graph Gh(V), Gv(V);
-	build_init_constraint_graph(Gh, Gv, rebuild_cnt);
-	re_index(macros);
-	// Gh.show();
-	// adjustment(Gh, Gv);
-	// Gh.transitive_reduction();
-	// Gv.transitive_reduction();
+	build_init_constraint_graph(Gh, Gv, og_macros);
+	adjustment(Gh, Gv);
+	Gh.transitive_reduction();
+	Gv.transitive_reduction();
 	// Gh, Gv are ready.
-
 	return 0;
 }
