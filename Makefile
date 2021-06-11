@@ -1,2 +1,3 @@
 build:
-	g++ -g main.cpp macro.cpp io.cpp -o main.exe
+	g++ main.cpp macro.cpp -std=c++11
+
