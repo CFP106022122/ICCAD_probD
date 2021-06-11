@@ -1,0 +1,2 @@
+# Compile
+  command: sh script
