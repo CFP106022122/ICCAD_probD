@@ -82,14 +82,18 @@ IoData *shoatingMain(int argc, char *argv[])
         fs.close();
     }
 
-    for(int i=0;i<iodata->macros.size();i++){
-        if(iodata->macros[i]->type()==border){
+    for (int i = 0; i < iodata->macros.size(); i++)
+    {
+        if (iodata->macros[i]->type() == border)
+        {
             continue;
         }
         //cout<<"why "<<i<<endl;
 
-        for(int j=0;j<iodata->macro_shapes.size();j++){
-            if(iodata->macros[i]->shape()==iodata->macro_shapes[j]->name()){
+        for (int j = 0; j < iodata->macro_shapes.size(); j++)
+        {
+            if (iodata->macros[i]->shape() == iodata->macro_shapes[j]->name())
+            {
                 iodata->macros[i]->setWidthHeight(*(iodata->macro_shapes[j]));
                 break;
             }
