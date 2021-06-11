@@ -31,7 +31,7 @@ public:
 		_x2 = _x1 + width;
 		_y2 = _y1 + height;
         macro_shape = "null";
-        macro_type = -1;
+        macro_type = 3;
 		macro_name = "null";
 	}
 	

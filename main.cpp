@@ -231,7 +231,6 @@ int main(int argc, char *argv[])
 	IoData* iodata;
 	cout<<"fuck 0 \n";
 	iodata = shoatingMain(argc, argv);
-
 	cout<<"fuck 1 \n";
 
 	chip_width = iodata->die_width;// = 25.0;
@@ -242,6 +241,14 @@ int main(int argc, char *argv[])
 	powerplan_width = iodata->powerplan_width_constraint;// = 0.0, 
 	min_spacing = iodata->minimum_spacing;// = 0.0;
 	macros = iodata->macros;
+
+	for(int i=0;i<macros.size();i++){
+    	cout<<"id: "<<macros[i]->id()<<"name: "<<macros[i]->name()<<" shape: "<<macros[i]->shape();
+		cout<<" type: "<<macros[i]->type()<<endl<<" x1: "<<macros[i]->x1()<<" y1: "<<macros[i]->y1()<<"\n";
+		cout<<"; x2: "<<macros[i]->x2()<<" y2: "<<macros[i]->y2()<<"\n";
+		cout<<"width: "<<macros[i]->w()<<" height: "<<macros[i]->h()<<" isfixed:  "<<macros[i]->is_fixed()<<"\n";
+		cout<<endl<<endl;
+    }
 
 	Graph Gh(V), Gv(V);
 	cout<<"fuck 2 \n";
