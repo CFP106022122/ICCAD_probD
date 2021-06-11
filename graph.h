@@ -25,26 +25,60 @@ struct edge
 class Graph
 {
 private:
-	constexpr static const int MAX_N = 105;
-	// constexpr static const double INF = DBL_MAX;
+	int MAX_N;
 	int n;
-	vector<edge> g[MAX_N];
-	vector<edge> g_reverserd[MAX_N];
-	vector<edge> _zero_slack_edges;
-	vector<int> topological_order;
-	bool visited[MAX_N];
-	bool adj_matrix[MAX_N][MAX_N];
+	vector<edge> *g;
+	vector<edge> *g_reversed;
+	bool **adj_matrix;
 
 public:
 	Graph(int _n) : n{_n}
 	{
-		memset(adj_matrix, false, sizeof(adj_matrix));
+		MAX_N = n + 5;
+		g = new vector<edge>[MAX_N];
+		g_reversed = new vector<edge>[MAX_N];
+		L = new double[MAX_N];
+		R = new double[MAX_N];
+		visited = new bool[MAX_N];
+		adj_matrix = new bool *[MAX_N];
+
+		for (int i = 0; i < MAX_N; ++i)
+			adj_matrix[i] = new bool[MAX_N];
+
+		for (int i = 0; i < MAX_N; ++i)
+			for (int j = 0; j < MAX_N; ++j)
+				adj_matrix[i][j] = false;
+	}
+	void rebuild()
+	{
+		for (int i = 0; i < MAX_N; ++i)
+		{
+			g[i].clear();
+			g_reversed[i].clear();
+		}
+		for (int i = 0; i < MAX_N; ++i)
+			for (int j = 0; j < MAX_N; ++j)
+				adj_matrix[i][j] = false;
+	}
+	~Graph()
+	{
+		// delete g;
+		// delete g_reversed;
+		// delete L;
+		// delete R;
+		// delete visited;
+
+		// for (int i = 0; i < MAX_N; ++i)
+		// {
+		// 	delete[] adj_matrix[i];
+		// }
+		// delete adj_matrix;
 	}
 
 	void add_edge(int u, int v, double w)
 	{
 		g[u].push_back(edge(u, v, w));
-		g_reverserd[v].push_back(edge(u, v, w));
+		g_reversed[v].push_back(edge(u, v, w));
 		adj_matrix[u][v] = true;
 	}
 
@@ -53,9 +87,9 @@ public:
 		g[u].erase(remove_if(g[u].begin(), g[u].end(), [=](edge &e)
 							 { return e.to == v; }),
 				   g[u].end());
-		g_reverserd[v].erase(remove_if(g_reverserd[v].begin(), g_reverserd[v].end(), [=](edge &e)
-									   { return e.from == u; }),
-							 g_reverserd[v].end());
+		g_reversed[v].erase(remove_if(g_reversed[v].begin(), g_reversed[v].end(), [=](edge &e)
+									  { return e.from == u; }),
+							g_reversed[v].end());
 		adj_matrix[u][v] = false;
 	}
 
@@ -68,6 +102,7 @@ public:
 		topological_order.push_back(u);
 	}
 
+	bool *visited;
 	void dfs_for_topological_sort()
 	{
 		memset(visited, false, sizeof(visited));
@@ -76,6 +111,7 @@ public:
 				dfs_for_topological_sort_helper(i);
 	}
 
+	vector<int> topological_order;
 	void topological_sort()
 	{
 		topological_order.clear();
@@ -83,6 +119,7 @@ public:
 		reverse(topological_order.begin(), topological_order.end());
 	}
 
+	vector<edge> _zero_slack_edges;
 	vector<edge> &zero_slack_edges()
 	{
 		_zero_slack_edges.clear();
@@ -93,7 +130,7 @@ public:
 		return _zero_slack_edges;
 	}
 
-	double L[MAX_N], R[MAX_N]; // as required in UCLA paper
+	double *L, *R; // as required in UCLA paper
 	double longest_path(bool is_horizontal)
 	{
 		topological_sort();
@@ -118,7 +155,7 @@ public:
 		reverse(topological_order.begin(), topological_order.end());
 		for (auto &u : topological_order)
 		{ // reverse topological order
-			for (auto &e : g_reverserd[u])
+			for (auto &e : g_reversed[u])
 			{
 				if (e.from == 0)
 				{
