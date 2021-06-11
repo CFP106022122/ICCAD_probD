@@ -230,6 +230,7 @@ int main(int argc, char *argv[])
 	rng.seed(87);
 	IoData *iodata;
 	iodata = shoatingMain(argc, argv);
+<<<<<<< HEAD
 
 	chip_width = iodata->die_width;						  // = 25.0;
 	chip_height = iodata->die_height;					  // = 10.0;
@@ -255,6 +256,39 @@ int main(int argc, char *argv[])
 	// adjustment(Gh, Gv);
 	// Gh.transitive_reduction();
 	// Gv.transitive_reduction();
+=======
+	cout<<"fuck 1 \n";
+
+	chip_width = iodata->die_width;// = 25.0;
+	chip_height = iodata->die_height;// = 10.0;
+	V = iodata->macros.size();// = 7; // #macros;
+	alpha = iodata->weight_alpha;// = 1.0, 
+	beta = iodata->weight_beta;// = 4.0 ;
+	powerplan_width = iodata->powerplan_width_constraint;// = 0.0, 
+	min_spacing = iodata->minimum_spacing;// = 0.0;
+	macros = iodata->macros;
+
+	for(int i=0;i<macros.size();i++){
+    	cout<<"id: "<<macros[i]->id()<<"name: "<<macros[i]->name()<<" shape: "<<macros[i]->shape();
+		cout<<" type: "<<macros[i]->type()<<endl<<" x1: "<<macros[i]->x1()<<" y1: "<<macros[i]->y1()<<"\n";
+		cout<<"; x2: "<<macros[i]->x2()<<" y2: "<<macros[i]->y2()<<"\n";
+		cout<<"width: "<<macros[i]->w()<<" height: "<<macros[i]->h()<<" isfixed:  "<<macros[i]->is_fixed()<<"\n";
+		cout<<endl<<endl;
+    }
+
+	Graph Gh(V), Gv(V);
+	cout<<"fuck 2 \n";
+	build_init_constraint_graph(Gh, Gv, rebuild_cnt);
+	cout<<"fuck 3 \n";
+	re_index(macros);
+	cout<<"fuck 4 \n";
+	adjustment(Gh, Gv);
+	cout<<"fuck 5 \n";
+	Gh.transitive_reduction();
+	cout<<"fuck 6 \n";
+	Gv.transitive_reduction();
+	cout<<"fuck 7 \n";
+>>>>>>> 8d213b0aca5d332ffa5794a4f9cab14aaecc6aea
 	// Gh, Gv are ready.
 
 	return 0;
