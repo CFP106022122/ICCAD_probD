@@ -32,7 +32,7 @@ IoData* shoatingMain(int argc, char* argv[]){
     IoData* iodata = new IoData();
 
     for(int i=0;i<argc;i++){
-        cout<<argv[i]<<endl;
+        //cout<<argv[i]<<endl;
     }
 
     //get argv and call parse
@@ -70,6 +70,7 @@ IoData* shoatingMain(int argc, char* argv[]){
     }
 
     //iodata->output(output_filename);
+    cout<<"fuck end"<<endl;
 
     return iodata;
 
