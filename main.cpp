@@ -1,25 +1,25 @@
 #include "flow.h"
 #include "graph.h"
+#include "io.h"
 #include "macro.h"
 #include <iostream>
 #include <random>
 #include <vector>
-#include "io.h"
 
 using namespace std;
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))
 
-double chip_width;// = 25.0;
-double chip_height;// = 10.0;
-int V;// = 7; // #macros;
-double alpha;// = 1.0, 
-double beta;// = 4.0;
-double powerplan_width;// = 0.0, 
-double min_spacing;// = 0.0;
+double chip_width;		// = 25.0;
+double chip_height;		// = 10.0;
+int V;					// = 7; // #macros;
+double alpha;			// = 1.0,
+double beta;			// = 4.0;
+double powerplan_width; // = 0.0,
+double min_spacing;		// = 0.0;
 vector<Macro *> macros;
-IoData* shoatingMain(int argc, char* argv[]);
+IoData *shoatingMain(int argc, char *argv[]);
 
 double hyper_parmeter = 0.1;
 int rebuild_cnt = 0;
@@ -228,28 +228,24 @@ void adjustment(Graph &Gh, Graph &Gv)
 int main(int argc, char *argv[])
 {
 	rng.seed(87);
-	IoData* iodata;
-	cout<<"fuck 0 \n";
+	IoData *iodata;
 	iodata = shoatingMain(argc, argv);
 
-	cout<<"fuck 1 \n";
-
-	chip_width = iodata->die_width;// = 25.0;
-	chip_height = iodata->die_height;// = 10.0;
-	V = iodata->macros.size();// = 7; // #macros;
-	alpha = iodata->weight_alpha;// = 1.0, 
-	beta = iodata->weight_beta;// = 4.0 ;
-	powerplan_width = iodata->powerplan_width_constraint;// = 0.0, 
-	min_spacing = iodata->minimum_spacing;// = 0.0;
+	chip_width = iodata->die_width;						  // = 25.0;
+	chip_height = iodata->die_height;					  // = 10.0;
+	V = iodata->macros.size();							  // = 7; // #macros;
+	alpha = iodata->weight_alpha;						  // = 1.0,
+	beta = iodata->weight_beta;							  // = 4.0 ;
+	powerplan_width = iodata->powerplan_width_constraint; // = 0.0,
+	min_spacing = iodata->minimum_spacing;				  // = 0.0;
 	macros = iodata->macros;
-
-	Graph Gh(V), Gv(V);
-	cout<<"fuck 2 \n";
-	build_init_constraint_graph(Gh, Gv, rebuild_cnt);
-	re_index(macros);
-	adjustment(Gh, Gv);
-	Gh.transitive_reduction();
-	Gv.transitive_reduction();
+	cout << "ok\n";
+	// Graph Gh(V), Gv(V);
+	// build_init_constraint_graph(Gh, Gv, rebuild_cnt);
+	// re_index(macros);
+	// adjustment(Gh, Gv);
+	// Gh.transitive_reduction();
+	// Gv.transitive_reduction();
 	// Gh, Gv are ready.
 
 	return 0;
