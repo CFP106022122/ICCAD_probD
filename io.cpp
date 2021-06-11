@@ -4,6 +4,7 @@
 #include <vector>
 #include <string.h>
 #include <fstream>
+#include <cstdlib>
 //#include "macro.h"
 
 using namespace std;
@@ -33,6 +34,55 @@ void IoData::processDiearea(vector<pt> points){
         min_y = 2147483647;
         max_x = -2147483647;
         max_y = -2147483647;
+
+        int j;
+        for(int i=0;i<points.size();i++){
+            if(points[i].x>max_x){
+                max_x = points[i].x;
+            }else if(points[i].x<min_x){
+                min_x = points[i].x;
+            }
+
+            if(points[i].y>max_y){
+                max_y = points[i].y;
+            }else if(points[i].y<min_y){
+                min_y = points[i].y;
+                j = i;
+            }
+        }
+        this->die_x = min_x;
+        this->die_y = min_y;
+        this->die_width = max_x - min_x;
+        this->die_height = max_y - min_y;
+
+        int left_right = -1;
+        bool down_side = true;
+        for(int i=0;i<points.size();i++, j++){
+            if((points[j%points.size()].y!=min_y)&&(points[j%points.size()].y!=max_y)&&(points[(j-1)%points.size()].y==points[j%points.size()].y)){
+            //cout<<(j-1)%points.size()<<" "<<points[j%points.size()].y<<" "<<points[(j-1)%points.size()].y<<endl;
+                if(down_side){
+                    Macro m(abs(points[(j-1)%points.size()].x-points[j%points.size()].x), 
+                    abs(points[(j)%points.size()].y-min_y),
+                    points[(j)%points.size()].x-this->die_x, 0, true, -1*i);
+                    this->macros.push_back(m);
+                }else{
+                    Macro m(abs(points[(j-1)%points.size()].x-points[j%points.size()].x), 
+                    abs(points[(j)%points.size()].y-max_y),
+                    points[(j)%points.size()].x-this->die_x, points[(j)%points.size()].y-this->die_y, true, -1*i);
+                    this->macros.push_back(m);
+                }
+                //(double w, double h, double _x, double _y, bool is_f, int i)
+            }
+            if((points[j%points.size()].x==min_x)||(points[j%points.size()].x==max_x)){
+                if(left_right==-1){
+                    left_right = (points[j%points.size()].x==min_x)? 1:0;
+                }
+                if((left_right==1)!=(points[j%points.size()].x==min_x)){
+                    down_side = !down_side;
+                    left_right = (left_right + 1)%2;
+                }
+            }
+        }
     }
 }
 
@@ -64,17 +114,20 @@ void IoData::parseDef(ifstream& f){
         //cout<<this->dbu_per_micron<<endl;
 
         //--die area
+        vector<pt> points;
         getline(f, linebuff, ';');
         this->die_area_string = linebuff+";"+"\n";
         //cout<<this->die_area;
-        vector<pt> points;
         linestring.str(linebuff);
         linestring>>buff>>buff;
-        while(buff=="("){
+        while(!linestring.eof()){
+            while(buff!="("){
+                linestring>>buff;
+            }
             linestring>>buff1>>buff2>>buff3;
             buff = "";
             linestring>>buff;
-            cout<<buff1<<" "<<buff2<<endl;
+            //cout<<buff1<<" "<<buff2<<endl;
             pt point;
             point.x = stoi(buff1);
             point.y = stoi(buff2);
@@ -108,7 +161,7 @@ void IoData::parseDef(ifstream& f){
         }
         
         //(string name, string shape, int type, double _x, double _y, bool is_f, int i)
-        Macro m(buff1, buff2, intbuff, stod(buff4.c_str()), stod(buff5.c_str()), isfixed, i);
+        Macro m(buff1, buff2, intbuff, stod(buff4.c_str())-this->die_x, stod(buff5.c_str())-this->die_x, isfixed, i);
         this->macros.push_back(m);
         //cout<<buff<<endl;
         linestring.clear();
@@ -197,6 +250,7 @@ void IoData::output(string file){
     f<<"\nCOMPONENTS "<<this->num_macro<<" ;\n";
 
     for(int i=0;i<this->macros.size();i++){
+        //f<<"  **** "<<this->macros[i].name()<<" "<<this->macros[i].w()<<" "<<this->macros[i].h()<<" "<<this->macros[i].x1()<<" "<<this->macros[i].x2()<<"\n";
         if(this->macros[i].type()==border){
             continue;
         }
