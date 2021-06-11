@@ -64,12 +64,12 @@ void IoData::processDiearea(vector<pt> points){
                 if(down_side){
                     m = new Macro(abs(points[(j-1)%points.size()].x-points[j%points.size()].x), 
                     abs(points[(j)%points.size()].y-min_y),
-                    points[(j)%points.size()].x-this->die_x, 0, true, -1*i);
+                    points[(j)%points.size()].x-this->die_x, 0, true, this->macros.size()+1);
                     this->macros.push_back(m);
                 }else{
                     m = new Macro(abs(points[(j-1)%points.size()].x-points[j%points.size()].x), 
                     abs(points[(j)%points.size()].y-max_y),
-                    points[(j)%points.size()].x-this->die_x, points[(j)%points.size()].y-this->die_y, true, -1*i);
+                    points[(j)%points.size()].x-this->die_x, points[(j)%points.size()].y-this->die_y, true, this->macros.size()+1);
                     this->macros.push_back(m);
                 }
                 //(double w, double h, double _x, double _y, bool is_f, int i)
@@ -163,7 +163,7 @@ void IoData::parseDef(ifstream& f){
         }
         
         //(string name, string shape, int type, double _x, double _y, bool is_f, int i)
-        m = new Macro(buff1, buff2, intbuff, stod(buff4.c_str())-this->die_x, stod(buff5.c_str())-this->die_x, isfixed, i);
+        m = new Macro(buff1, buff2, intbuff, stod(buff4.c_str())-this->die_x, stod(buff5.c_str())-this->die_y, isfixed, this->macros.size()+1);
         this->macros.push_back(m);
 
         linestring.clear();
@@ -228,19 +228,19 @@ void IoData::parseLef(ifstream& f){
         getline(f, linebuff);
     }
 
-    for(int i=0;i<this->macros.size();i++){
-        if(this->macros[i]->type()==border){
-            continue;
-        }
-        //cout<<"why "<<i<<endl;
+    // for(int i=0;i<this->macros.size();i++){
+    //     if(this->macros[i]->type()==border){
+    //         continue;
+    //     }
+    //     //cout<<"why "<<i<<endl;
 
-        for(int j=0;j<this->macro_shapes.size();j++){
-            if(this->macros[i]->shape()==this->macro_shapes[j]->name()){
-                this->macros[i]->setWidthHeight(*(this->macro_shapes[j]));
-                break;
-            }
-        }
-    }
+    //     for(int j=0;j<this->macro_shapes.size();j++){
+    //         if(this->macros[i]->shape()==this->macro_shapes[j]->name()){
+    //             this->macros[i]->setWidthHeight(*(this->macro_shapes[j]));
+    //             break;
+    //         }
+    //     }
+    // }
 }
 
 

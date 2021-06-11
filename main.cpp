@@ -246,10 +246,15 @@ int main(int argc, char *argv[])
 	Graph Gh(V), Gv(V);
 	cout<<"fuck 2 \n";
 	build_init_constraint_graph(Gh, Gv, rebuild_cnt);
+	cout<<"fuck 3 \n";
 	re_index(macros);
+	cout<<"fuck 4 \n";
 	adjustment(Gh, Gv);
+	cout<<"fuck 5 \n";
 	Gh.transitive_reduction();
+	cout<<"fuck 6 \n";
 	Gv.transitive_reduction();
+	cout<<"fuck 7 \n";
 	// Gh, Gv are ready.
 
 	return 0;
