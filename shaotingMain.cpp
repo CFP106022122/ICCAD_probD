@@ -94,13 +94,18 @@ IoData *shoatingMain(int argc, char *argv[])
         {
             if (iodata->macros[i]->shape() == iodata->macro_shapes[j]->name())
             {
-                iodata->macros[i]->setWidthHeight(*(iodata->macro_shapes[j]));
+                iodata->macros[i]->setWidthHeight(*(iodata->macro_shapes[j]), iodata->dbu_per_micron);
                 break;
             }
         }
     }
 
+    iodata->powerplan_width_constraint *= iodata->dbu_per_micron;
+    iodata->minimum_spacing *= iodata->dbu_per_micron;
+    iodata->buffer_constraint *= iodata->dbu_per_micron;
+
     //iodata->output(output_filename);
+    cout << "tim end" << endl;
 
     return iodata;
 }

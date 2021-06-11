@@ -85,9 +85,9 @@ public:
 
     string name() const{return macro_name; }
 
-    void setWidthHeight(Macro m){
-        width = m.w();
-        height = m.h();
+    void setWidthHeight(Macro m, int dbu_per_micron){
+        width = m.w()*dbu_per_micron;
+        height = m.h()*dbu_per_micron;
         _x2 = _x1 + width;
 		_y2 = _y1 + height;
     }

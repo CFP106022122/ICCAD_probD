@@ -74,6 +74,7 @@ void IoData::processDiearea(vector<pt> points)
 
         int left_right = -1;
         bool down_side = true;
+<<<<<<< HEAD
         for (int i = 0; i < points.size(); i++, j++)
         {
             if ((points[j % points.size()].y != min_y) && (points[j % points.size()].y != max_y) && (points[(j - 1) % points.size()].y == points[j % points.size()].y))
@@ -91,6 +92,20 @@ void IoData::processDiearea(vector<pt> points)
                     m = new Macro(abs(points[(j - 1) % points.size()].x - points[j % points.size()].x),
                                   abs(points[(j) % points.size()].y - max_y),
                                   min(points[(j) % points.size()].x, points[(j - 1) % points.size()].x) - this->die_x, points[(j) % points.size()].y - this->die_y, true, this->macros.size() + 1);
+=======
+        for(int i=0;i<points.size();i++, j++){
+            if((points[j%points.size()].y!=min_y)&&(points[j%points.size()].y!=max_y)&&(points[(j-1)%points.size()].y==points[j%points.size()].y)){
+            //cout<<(j-1)%points.size()<<" "<<points[j%points.size()].y<<" "<<points[(j-1)%points.size()].y<<endl;
+                if(down_side){
+                    m = new Macro(abs(points[(j-1)%points.size()].x-points[j%points.size()].x), 
+                    abs(points[(j)%points.size()].y-min_y),
+                    min(points[(j)%points.size()].x, points[(j-1)%points.size()].x)-this->die_x, 0, true, this->macros.size()+1);
+                    this->macros.push_back(m);
+                }else{
+                    m = new Macro(abs(points[(j-1)%points.size()].x-points[j%points.size()].x), 
+                    abs(points[(j)%points.size()].y-max_y),
+                    min(points[(j)%points.size()].x, points[(j-1)%points.size()].x)-this->die_x, points[(j)%points.size()].y-this->die_y, true, this->macros.size()+1);
+>>>>>>> e16e9b407ce422fc167c23fddca7233e559db3b1
                     this->macros.push_back(m);
                 }
                 //(double w, double h, double _x, double _y, bool is_f, int i)
