@@ -64,12 +64,12 @@ void IoData::processDiearea(vector<pt> points){
                 if(down_side){
                     m = new Macro(abs(points[(j-1)%points.size()].x-points[j%points.size()].x), 
                     abs(points[(j)%points.size()].y-min_y),
-                    points[(j)%points.size()].x-this->die_x, 0, true, this->macros.size()+1);
+                    min(points[(j)%points.size()].x, points[(j-1)%points.size()].x)-this->die_x, 0, true, this->macros.size()+1);
                     this->macros.push_back(m);
                 }else{
                     m = new Macro(abs(points[(j-1)%points.size()].x-points[j%points.size()].x), 
                     abs(points[(j)%points.size()].y-max_y),
-                    points[(j)%points.size()].x-this->die_x, points[(j)%points.size()].y-this->die_y, true, this->macros.size()+1);
+                    min(points[(j)%points.size()].x, points[(j-1)%points.size()].x)-this->die_x, points[(j)%points.size()].y-this->die_y, true, this->macros.size()+1);
                     this->macros.push_back(m);
                 }
                 //(double w, double h, double _x, double _y, bool is_f, int i)
