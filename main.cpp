@@ -240,8 +240,17 @@ int main(int argc, char *argv[])
 	min_spacing = iodata->minimum_spacing;				  // = 0.0;
 	macros = iodata->macros;
 	cout << "ok\n";
-	// Graph Gh(V), Gv(V);
+	// cout << chip_width << ' ' << chip_height << '\n';
+	// cout << V << endl;
+	// cout << alpha << ' ' << beta << '\n';
+	// cout << powerplan_width << ' ' << min_spacing << '\n';
+	for (auto &m : macros)
+	{
+		cout << m->id() << ' ' << m->w() << ' ' << m->h() << endl;
+	}
+	Graph Gh(V), Gv(V);
 	// build_init_constraint_graph(Gh, Gv, rebuild_cnt);
+
 	// re_index(macros);
 	// adjustment(Gh, Gv);
 	// Gh.transitive_reduction();
