@@ -4,21 +4,25 @@
 #include <iostream>
 #include <random>
 #include <vector>
+#include "io.h"
 
 using namespace std;
 
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))
 
-double chip_width = 25.0;
-double chip_height = 10.0;
+double chip_width;// = 25.0;
+double chip_height;// = 10.0;
+int V;// = 7; // #macros;
+double alpha;// = 1.0, 
+double beta;// = 4.0;
+double powerplan_width;// = 0.0, 
+double min_spacing;// = 0.0;
+vector<Macro *> macros;
+IoData* shoatingMain(int argc, char* argv[]);
 
-int V = 7; // #macros;
-double alpha = 1.0, beta = 4.0;
-double powerplan_width = 0.0, min_spacing = 0.0;
 double hyper_parmeter = 0.1;
 int rebuild_cnt = 0;
-vector<Macro *> macros;
 
 mt19937_64 rng;
 std::uniform_real_distribution<double> unif(0.0, 1.0);
@@ -224,26 +228,29 @@ void adjustment(Graph &Gh, Graph &Gv)
 int main(int argc, char *argv[])
 {
 	rng.seed(87);
-	Macro m1(4.0, 4.0, 0.0, 3.0, false, 1);
-	Macro m2(4.0, 2.0, 3.8, 5.5, false, 2);
-	Macro m3(4.0, 3.0, 3.8, 1.5, false, 3);
-	Macro m4(6.0, 9.0, 7.6, 0.7, false, 4);
-	Macro m5(6.0, 4.0, 13.4, 4.7, false, 5);
-	Macro m6(6.0, 3.0, 16.0, 0.7, false, 6);
-	Macro m7(6.0, 6.0, 19.0, 3.7, false, 7);
-	macros.push_back(&m1);
-	macros.push_back(&m2);
-	macros.push_back(&m3);
-	macros.push_back(&m4);
-	macros.push_back(&m5);
-	macros.push_back(&m6);
-	macros.push_back(&m7);
+	IoData* iodata;
+	cout<<"fuck 0 \n";
+	iodata = shoatingMain(argc, argv);
+
+	cout<<"fuck 1 \n";
+
+	chip_width = iodata->die_width;// = 25.0;
+	chip_height = iodata->die_height;// = 10.0;
+	V = iodata->macros.size();// = 7; // #macros;
+	alpha = iodata->weight_alpha;// = 1.0, 
+	beta = iodata->weight_beta;// = 4.0 ;
+	powerplan_width = iodata->powerplan_width_constraint;// = 0.0, 
+	min_spacing = iodata->minimum_spacing;// = 0.0;
+	macros = iodata->macros;
+
 	Graph Gh(V), Gv(V);
+	cout<<"fuck 2 \n";
 	build_init_constraint_graph(Gh, Gv, rebuild_cnt);
 	re_index(macros);
 	adjustment(Gh, Gv);
 	Gh.transitive_reduction();
 	Gv.transitive_reduction();
 	// Gh, Gv are ready.
+
 	return 0;
 }

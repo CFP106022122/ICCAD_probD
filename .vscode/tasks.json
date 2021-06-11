@@ -9,6 +9,7 @@
                 "${file}",
                 "macro.cpp",
                 "io.cpp",
+                "shaotingMain.cpp",
                 "-o",
                 "${fileDirname}\\${fileBasenameNoExtension}.exe",
                 "-std=c++11"

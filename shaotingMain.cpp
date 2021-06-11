@@ -3,6 +3,7 @@
 #include <vector>
 #include <string.h>
 //#include "macro.h"
+
 #include "io.h"
 
 using namespace std;
@@ -24,18 +25,23 @@ bool hasBegining (std::string fullString, std::string begining) {
 }
 
 
-int main(int argc, char **argv){
+IoData* shoatingMain(int argc, char* argv[]){
     ifstream fs;
     string arg[argc];
-    string output_filename;
+    //string output_filename;
     IoData* iodata = new IoData();
+
+    for(int i=0;i<argc;i++){
+        cout<<argv[i]<<endl;
+    }
 
     //get argv and call parse
     for( int i = 1; i < argc; i++) {
-        //cout<<argv[i]<<endl;
+        cout<<argv[i]<<endl;
+        //cout<<"fuck 1 \n";
         arg[i] = argv[i];
         if(hasBegining(arg[i], "out")){
-            output_filename = arg[i];
+            iodata->output_filename = arg[i];
             continue;
         }
 
@@ -46,10 +52,13 @@ int main(int argc, char **argv){
         
         if(hasEnding(arg[i], "lef")){
             iodata->parseLef(fs);
+            cout<<"fuck 5 \n";
         }else if(hasEnding(arg[i], "def")){
             iodata->parseDef(fs);
+            cout<<"fuck 7 \n";
         }else if(hasEnding(arg[i], "txt")){
             iodata->parseTxt(fs);
+            cout<<"fuck 9 \n";
         }else{
             cerr<<"File type unavailable: "<<argv[i]<<endl;
         }
@@ -60,9 +69,9 @@ int main(int argc, char **argv){
        
     }
 
-    iodata->output(output_filename);
+    //iodata->output(output_filename);
 
-    return 0;
+    return iodata;
 
 }
 

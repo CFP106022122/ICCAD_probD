@@ -1,14 +1,15 @@
+#ifndef _MACRO_H_
+#define _MACRO_H_
+
 #include <iostream>
 #include <string>
 
 using namespace std;
 
 #define border 3
-#define fixed 2
+#define _fixed 2
 #define placed 1
 
-#ifndef _MACRO_H_
-#define _MACRO_H_
 
 class Macro
 {
@@ -34,14 +35,6 @@ public:
 		macro_name = "null";
 	}
 	
-
-public:
-	Macro(double w, double h, double _x, double _y, bool is_f, int i) : width{w}, height{h}, _x1{_x}, _y1{_y}, _is_fixed{is_f}, _id{i}
-	{
-		_x2 = _x1 + width;
-		_y2 = _y1 + height;
-	}
-
 
 	double x1() const { return _x1; }
 	double x2() const { return _x2; }
@@ -100,15 +93,9 @@ public:
     }
 
 
-	double cx() const { return _x1 + width / 2; }
 
-	double cy() const { return _y1 + height / 2; }
 
-	friend bool is_overlapped(Macro &m1, Macro &m2);
-	friend bool x_dir_is_overlapped_less(Macro &m1, Macro &m2);
-	friend bool x_dir_projection_no_overlapped(Macro &m1, Macro &m2);
-	friend bool y_dir_projection_no_overlapped(Macro &m1, Macro &m2);
-	friend bool projection_no_overlapped(Macro &m1, Macro &m2);
+
 };
 
 #endif

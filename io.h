@@ -1,3 +1,6 @@
+#ifndef _IO_H_
+#define _IO_H_
+
 #include <iostream>
 #include <vector>
 #include <fstream>
@@ -23,8 +26,8 @@ public:
     int weight_beta;
     int dbu_per_micron;
 
-    vector<Macro> macros;
-    vector<Macro> macro_shapes;
+    vector<Macro*> macros;
+    vector<Macro*> macro_shapes;
 
     //other info that need to put to output
     string version;
@@ -35,6 +38,8 @@ public:
     int num_macro;
     int die_x, die_y;
     int die_width, die_height;
+
+    string output_filename;
 
     void parseDef(ifstream& f);
 
@@ -50,3 +55,4 @@ public:
 
 };
 
+#endif

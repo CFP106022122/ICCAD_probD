@@ -64,12 +64,12 @@ void IoData::processDiearea(vector<pt> points){
                     Macro m(abs(points[(j-1)%points.size()].x-points[j%points.size()].x), 
                     abs(points[(j)%points.size()].y-min_y),
                     points[(j)%points.size()].x-this->die_x, 0, true, -1*i);
-                    this->macros.push_back(m);
+                    this->macros.push_back(&m);
                 }else{
                     Macro m(abs(points[(j-1)%points.size()].x-points[j%points.size()].x), 
                     abs(points[(j)%points.size()].y-max_y),
                     points[(j)%points.size()].x-this->die_x, points[(j)%points.size()].y-this->die_y, true, -1*i);
-                    this->macros.push_back(m);
+                    this->macros.push_back(&m);
                 }
                 //(double w, double h, double _x, double _y, bool is_f, int i)
             }
@@ -151,7 +151,7 @@ void IoData::parseDef(ifstream& f){
         linestring>>buff>>buff3>>buff>>buff4>>buff5;//     + FIXED ( 0 20000 ) N ;
         //cout<<buff1<<" "<<buff2<<" "<<buff3<<" "<<buff4<<" "<<buff5<<" "<<endl;
         if(buff3=="FIXED"){
-            intbuff = fixed;
+            intbuff = _fixed;
             isfixed = true;
         }else if(buff3=="PLACED"){
             intbuff = placed;
@@ -162,7 +162,7 @@ void IoData::parseDef(ifstream& f){
         
         //(string name, string shape, int type, double _x, double _y, bool is_f, int i)
         Macro m(buff1, buff2, intbuff, stod(buff4.c_str())-this->die_x, stod(buff5.c_str())-this->die_x, isfixed, i);
-        this->macros.push_back(m);
+        this->macros.push_back(&m);
         //cout<<buff<<endl;
         linestring.clear();
     }
@@ -196,10 +196,11 @@ void IoData::parseLef(ifstream& f){
     string linebuff, buff, buff1, buff2, buff3, buff4, buff5, buff6, buff7;
     int intbuff;
     bool isfixed;
+    cout<<"lef fuck" ;
 
     stringstream linestring;
 
-    while(true){
+    while(!f.eof()){
         getline(f, linebuff);
         if(linebuff=="END LIBRARY"){
             break;
@@ -212,23 +213,24 @@ void IoData::parseLef(ifstream& f){
         linestring.str(linebuff);
         linestring>>buff>>buff2>>buff>>buff3;
         linestring.clear();
-        //cout<<buff1<<" "<<buff2<<" "<<buff3<<endl;
+        cout<<buff1<<" "<<buff2<<" "<<buff3<<endl;
 
         Macro m(buff1, stod(buff2), stod(buff3));
-        this->macro_shapes.push_back(m);
+        this->macro_shapes.push_back(&m);
 
         getline(f, linebuff);
         getline(f, linebuff);
     }
 
     for(int i=0;i<this->macros.size();i++){
-        if(this->macros[i].type()==border){
+        cout<<"why "<<i<<endl;
+        if(this->macros[i]->type()==border){
             continue;
         }
 
         for(int j=0;j<this->macro_shapes.size();j++){
-            if(this->macros[i].shape()==this->macro_shapes[j].name()){
-                this->macros[i].setWidthHeight(this->macro_shapes[j]);
+            if(this->macros[i]->shape()==this->macro_shapes[j]->name()){
+                this->macros[i]->setWidthHeight(*(this->macro_shapes[j]));
                 break;
             }
         }
@@ -251,16 +253,16 @@ void IoData::output(string file){
 
     for(int i=0;i<this->macros.size();i++){
         //f<<"  **** "<<this->macros[i].name()<<" "<<this->macros[i].w()<<" "<<this->macros[i].h()<<" "<<this->macros[i].x1()<<" "<<this->macros[i].x2()<<"\n";
-        if(this->macros[i].type()==border){
+        if(this->macros[i]->type()==border){
             continue;
         }
-        f<<"   - "<<this->macros[i].name()<<" "<<this->macros[i].shape()<<" \n"<<"      + ";
-        if(this->macros[i].is_fixed()){
+        f<<"   - "<<this->macros[i]->name()<<" "<<this->macros[i]->shape()<<" \n"<<"      + ";
+        if(this->macros[i]->is_fixed()){
             f<<"FIXED ( ";
         }else{
             f<<"PLACED ( ";
         }
-        f<<to_string(this->macros[i].x1())<<" "<<to_string(this->macros[i].y1())<<" ) N ;\n";
+        f<<to_string(this->macros[i]->x1())<<" "<<to_string(this->macros[i]->y1())<<" ) N ;\n";
 
         //f<<"   - "<<this->macros[i].shape()<<" "<<this->macros[i].w()<<" "<<this->macros[i].h()<<"\n";
     }
