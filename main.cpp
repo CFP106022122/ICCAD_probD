@@ -1,6 +1,7 @@
 #include "flow.h"
 #include "graph.h"
 #include "macro.h"
+#include "LP.h"
 #include <iostream>
 #include <random>
 #include <vector>
@@ -264,5 +265,15 @@ int main(int argc, char *argv[])
 	cout<<"fuck 7 \n";
 	// Gh, Gv are ready.
 
+
+	// To change this function to return vector<pair<double, double>>
+	// Please refer the annotation in bottom of LP.cpp
+	// I also can modify macro[i].x, macro[i].y directly
+	// If you want to do so, wellcom to contact me
+	
+	// ====================Important====================
+	// Return values represent macros' "center" position
+	// =================================================
+	Linear_Program(macros, Gv, Gh);
 	return 0;
 }

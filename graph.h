@@ -197,6 +197,10 @@ public:
 			cout << endl;
 		}
 	}
+
+	vector<edge>* get_edge_list(){
+		return g;
+	}
 };
 
 #endif
