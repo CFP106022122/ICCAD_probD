@@ -12,6 +12,7 @@ using namespace std;
 void IoData::processDiearea(vector<pt> points)
 {
     int min_x, min_y, max_x, max_y;
+    Macro *m;
     if (points.size() == 2)
     {
         this->die_x = points[0].x;
@@ -80,17 +81,17 @@ void IoData::processDiearea(vector<pt> points)
                 //cout<<(j-1)%points.size()<<" "<<points[j%points.size()].y<<" "<<points[(j-1)%points.size()].y<<endl;
                 if (down_side)
                 {
-                    Macro m(abs(points[(j - 1) % points.size()].x - points[j % points.size()].x),
-                            abs(points[(j) % points.size()].y - min_y),
-                            points[(j) % points.size()].x - this->die_x, 0, true, -1 * i);
-                    this->macros.push_back(&m);
+                    m = new Macro(abs(points[(j - 1) % points.size()].x - points[j % points.size()].x),
+                                  abs(points[(j) % points.size()].y - min_y),
+                                  points[(j) % points.size()].x - this->die_x, 0, true, -1 * i);
+                    this->macros.push_back(m);
                 }
                 else
                 {
-                    Macro m(abs(points[(j - 1) % points.size()].x - points[j % points.size()].x),
-                            abs(points[(j) % points.size()].y - max_y),
-                            points[(j) % points.size()].x - this->die_x, points[(j) % points.size()].y - this->die_y, true, -1 * i);
-                    this->macros.push_back(&m);
+                    m = new Macro(abs(points[(j - 1) % points.size()].x - points[j % points.size()].x),
+                                  abs(points[(j) % points.size()].y - max_y),
+                                  points[(j) % points.size()].x - this->die_x, points[(j) % points.size()].y - this->die_y, true, -1 * i);
+                    this->macros.push_back(m);
                 }
                 //(double w, double h, double _x, double _y, bool is_f, int i)
             }
@@ -115,6 +116,7 @@ void IoData::parseDef(ifstream &f)
     string linebuff, buff, buff1, buff2, buff3, buff4, buff5, buff6, buff7;
     int intbuff;
     bool isfixed;
+    Macro *m;
 
     stringstream linestring;
 
@@ -141,7 +143,7 @@ void IoData::parseDef(ifstream &f)
         vector<pt> points;
         getline(f, linebuff, ';');
         this->die_area_string = linebuff + ";" + "\n";
-        //cout<<this->die_area;
+        //cout<<this->die_area_string;
         linestring.str(linebuff);
         linestring >> buff >> buff;
         while (!linestring.eof())
@@ -193,12 +195,15 @@ void IoData::parseDef(ifstream &f)
         }
 
         //(string name, string shape, int type, double _x, double _y, bool is_f, int i)
-        Macro m(buff1, buff2, intbuff, stod(buff4.c_str()) - this->die_x, stod(buff5.c_str()) - this->die_x, isfixed, i);
-        this->macros.push_back(&m);
-        //cout<<buff<<endl;
+        m = new Macro(buff1, buff2, intbuff, stod(buff4.c_str()) - this->die_x, stod(buff5.c_str()) - this->die_x, isfixed, i);
+        this->macros.push_back(m);
+
         linestring.clear();
     }
 
+    /*for(int i=0;i<this->macros.size();i++){
+        cout<<"  **** "<<this->macros[i]->name()<<" "<<this->macros[i]->shape()<<" "<<this->macros[i]->type()<<" "<<this->macros[i]->x1()<<" "<<this->macros[i]->x2()<<"\n";
+    }*/
     //--------------------------
     // def sample
     //
@@ -229,7 +234,8 @@ void IoData::parseLef(ifstream &f)
     string linebuff, buff, buff1, buff2, buff3, buff4, buff5, buff6, buff7;
     int intbuff;
     bool isfixed;
-    cout << "lef fuck";
+    Macro *m;
+    //cout<<"lef fuck" ;
 
     stringstream linestring;
 
@@ -248,10 +254,10 @@ void IoData::parseLef(ifstream &f)
         linestring.str(linebuff);
         linestring >> buff >> buff2 >> buff >> buff3;
         linestring.clear();
-        cout << buff1 << " " << buff2 << " " << buff3 << endl;
+        //cout<<buff1<<" "<<buff2<<" "<<buff3<<endl;
 
-        Macro m(buff1, stod(buff2), stod(buff3));
-        this->macro_shapes.push_back(&m);
+        m = new Macro(buff1, stod(buff2), stod(buff3));
+        this->macro_shapes.push_back(m);
 
         getline(f, linebuff);
         getline(f, linebuff);
@@ -263,9 +269,10 @@ void IoData::parseLef(ifstream &f)
         {
             continue;
         }
+        //cout<<"why "<<i<<endl;
+
         for (int j = 0; j < this->macro_shapes.size(); j++)
         {
-            cout << (this->macros[i])->shape() << '\n';
             if (this->macros[i]->shape() == this->macro_shapes[j]->name())
             {
                 this->macros[i]->setWidthHeight(*(this->macro_shapes[j]));
