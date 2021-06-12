@@ -60,20 +60,20 @@ public:
 			for (int j = 0; j < MAX_N; ++j)
 				adj_matrix[i][j] = false;
 	}
-	~Graph()
-	{
-		// delete g;
-		// delete g_reversed;
-		// delete L;
-		// delete R;
-		// delete visited;
+	// ~Graph()
+	// {
+	// 	delete g;
+	// 	delete g_reversed;
+	// 	delete L;
+	// 	delete R;
+	// 	delete visited;
 
-		// for (int i = 0; i < MAX_N; ++i)
-		// {
-		// 	delete[] adj_matrix[i];
-		// }
-		// delete adj_matrix;
-	}
+	// 	for (int i = 0; i < MAX_N; ++i)
+	// 	{
+	// 		delete[] adj_matrix[i];
+	// 	}
+	// 	delete adj_matrix;
+	// }
 
 	void add_edge(int u, int v, double w)
 	{
@@ -97,15 +97,21 @@ public:
 	{
 		visited[u] = true;
 		for (auto &e : g[u])
+		{
 			if (!visited[e.to])
+			{
 				dfs_for_topological_sort_helper(e.to);
+			}
+		}
 		topological_order.push_back(u);
 	}
 
 	bool *visited;
 	void dfs_for_topological_sort()
 	{
-		memset(visited, false, sizeof(visited));
+		// memset(visited, false, sizeof(visited));
+		for (int i = 0; i <= n + 1; ++i)
+			visited[i] = false;
 		for (int i = 0; i <= n; ++i)
 			if (!visited[i])
 				dfs_for_topological_sort_helper(i);
@@ -134,13 +140,18 @@ public:
 	double longest_path(bool is_horizontal)
 	{
 		topological_sort();
-		fill(L, L + n + 2, 0.0);
-		fill(R, R + n + 2, DBL_MAX);
+		for (int i = 0; i <= n + 1; ++i)
+		{
+			L[i] = 0.0;
+			R[i] = DBL_MAX;
+		}
+		// fill(L, L + n + 2, 0.0);
+		// fill(R, R + n + 2, DBL_MAX);
 		for (auto &u : topological_order)
 		{
 			for (auto &e : g[u])
 			{
-				// cout << macros[e.to]->is_fixed() << '\n';
+				// cout << u << ' ' << e.to << '\n';
 				if (e.to == n + 1)
 				{
 					L[e.to] = max(L[e.to], L[u] + e.weight);
@@ -150,11 +161,10 @@ public:
 												   : max(L[e.to], L[u] + e.weight);
 			}
 		}
-
 		R[n + 1] = max(L[n + 1], chip_width);
 		reverse(topological_order.begin(), topological_order.end());
 		for (auto &u : topological_order)
-		{ // reverse topological order
+		{
 			for (auto &e : g_reversed[u])
 			{
 				if (e.from == 0)
@@ -162,11 +172,10 @@ public:
 					R[e.from] = min(R[e.from], R[u] - e.weight);
 					continue;
 				}
-				R[e.from] = macros[e.from]->is_fixed() ? is_horizontal ? macros[e.to]->cx() : macros[e.to]->cy()
+				R[e.from] = macros[e.from]->is_fixed() ? is_horizontal ? macros[e.from]->cx() : macros[e.from]->cy()
 													   : min(R[e.from], R[u] - e.weight);
 			}
 		}
-
 		return L[n + 1];
 	}
 
@@ -191,13 +200,15 @@ public:
 	{
 		for (int i = 0; i <= n; ++i)
 		{
-			cout << "macro " << i << "'s neighbors:\n";
+			if (i == 0)
+				cout << "source 's neighbors:\n";
+			else
+				cout << "macro id" << macros[i]->id()<< "'s neighbors:\n";
 			for (auto &e : g[i])
-				cout << "\tmacro " << e.to << " with weight " << e.weight << endl;
+				cout << "\t" << ((e.to == n + 1) ? n + 1 : macros[e.to]->id()) << " with weight " << e.weight << endl;
 			cout << endl;
 		}
 	}
-
 	vector<edge>* get_edge_list(){
 		return g;
 	}
