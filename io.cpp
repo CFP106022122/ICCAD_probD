@@ -12,7 +12,7 @@ using namespace std;
 void IoData::processDiearea(vector<pt> points){
     int min_x, min_y, max_x, max_y;
     Macro* m;
-    if(points.size()==2){
+    if(points.size()==2){//only two means that it's the two cross point, so just memorize the four number;
         this->die_x = points[0].x;
         this->die_y = points[0].y;
         max_x = points[0].x;
