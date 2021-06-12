@@ -287,6 +287,7 @@ int main(int argc, char *argv[])
 	og_macros = iodata->macros;
 	macros.reserve(og_macros.size() + 5);
 	for (int i = 0; i < og_macros.size(); ++i)
+		//macros.insert(macros.begin()+og_macros[i]->id(), og_macros[i]);
 		macros[og_macros[i]->id()] = og_macros[i];
 
 	Graph Gh(V), Gv(V);
