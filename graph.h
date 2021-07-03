@@ -12,7 +12,7 @@ using namespace std;
 
 extern double chip_width;
 extern double chip_height;
-extern vector<Macro *> macros;
+extern Macro **macros;
 
 struct edge
 {
@@ -145,35 +145,54 @@ public:
 			L[i] = 0.0;
 			R[i] = DBL_MAX;
 		}
-		// fill(L, L + n + 2, 0.0);
-		// fill(R, R + n + 2, DBL_MAX);
 		for (auto &u : topological_order)
 		{
 			for (auto &e : g[u])
 			{
 				// cout << u << ' ' << e.to << '\n';
-				if (e.to == n + 1)
-				{
-					L[e.to] = max(L[e.to], L[u] + e.weight);
-					continue;
-				}
-				L[e.to] = macros[e.to]->is_fixed() ? is_horizontal ? macros[e.to]->cx() : macros[e.to]->cy()
-												   : max(L[e.to], L[u] + e.weight);
+				// if (e.to == n + 1)
+				// {
+				// 	L[e.to] = max(L[e.to], L[u] + e.weight);
+				// 	continue;
+				// }
+				// if (macros[e.to]->is_fixed())
+				// {
+				// 	L[e.to] = (is_horizontal) ? macros[e.to]->cx() : macros[e.to]->cy();
+				// }
+				// else
+				// {
+				L[e.to] = max(L[e.to], L[u] + e.weight);
+				// }
+				// L[e.to] = macros[e.to]->is_fixed() ? is_horizontal ? macros[e.to]->cx() : macros[e.to]->cy()
+				// 								   : max(L[e.to], L[u] + e.weight);
 			}
 		}
-		R[n + 1] = max(L[n + 1], chip_width);
+		double chip_boundry;
+		if (is_horizontal)
+			chip_boundry = chip_width;
+		else
+			chip_boundry = chip_height;
+		R[n + 1] = max(L[n + 1], chip_boundry);
 		reverse(topological_order.begin(), topological_order.end());
 		for (auto &u : topological_order)
 		{
 			for (auto &e : g_reversed[u])
 			{
-				if (e.from == 0)
-				{
-					R[e.from] = min(R[e.from], R[u] - e.weight);
-					continue;
-				}
-				R[e.from] = macros[e.from]->is_fixed() ? is_horizontal ? macros[e.from]->cx() : macros[e.from]->cy()
-													   : min(R[e.from], R[u] - e.weight);
+				// if (e.from == 0)
+				// {
+				// 	R[e.from] = min(R[e.from], R[u] - e.weight);
+				// 	continue;
+				// }
+				// if (macros[e.from]->is_fixed())
+				// {
+				// 	R[e.from] = (is_horizontal) ? macros[e.from]->cx() : macros[e.from]->cy();
+				// }
+				// else
+				// {
+				R[e.from] = min(R[e.from], R[u] - e.weight);
+				// }
+				// R[e.from] = macros[e.from]->is_fixed() ? is_horizontal ? macros[e.from]->cx() : macros[e.from]->cy()
+				// 									   : min(R[e.from], R[u] - e.weight);
 			}
 		}
 		return L[n + 1];
@@ -203,7 +222,7 @@ public:
 			if (i == 0)
 				cout << "source 's neighbors:\n";
 			else
-				cout << "macro id" << macros[i]->id() << ' ' << macros[i]->name() << "'s neighbors:\n";
+				cout << "macro id" << macros[i]->id() << ' ' << macros[i]->name() << "(is_fixed: " << macros[i]->is_fixed() << ")'s neighbors:\n";
 			for (auto &e : g[i])
 				cout << "\t" << ((e.to == n + 1) ? "sink" : macros[e.to]->name()) << " with weight " << e.weight << endl;
 			cout << endl;
