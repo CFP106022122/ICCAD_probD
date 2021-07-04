@@ -18,7 +18,7 @@ double alpha;			// = 1.0,
 double beta;			// = 4.0;
 double powerplan_width; // = 0.0,
 double min_spacing;		// = 0.0;
-vector<Macro *> macros;
+Macro **macros;
 vector<Macro *> og_macros;
 IoData *shoatingMain(int argc, char *argv[]);
 
@@ -44,7 +44,7 @@ double determine_edge_weight(Macro *m1, Macro *m2, bool is_horizontal)
 	return w;
 }
 
-void add_st_nodes(Graph &Gh, Graph &Gv, vector<Macro *> macros)
+void add_st_nodes(Graph &Gh, Graph &Gv, vector<Macro *> macros) // using og_macros here
 {
 	// id 0 for source, V+1 for sink
 	for (int i = 0; i < V; i++)
@@ -66,7 +66,7 @@ void add_st_nodes(Graph &Gh, Graph &Gv, vector<Macro *> macros)
 	}
 }
 
-void build_init_constraint_graph(Graph &Gh, Graph &Gv, vector<Macro *> macros)
+void build_init_constraint_graph(Graph &Gh, Graph &Gv, vector<Macro *> macros) // using og_macros here
 {
 	add_st_nodes(Gh, Gv, macros);
 	for (int i = 0; i < V; ++i)
@@ -80,6 +80,7 @@ void build_init_constraint_graph(Graph &Gh, Graph &Gv, vector<Macro *> macros)
 				i_is_at_the_left = true;
 			if (macros[i]->cy() < macros[j]->cy())
 				i_is_at_the_bottom = true;
+
 			if (is_overlapped(*macros[i], *macros[j]))
 			{
 				if (x_dir_is_overlapped_less(*macros[i], *macros[j]))
@@ -133,9 +134,9 @@ void build_init_constraint_graph(Graph &Gh, Graph &Gv, vector<Macro *> macros)
 	}
 }
 
-void build_Gc(Graph &G, DICNIC<double> &Gc, Graph &G_the_other_dir, bool test_g_is_horizontal)
+void build_Gc(Graph &G, DICNIC<double> &Gc, Graph &G_the_other_dir, bool test_g_is_horizontal) // using macros
 {
-	vector<edge> zero_slack_edges = G.zero_slack_edges();
+	vector<edge> &zero_slack_edges = G.zero_slack_edges();
 	for (auto &e : zero_slack_edges)
 	{
 		if (e.from == 0 || e.to == V + 1)
@@ -167,8 +168,9 @@ void build_Gc(Graph &G, DICNIC<double> &Gc, Graph &G_the_other_dir, bool test_g_
 	}
 }
 
-void adjustment_helper(Graph &G, DICNIC<double> &Gc, Graph &G_the_other_dir, bool adjust_g_is_horizontal)
+void adjustment_helper(Graph &G, DICNIC<double> &Gc, Graph &G_the_other_dir, bool adjust_g_is_horizontal) //using macros
 {
+	Gc.min_cut(0, V + 1);
 	for (auto &e : Gc.cut_e)
 	{
 		double w = determine_edge_weight(macros[e.pre], macros[e.v], !adjust_g_is_horizontal);
@@ -270,10 +272,12 @@ void rebuild_constraint_graph(Graph &Gh, Graph &Gv)
 		cout << "End of the world\n";
 		return;
 	}
-	cout << rebuild_cnt << "th time rebuild\n";
+	// cout << rebuild_cnt << "th time rebuild\n";
 	Gh.rebuild();
 	Gv.rebuild();
 	build_init_constraint_graph(Gh, Gv, og_macros);
+	// Gh.transitive_reduction();
+	// Gv.transitive_reduction();
 	adjustment(Gh, Gv);
 }
 
@@ -290,19 +294,16 @@ int main(int argc, char *argv[])
 	beta = (double)iodata->weight_beta;							  // = 4.0 ;
 	powerplan_width = (double)iodata->powerplan_width_constraint; // = 0.0,
 	min_spacing = (double)iodata->minimum_spacing;				  // = 0.0;
-	og_macros = iodata->macros;
-	macros.reserve(og_macros.size() + 5);
-	for (int i = 0; i < og_macros.size(); ++i)
-		//macros.insert(macros.begin()+og_macros[i]->id(), og_macros[i]);
-		macros[og_macros[i]->id()] = og_macros[i];
 
+	og_macros = iodata->macros;
+	macros = new Macro *[V + 2];
+	for (auto &m : og_macros)
+		macros[m->id()] = m;
 	Graph Gh(V), Gv(V);
 	build_init_constraint_graph(Gh, Gv, og_macros);
+	// Gh.transitive_reduction();
+	// Gv.transitive_reduction();
 	adjustment(Gh, Gv);
-	Gh.transitive_reduction();
-	Gv.transitive_reduction();
-	// for (int i = 1; i <= V; ++i)
-	// 	cout << (macros[i]->id() == og_macros[i - 1]->id()) << '\n';
 	// Gh, Gv are ready.
 
 	return 0;
