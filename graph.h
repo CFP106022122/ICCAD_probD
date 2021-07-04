@@ -18,7 +18,7 @@ struct edge
 {
 	int from, to;
 	double weight;
-	double slack;
+	double slack; //refactor
 	edge(int u, int v, double w) : from{u}, to{v}, weight{w} {}
 };
 
@@ -172,8 +172,11 @@ public:
 			chip_boundry = chip_width;
 		else
 			chip_boundry = chip_height;
+
 		R[n + 1] = max(L[n + 1], chip_boundry);
+
 		reverse(topological_order.begin(), topological_order.end());
+
 		for (auto &u : topological_order)
 		{
 			for (auto &e : g_reversed[u])
@@ -195,6 +198,7 @@ public:
 				// 									   : min(R[e.from], R[u] - e.weight);
 			}
 		}
+		// for (fixed macro) L = R = x;
 		return L[n + 1];
 	}
 

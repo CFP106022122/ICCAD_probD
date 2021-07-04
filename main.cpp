@@ -80,6 +80,7 @@ void build_init_constraint_graph(Graph &Gh, Graph &Gv, vector<Macro *> macros) /
 				i_is_at_the_left = true;
 			if (macros[i]->cy() < macros[j]->cy())
 				i_is_at_the_bottom = true;
+
 			if (is_overlapped(*macros[i], *macros[j]))
 			{
 				if (x_dir_is_overlapped_less(*macros[i], *macros[j]))
@@ -169,6 +170,7 @@ void build_Gc(Graph &G, DICNIC<double> &Gc, Graph &G_the_other_dir, bool test_g_
 
 void adjustment_helper(Graph &G, DICNIC<double> &Gc, Graph &G_the_other_dir, bool adjust_g_is_horizontal) //using macros
 {
+	Gc.min_cut(0, V + 1);
 	for (auto &e : Gc.cut_e)
 	{
 		double w = determine_edge_weight(macros[e.pre], macros[e.v], !adjust_g_is_horizontal);
@@ -205,15 +207,15 @@ void adjustment(Graph &Gh, Graph &Gv)
 	double longest_path_h = Gh.longest_path(true);
 	double longest_path_v = Gv.longest_path(false);
 	double copy_of_chip_height = chip_height; // for safety
-	// cout << "Before adjustment:\n";
-	// cout << "Horizontal constraint graph has longest path: " << longest_path_h << '\n';
-	// cout << "Vertical constraint graph has longest path: " << longest_path_v << "\n\n";
+	cout << "Before adjustment:\n";
+	cout << "Horizontal constraint graph has longest path: " << longest_path_h << '\n';
+	cout << "Vertical constraint graph has longest path: " << longest_path_v << "\n\n";
 
 	while (longest_path_h > chip_width || longest_path_v > chip_height)
 	{
-		// cout << "Now:\n";
-		// cout << "Horizontal constraint graph has longest path: " << longest_path_h << '\n';
-		// cout << "Vertical constraint graph has longest path: " << longest_path_v << "\n\n";
+		cout << "Now:\n";
+		cout << "Horizontal constraint graph has longest path: " << longest_path_h << '\n';
+		cout << "Vertical constraint graph has longest path: " << longest_path_v << "\n\n";
 
 		double prev_longest_path_h = longest_path_h, prev_longest_path_v = longest_path_v;
 		DICNIC<double> Gc;
@@ -257,9 +259,9 @@ void adjustment(Graph &Gh, Graph &Gv)
 			}
 		}
 	}
-	// cout << "After adjustment:\n";
-	// cout << "Horizontal constraint graph has longest path: " << longest_path_h << " less than chip_width: " << chip_width << '\n';
-	// cout << "Vertical constraint graph has longest path: " << longest_path_v << " less than chip_height: " << copy_of_chip_height << '\n';
+	cout << "After adjustment:\n";
+	cout << "Horizontal constraint graph has longest path: " << longest_path_h << " less than chip_width: " << chip_width << '\n';
+	cout << "Vertical constraint graph has longest path: " << longest_path_v << " less than chip_height: " << copy_of_chip_height << '\n';
 	chip_height = copy_of_chip_height;
 }
 
@@ -274,8 +276,8 @@ void rebuild_constraint_graph(Graph &Gh, Graph &Gv)
 	Gh.rebuild();
 	Gv.rebuild();
 	build_init_constraint_graph(Gh, Gv, og_macros);
-	Gh.transitive_reduction();
-	Gv.transitive_reduction();
+	// Gh.transitive_reduction();
+	// Gv.transitive_reduction();
 	adjustment(Gh, Gv);
 }
 
@@ -299,8 +301,8 @@ int main(int argc, char *argv[])
 		macros[m->id()] = m;
 	Graph Gh(V), Gv(V);
 	build_init_constraint_graph(Gh, Gv, og_macros);
-	Gh.transitive_reduction();
-	Gv.transitive_reduction();
+	// Gh.transitive_reduction();
+	// Gv.transitive_reduction();
 	adjustment(Gh, Gv);
 	// Gh, Gv are ready.
 
