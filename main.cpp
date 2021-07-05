@@ -134,18 +134,31 @@ void build_init_constraint_graph(Graph &Gh, Graph &Gv, vector<Macro *> macros) /
 	}
 }
 
-void build_Gc(Graph &G, DICNIC<double> &Gc, Graph &G_the_other_dir, bool test_g_is_horizontal) // using macros
+bool build_Gc(Graph &G, DICNIC<double> &Gc, Graph &G_the_other_dir, bool test_g_is_horizontal) // using macros
 {
 	vector<edge> &zero_slack_edges = G.zero_slack_edges();
+	// G.show();
+	int cnt = 0;
 	for (auto &e : zero_slack_edges)
 	{
+		if (e.from != 0)
+			cout << macros[e.from]->name() << ' ';
+		else
+			cout << "source ";
+		if (e.to != V + 1)
+			cout << macros[e.to]->name() << " ";
+		else
+			cout << "sink ";
 		if (e.from == 0 || e.to == V + 1)
 		{
+			cout << "1\n";
 			Gc.add_edge(e.from, e.to, DBL_MAX, true);
+			++cnt;
 			// cout << "adding edge from " << e.from << " to " << e.to << " with weight " << DBL_MAX << '\n';
 		}
 		else
 		{
+			cout << "2";
 			double w = determine_edge_weight(macros[e.from], macros[e.to], test_g_is_horizontal);
 			G_the_other_dir.add_edge(e.from, e.to, w);
 			double Rvj = G.R[e.to];
@@ -153,7 +166,11 @@ void build_Gc(Graph &G, DICNIC<double> &Gc, Graph &G_the_other_dir, bool test_g_
 			double test_longest_path = G_the_other_dir.longest_path(test_g_is_horizontal);
 			double boundry = (test_g_is_horizontal) ? chip_width : chip_height;
 			if (test_longest_path > boundry)
+			{
 				Gc.add_edge(e.from, e.to, DBL_MAX, true);
+				++cnt;
+				cout << "a\n";
+			}
 			else
 			{
 				double avg = determine_edge_weight(macros[e.from], macros[e.to], test_g_is_horizontal);
@@ -161,18 +178,24 @@ void build_Gc(Graph &G, DICNIC<double> &Gc, Graph &G_the_other_dir, bool test_g_
 				double coord_to = (test_g_is_horizontal) ? macros[e.to]->cx() : macros[e.to]->cy();
 				w = max(coord_from - Rvj + avg, 0) + max(Lvi + avg - coord_to, 0);
 				Gc.add_edge(e.from, e.to, w, true);
+				cout << "b " << w << endl;
 				// cout << "adding edge from " << e.from << " to " << e.to << " with weight " << w << '\n';
 			}
 			G_the_other_dir.remove_edge(e.from, e.to);
 		}
 	}
+	return cnt == zero_slack_edges.size();
 }
 
-void adjustment_helper(Graph &G, DICNIC<double> &Gc, Graph &G_the_other_dir, bool adjust_g_is_horizontal) //using macros
+bool adjustment_helper(Graph &G, DICNIC<double> &Gc, Graph &G_the_other_dir, bool adjust_g_is_horizontal) //using macros
 {
-	Gc.min_cut(0, V + 1);
+	if (Gc.min_cut(0, V + 1))
+	{
+		return true;
+	}
 	for (auto &e : Gc.cut_e)
 	{
+		cout << e.pre << ' ' << e.v << endl;
 		double w = determine_edge_weight(macros[e.pre], macros[e.v], !adjust_g_is_horizontal);
 		if (adjust_g_is_horizontal)
 		{
@@ -198,6 +221,7 @@ void adjustment_helper(Graph &G, DICNIC<double> &Gc, Graph &G_the_other_dir, boo
 		}
 		G.remove_edge(e.pre, e.v);
 	}
+	return false;
 }
 
 void adjustment(Graph &Gh, Graph &Gv)
@@ -222,8 +246,16 @@ void adjustment(Graph &Gh, Graph &Gv)
 		Gc.init(V + 2);
 		if (longest_path_h > chip_width && longest_path_v <= chip_height)
 		{
-			build_Gc(Gh, Gc, Gv, false);
-			adjustment_helper(Gh, Gc, Gv, true);
+			if (build_Gc(Gh, Gc, Gv, false))
+			{
+				rebuild_constraint_graph(Gh, Gv);
+				return;
+			}
+			if (adjustment_helper(Gh, Gc, Gv, true))
+			{
+				rebuild_constraint_graph(Gh, Gv);
+				return;
+			}
 			longest_path_h = Gh.longest_path(true);
 			longest_path_v = Gv.longest_path(false);
 			if (longest_path_h >= prev_longest_path_h)
@@ -239,8 +271,16 @@ void adjustment(Graph &Gh, Graph &Gv)
 		}
 		else if (longest_path_h <= chip_width && longest_path_v > chip_height)
 		{
-			build_Gc(Gv, Gc, Gh, true);
-			adjustment_helper(Gv, Gc, Gh, false);
+			if (build_Gc(Gv, Gc, Gh, true))
+			{
+				rebuild_constraint_graph(Gh, Gv);
+				return;
+			}
+			if (adjustment_helper(Gv, Gc, Gh, false))
+			{
+				rebuild_constraint_graph(Gh, Gv);
+				return;
+			}
 			longest_path_h = Gh.longest_path(true);
 			longest_path_v = Gv.longest_path(false);
 			if (longest_path_v >= prev_longest_path_v)
