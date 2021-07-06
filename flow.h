@@ -9,7 +9,7 @@
 #include <string.h>
 #include <vector>
 template <typename T>
-struct DICNIC
+struct DICNIC // O(V^2 E) -> O(VlogV E) // O(VE)
 {
 	int MAX_N;
 	constexpr static const T INF = DBL_MAX;
@@ -125,7 +125,7 @@ struct DICNIC
 				dfs_cut(e[i].v);
 		}
 	}
-	T min_cut(int s, int t)
+	bool min_cut(int s, int t)
 	{
 		T ans = dinic(s, t);
 		memset(vis, 0, sizeof(bool) * (n + 1));
@@ -143,7 +143,8 @@ struct DICNIC
 				}
 			}
 		}
-		return ans;
+		// std::cout << ans << "\n";
+		return ans == DBL_MAX;
 	}
 };
 
