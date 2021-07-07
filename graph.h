@@ -84,13 +84,18 @@ public:
 
 	void remove_edge(int u, int v)
 	{
-		g[u].erase(remove_if(g[u].begin(), g[u].end(), [=](edge &e)
-							 { return e.to == v; }),
-				   g[u].end());
-		g_reversed[v].erase(remove_if(g_reversed[v].begin(), g_reversed[v].end(), [=](edge &e)
-									  { return e.from == u; }),
-							g_reversed[v].end());
-		adj_matrix[u][v] = false;
+		for(int i = 0; i < g[u].size(); i++){
+			if(g[u][i].to == v){
+				g[u].erase(g[u].begin() + i);
+				break;
+			}
+		}
+		for(int i = 0; i < g[v].size(); i++){
+			if(g_reversed[v][i].from == u){
+				g_reversed[v].erase(g_reversed[v].begin() + i);
+				break;
+			}
+		}
 	}
 
 	void dfs_for_topological_sort_helper(int u)
@@ -145,38 +150,60 @@ public:
 			L[i] = 0.0;
 			R[i] = DBL_MAX;
 		}
-		// fill(L, L + n + 2, 0.0);
-		// fill(R, R + n + 2, DBL_MAX);
 		for (auto &u : topological_order)
 		{
 			for (auto &e : g[u])
 			{
 				// cout << u << ' ' << e.to << '\n';
-				if (e.to == n + 1)
-				{
-					L[e.to] = max(L[e.to], L[u] + e.weight);
-					continue;
-				}
-				L[e.to] = macros[e.to]->is_fixed() ? is_horizontal ? macros[e.to]->cx() : macros[e.to]->cy()
-												   : max(L[e.to], L[u] + e.weight);
+				// if (e.to == n + 1)
+				// {
+				// 	L[e.to] = max(L[e.to], L[u] + e.weight);
+				// 	continue;
+				// }
+				// if (macros[e.to]->is_fixed())
+				// {
+				// 	L[e.to] = (is_horizontal) ? macros[e.to]->cx() : macros[e.to]->cy();
+				// }
+				// else
+				// {
+				L[e.to] = max(L[e.to], L[u] + e.weight);
+				// }
+				// L[e.to] = macros[e.to]->is_fixed() ? is_horizontal ? macros[e.to]->cx() : macros[e.to]->cy()
+				// 								   : max(L[e.to], L[u] + e.weight);
 			}
 		}
-		R[n + 1] = max(L[n + 1], chip_width);
+		double chip_boundry;
+		if (is_horizontal)
+			chip_boundry = chip_width;
+		else
+			chip_boundry = chip_height;
+
+		R[n + 1] = max(L[n + 1], chip_boundry);
+
 		reverse(topological_order.begin(), topological_order.end());
 
 		for (auto &u : topological_order)
 		{
 			for (auto &e : g_reversed[u])
 			{
-				if (e.from == 0)
-				{
-					R[e.from] = min(R[e.from], R[u] - e.weight);
-					continue;
-				}
-				R[e.from] = macros[e.from]->is_fixed() ? is_horizontal ? macros[e.from]->cx() : macros[e.from]->cy()
-													   : min(R[e.from], R[u] - e.weight);
+				// if (e.from == 0)
+				// {
+				// 	R[e.from] = min(R[e.from], R[u] - e.weight);
+				// 	continue;
+				// }
+				// if (macros[e.from]->is_fixed())
+				// {
+				// 	R[e.from] = (is_horizontal) ? macros[e.from]->cx() : macros[e.from]->cy();
+				// }
+				// else
+				// {
+				R[e.from] = min(R[e.from], R[u] - e.weight);
+				// }
+				// R[e.from] = macros[e.from]->is_fixed() ? is_horizontal ? macros[e.from]->cx() : macros[e.from]->cy()
+				// 									   : min(R[e.from], R[u] - e.weight);
 			}
 		}
+		// for (fixed macro) L = R = x;
 		return L[n + 1];
 	}
 
@@ -194,7 +221,7 @@ public:
 		}
 		else if(macros[u]->is_fixed()){	// u is a fixed macro, can't remove edge(fixed macro, sink)
 			for(int i = 0; i < g[v].size(); i++){
-				if (adj_matrix[u][g[v][i].to] == true && g[v][i].to != n){
+				if (adj_matrix[u][g[v][i].to] == true && g[v][i].to != n + 1){
 					// store node which will be deleted
 					delete_to_nodes.push_back(g[v][i].to);
 					adj_matrix[u][g[v][i].to] = false;
