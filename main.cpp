@@ -353,7 +353,7 @@ int main(int argc, char *argv[])
 	Gh.transitive_reduction();
 	Gv.transitive_reduction();
 	// Gh, Gv are ready.
-	// Gh.show();
+	Gh.show();
 	// To change this function to return vector<pair<double, double>>
 	// Please refer the annotation in bottom of LP.cpp
 	// I also can modify macro[i].x, macro[i].y directly
