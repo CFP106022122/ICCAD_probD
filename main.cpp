@@ -37,13 +37,14 @@ bool lucky(double ratio)
 	return x < y;
 }
 
-// double determine_edge_weight(Macro *m1, Macro *m2, bool is_horizontal)
-// {
-// 	double w = (is_horizontal) ? (m1->w() + m2->w()) / 2 : (m1->h() + m2->h()) / 2;
-// 	if (m1->name() != "null" && m2->name() != "null")
-// 		w += (lucky(beta / alpha)) ? powerplan_width : min_spacing;
-// 	return w;
-// }
+double determine_edge_weight(Macro *m1, Macro *m2, bool is_horizontal)
+{
+	double w = (is_horizontal) ? (m1->w() + m2->w()) / 2 : (m1->h() + m2->h()) / 2;
+	if (m1->name() != "null" && m2->name() != "null")
+		w += min_spacing;
+		// w += (lucky(beta / alpha)) ? powerplan_width : min_spacing;
+	return w;
+}
 
 void add_st_nodes(Graph &Gh, Graph &Gv, vector<Macro *> macros) // using og_macros here
 {
@@ -74,10 +75,9 @@ void build_init_constraint_graph(Graph &Gh, Graph &Gv, vector<Macro *> macros) /
 	{
 		for (int j = i + 1; j < V; ++j)
 		{
-			// double h_weight = determine_edge_weight(macros[i], macros[j], true);
-			// double v_weight = determine_edge_weight(macros[i], macros[j], false);
-			double h_weight = (macros[i]->w() + macros[j]->w()) / 2 + ((lucky(beta / alpha)) ? powerplan_width : min_spacing);
-			double v_weight = (macros[i]->h() + macros[j]->h()) / 2 + ((lucky(beta / alpha)) ? powerplan_width : min_spacing);
+			double h_weight = determine_edge_weight(macros[i], macros[j], true);
+			double v_weight = determine_edge_weight(macros[i], macros[j], false);
+			
 			bool i_is_at_the_bottom = false, i_is_at_the_left = false;
 			if (macros[i]->cx() < macros[j]->cx())
 				i_is_at_the_left = true;
@@ -169,7 +169,7 @@ bool build_Gc(Graph &G, DICNIC<double> &Gc, Graph &G_the_other_dir, bool test_g_
 			// double boundry = (test_g_is_horizontal) ? chip_width : chip_height;
 			// if (test_longest_path > boundry)
 			double test_vertical_longest_path = G_the_other_dir.longest_path(test_g_is_horizontal);
-			if (test_vertical_longest_path > chip_height)
+			if (test_vertical_longest_path > chip_height){
 				Gc.add_edge(e.from, e.to, DBL_MAX, true);
 				++cnt;
 				cout << "a\n";
@@ -349,11 +349,11 @@ int main(int argc, char *argv[])
 		macros[m->id()] = m;
 	Graph Gh(V), Gv(V);
 	build_init_constraint_graph(Gh, Gv, og_macros);
-	adjustment(Gh, Gv);
+	//adjustment(Gh, Gv);
 	Gh.transitive_reduction();
 	Gv.transitive_reduction();
 	// Gh, Gv are ready.
-
+	// Gh.show();
 	// To change this function to return vector<pair<double, double>>
 	// Please refer the annotation in bottom of LP.cpp
 	// I also can modify macro[i].x, macro[i].y directly

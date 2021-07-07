@@ -60,20 +60,20 @@ public:
 			for (int j = 0; j < MAX_N; ++j)
 				adj_matrix[i][j] = false;
 	}
-	~Graph()
-	{
-		delete g;
-		delete g_reversed;
-		delete L;
-		delete R;
-		delete visited;
+	// ~Graph()
+	// {
+	// 	delete g;
+	// 	delete g_reversed;
+	// 	delete L;
+	// 	delete R;
+	// 	delete visited;
 
-		for (int i = 0; i < MAX_N; ++i)
-		{
-			delete[] adj_matrix[i];
-		}
-		delete adj_matrix;
-	}
+	// 	for (int i = 0; i < MAX_N; ++i)
+	// 	{
+	// 		delete[] adj_matrix[i];
+	// 	}
+	// 	delete adj_matrix;
+	// }
 
 	void add_edge(int u, int v, double w)
 	{
@@ -204,9 +204,9 @@ public:
 			if (i == 0)
 				cout << "source 's neighbors:\n";
 			else
-				cout << "macro id" << macros[i]->id()<< "'s neighbors:\n";
+				cout << "macro id" << macros[i]->id() << ' ' << macros[i]->name() << "(is_fixed: " << macros[i]->is_fixed() << ")'s neighbors:\n";
 			for (auto &e : g[i])
-				cout << "\t" << ((e.to == n + 1) ? n + 1 : macros[e.to]->id()) << " with weight " << e.weight << endl;
+				cout << "\t" << ((e.to == n + 1) ? "sink" : macros[e.to]->name()) << " with weight " << e.weight << endl;
 			cout << endl;
 		}
 	}
