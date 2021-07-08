@@ -144,7 +144,7 @@ struct DICNIC // O(V^2 E) -> O(VlogV E) // O(VE)
 			}
 		}
 		// std::cout << ans << "\n";
-		return ans == DBL_MAX;
+		return ans >= DBL_MAX;
 	}
 };
 
