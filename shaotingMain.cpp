@@ -32,6 +32,10 @@ bool hasBegining(std::string fullString, std::string begining)
     }
 }
 
+void output()
+
+
+
 IoData *shoatingMain(int argc, char *argv[])
 {
     ifstream fs;
