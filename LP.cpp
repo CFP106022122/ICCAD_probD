@@ -9,7 +9,7 @@ using namespace std;
 extern double chip_width, chip_height;
 # define ERROR() { fprintf(stderr, "Error\n"); exit(1); }
 
-void Linear_Program(vector<Macro*>& macro, Graph& Gv, Graph& Gh){
+std::vector<std::pair<double, double>> Linear_Program(vector<Macro*>& macro, Graph& Gv, Graph& Gh){
     lprec *model;
     int n = macro.size();
     if ((model = make_lp(0, 2 * (n + 2) + 6 * n)) == NULL)
@@ -206,6 +206,6 @@ void Linear_Program(vector<Macro*>& macro, Graph& Gv, Graph& Gh){
     // vector<pair(double, double)> Linear_Program(vector<Macro*>& macro, Graph& Gv, Graph& Gh)
     // then add following code
     // ===========================
-    // return solution;
+    return solution;
     // ===========================
 }

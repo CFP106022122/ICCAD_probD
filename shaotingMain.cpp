@@ -8,6 +8,8 @@
 
 using namespace std;
 
+IoData *iodata;
+
 bool hasEnding(std::string fullString, std::string ending)
 {
     if (fullString.length() >= ending.length())
@@ -32,7 +34,51 @@ bool hasBegining(std::string fullString, std::string begining)
     }
 }
 
-void output()
+void output(vector<pair<double, double>> solution){
+    ofstream f(iodata->output_filename.c_str());
+    if (!f.good())
+    {
+        cerr << "Unable to output file";
+    }
+
+    f << iodata->version;
+    f << iodata->design;
+    f << iodata->dbu_per_micron_string;
+    f << iodata->die_area_string;
+
+    f << "\nCOMPONENTS " << iodata->num_macro << " ;\n";
+
+    for (int i = 0; i < iodata->macros.size(); i++)
+    {
+        //f<<"  **** "<<iodata->macros[i].name()<<" "<<iodata->macros[i].w()<<" "<<iodata->macros[i].h()<<" "<<this->macros[i].x1()<<" "<<this->macros[i].x2()<<"\n";
+        if (iodata->macros[i]->type() == border)
+        {
+            continue;
+        }
+        f << "   - " << iodata->macros[i]->name() << " " << iodata->macros[i]->shape() << " \n"
+          << "      + ";
+        if (iodata->macros[i]->is_fixed())
+        {
+            f << "FIXED ( ";
+        }
+        else
+        {
+            f << "PLACED ( ";
+        }
+        f << to_string(solution[i].first-iodata->macros[i]->w()/2) << " " << to_string(solution[i].second-iodata->macros[i]->h()/2) << " ) N ;\n";
+        //f << to_string(iodata->macros[i]->x1()) << " " << to_string(iodata->macros[i]->y1()) << " ) N ;\n";
+
+        //f<<"   - "<<this->macros[i].shape()<<" "<<this->macros[i].w()<<" "<<this->macros[i].h()<<"\n";
+    }
+
+    f << "END COMPONENTS\n\n\nEND DESIGN\n\n\n";
+    /*
+    for(int i=0;i<this->macro_shapes.size();i++){
+        f<<"   - "<<this->macro_shapes[i].name()<<" "<<this->macro_shapes[i].w()<<" "<<this->macro_shapes[i].h()<<"\n";
+    }
+*/
+    f.close();
+}
 
 
 
@@ -41,7 +87,7 @@ IoData *shoatingMain(int argc, char *argv[])
     ifstream fs;
     string arg[argc];
     //string output_filename;
-    IoData *iodata = new IoData();
+    iodata = new IoData();
 
     for (int i = 0; i < argc; i++)
     {
