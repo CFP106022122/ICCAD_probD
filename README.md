@@ -7,6 +7,6 @@
   &emsp;&emsp;ex: scp -r someDirectory/ cadb0065@140.110.214.97:\~/User_dir
 # Run exe
   .\exe_name lef_name.lef def_name.def txt_name.txt desired_output_file_name.def
-  order doesn't matter
-  ex:
-  .\cadb0065 case1/caseSample.lef case1/caseSample.def case1/caseSample.txt outSample.def
+  &emsp;order doesn't matter
+  &emsp;ex:
+  &emsp;.\cadb0065 case1/caseSample.lef case1/caseSample.def case1/caseSample.txt outSample.def
