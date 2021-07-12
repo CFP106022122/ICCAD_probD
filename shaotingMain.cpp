@@ -6,6 +6,10 @@
 
 #include "io.h"
 
+#include <limits>
+
+typedef std::numeric_limits< double > dbl;
+
 using namespace std;
 
 IoData *iodata;
@@ -65,8 +69,10 @@ void output(){
         {
             f << "PLACED ( ";
         }
+        f.precision(dbl::max_digits10);
         //f << to_string(solution[i].first-iodata->macros[i]->w()/2) << " " << to_string(solution[i].second-iodata->macros[i]->h()/2) << " ) N ;\n";
-        f << to_string(iodata->macros[i]->x1()) << " " << to_string(iodata->macros[i]->y1()) << " ) N ;\n";
+        //f << to_string(iodata->macros[i]->x1()) << " " << to_string(iodata->macros[i]->y1()) << " ) N ;\n";
+        f << iodata->macros[i]->x1() << " " << iodata->macros[i]->y1() << " ) N ;\n";
 
         //f<<"   - "<<this->macros[i].shape()<<" "<<this->macros[i].w()<<" "<<this->macros[i].h()<<"\n";
     }
