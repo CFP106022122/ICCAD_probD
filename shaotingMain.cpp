@@ -34,7 +34,7 @@ bool hasBegining(std::string fullString, std::string begining)
     }
 }
 
-void output(vector<pair<double, double>> solution){
+void output(){
     ofstream f(iodata->output_filename.c_str());
     if (!f.good())
     {
@@ -65,8 +65,8 @@ void output(vector<pair<double, double>> solution){
         {
             f << "PLACED ( ";
         }
-        f << to_string(solution[i].first-iodata->macros[i]->w()/2) << " " << to_string(solution[i].second-iodata->macros[i]->h()/2) << " ) N ;\n";
-        //f << to_string(iodata->macros[i]->x1()) << " " << to_string(iodata->macros[i]->y1()) << " ) N ;\n";
+        //f << to_string(solution[i].first-iodata->macros[i]->w()/2) << " " << to_string(solution[i].second-iodata->macros[i]->h()/2) << " ) N ;\n";
+        f << to_string(iodata->macros[i]->x1()) << " " << to_string(iodata->macros[i]->y1()) << " ) N ;\n";
 
         //f<<"   - "<<this->macros[i].shape()<<" "<<this->macros[i].w()<<" "<<this->macros[i].h()<<"\n";
     }

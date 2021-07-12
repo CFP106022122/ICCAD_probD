@@ -40,6 +40,13 @@ public:
 	double y1() const { return _y1; }
 	double y2() const { return _y2; }
 
+	void updateXY(pair<double, double> p){
+		this->_x1 = p.first - width/2;
+		this->_x2 = p.first + width/2;
+		this->_y1 = p.second - height/2;
+		this->_y2 = p.second + height/2;
+	}
+
 	int id() const { return _id; }
 
 	double w() const { return width; }

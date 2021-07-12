@@ -22,7 +22,7 @@ double min_spacing;		// = 0.0;
 Macro **macros;
 vector<Macro *> og_macros;
 IoData *shoatingMain(int argc, char *argv[]);
-void output(vector<pair<double, double>> solution);
+void output();
 
 double hyper_parameter = 0.1;
 int rebuild_cnt;
@@ -357,8 +357,8 @@ int main(int argc, char *argv[])
 	// ====================Important====================
 	// Return values represent macros' "center" position
 	// =================================================
-	std::vector<std::pair<double, double>> solution;
-	solution = Linear_Program(og_macros, Gv, Gh);
-	output(solution);
+	//std::vector<std::pair<double, double>> solution;
+	Linear_Program(og_macros, Gv, Gh);
+	output();
 	return 0;
 }
