@@ -92,7 +92,7 @@ public:
 				break;
 			}
 		}
-		for (int i = 0; i < g[v].size(); i++)
+		for (int i = 0; i < g_reversed[v].size(); i++)
 		{
 			if (g_reversed[v][i].from == u)
 			{
@@ -291,6 +291,10 @@ public:
 	{
 		return g;
 	}
+	vector<edge> *get_reverse_edge_list()
+	{
+		return g_reversed;
+	}	
 };
 
 #endif

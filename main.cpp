@@ -17,6 +17,7 @@ double chip_height;		// = 10.0;
 int V;					// = 7; // #macros;
 double alpha;			// = 1.0,
 double beta;			// = 4.0;
+double buffer_constraint;
 double powerplan_width; // = 0.0,
 double min_spacing;		// = 0.0;
 Macro **macros;
@@ -250,11 +251,13 @@ void adjustment(Graph &Gh, Graph &Gv)
 		{
 			if (build_Gc(Gh, Gc, Gv, false))
 			{
+				chip_height = copy_of_chip_height;
 				rebuild_constraint_graph(Gh, Gv);
 				return;
 			}
 			if (adjustment_helper(Gh, Gc, Gv, true))
 			{
+				chip_height = copy_of_chip_height;
 				rebuild_constraint_graph(Gh, Gv);
 				return;
 			}
@@ -262,6 +265,7 @@ void adjustment(Graph &Gh, Graph &Gv)
 			longest_path_v = Gv.longest_path(false);
 			if (longest_path_h >= prev_longest_path_h)
 			{
+				chip_height = copy_of_chip_height;
 				rebuild_constraint_graph(Gh, Gv);
 				return;
 			}
@@ -275,11 +279,13 @@ void adjustment(Graph &Gh, Graph &Gv)
 		{
 			if (build_Gc(Gv, Gc, Gh, true))
 			{
+				chip_height = copy_of_chip_height;
 				rebuild_constraint_graph(Gh, Gv);
 				return;
 			}
 			if (adjustment_helper(Gv, Gc, Gh, false))
 			{
+				chip_height = copy_of_chip_height;
 				rebuild_constraint_graph(Gh, Gv);
 				return;
 			}
@@ -287,6 +293,7 @@ void adjustment(Graph &Gh, Graph &Gv)
 			longest_path_v = Gv.longest_path(false);
 			if (longest_path_v >= prev_longest_path_v)
 			{
+				chip_height = copy_of_chip_height;
 				rebuild_constraint_graph(Gh, Gv);
 				return;
 			}
@@ -334,6 +341,7 @@ int main(int argc, char *argv[])
 	V = iodata->macros.size();									  // = 7; // #macros;
 	alpha = (double)iodata->weight_alpha;						  // = 1.0,
 	beta = (double)iodata->weight_beta;							  // = 4.0 ;
+	buffer_constraint = (double)iodata->buffer_constraint;
 	powerplan_width = (double)iodata->powerplan_width_constraint; // = 0.0,
 	min_spacing = (double)iodata->minimum_spacing;				  // = 0.0;
 
@@ -348,7 +356,7 @@ int main(int argc, char *argv[])
 	adjustment(Gh, Gv);
 	// Gh, Gv are ready.
 	//Gh.show();
-	//Gv.show();
+	
 	// To change this function to return vector<pair<double, double>>
 	// Please refer the annotation in bottom of LP.cpp
 	// I also can modify macro[i].x, macro[i].y directly
@@ -357,8 +365,11 @@ int main(int argc, char *argv[])
 	// ====================Important====================
 	// Return values represent macros' "center" position
 	// =================================================
-	//std::vector<std::pair<double, double>> solution;
 	Linear_Program(og_macros, Gv, Gh);
+
+	Linear_Check_Sol(og_macros, Gh, Gv);
+
+
 	output();
 	return 0;
 }
