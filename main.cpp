@@ -1,8 +1,8 @@
+#include "LP.h"
 #include "flow.h"
 #include "graph.h"
 #include "io.h"
 #include "macro.h"
-#include "LP.h"
 #include <iostream>
 #include <random>
 #include <vector>
@@ -12,11 +12,11 @@ using namespace std;
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))
 
-double chip_width;		// = 25.0;
-double chip_height;		// = 10.0;
-int V;					// = 7; // #macros;
-double alpha;			// = 1.0,
-double beta;			// = 4.0;
+double chip_width;	// = 25.0;
+double chip_height; // = 10.0;
+int V;				// = 7; // #macros;
+double alpha;		// = 1.0,
+double beta;		// = 4.0;
 double buffer_constraint;
 double powerplan_width; // = 0.0,
 double min_spacing;		// = 0.0;
@@ -325,8 +325,8 @@ void rebuild_constraint_graph(Graph &Gh, Graph &Gv)
 	Gh.rebuild();
 	Gv.rebuild();
 	build_init_constraint_graph(Gh, Gv, og_macros);
-	// Gh.transitive_reduction();
-	// Gv.transitive_reduction();
+	Gh.transitive_reduction();
+	Gv.transitive_reduction();
 	adjustment(Gh, Gv);
 }
 
@@ -336,11 +336,11 @@ int main(int argc, char *argv[])
 
 	IoData *iodata;
 	iodata = shoatingMain(argc, argv);
-	chip_width = (double)iodata->die_width;						  // = 25.0;
-	chip_height = (double)iodata->die_height;					  // = 10.0;
-	V = iodata->macros.size();									  // = 7; // #macros;
-	alpha = (double)iodata->weight_alpha;						  // = 1.0,
-	beta = (double)iodata->weight_beta;							  // = 4.0 ;
+	chip_width = (double)iodata->die_width;	  // = 25.0;
+	chip_height = (double)iodata->die_height; // = 10.0;
+	V = iodata->macros.size();				  // = 7; // #macros;
+	alpha = (double)iodata->weight_alpha;	  // = 1.0,
+	beta = (double)iodata->weight_beta;		  // = 4.0 ;
 	buffer_constraint = (double)iodata->buffer_constraint;
 	powerplan_width = (double)iodata->powerplan_width_constraint; // = 0.0,
 	min_spacing = (double)iodata->minimum_spacing;				  // = 0.0;
@@ -356,19 +356,18 @@ int main(int argc, char *argv[])
 	adjustment(Gh, Gv);
 	// Gh, Gv are ready.
 	//Gh.show();
-	
+
 	// To change this function to return vector<pair<double, double>>
 	// Please refer the annotation in bottom of LP.cpp
 	// I also can modify macro[i].x, macro[i].y directly
 	// If you want to do so, wellcom to contact me
-	
+
 	// ====================Important====================
 	// Return values represent macros' "center" position
 	// =================================================
 	Linear_Program(og_macros, Gv, Gh);
 
 	Linear_Check_Sol(og_macros, Gh, Gv);
-
 
 	output();
 	return 0;
