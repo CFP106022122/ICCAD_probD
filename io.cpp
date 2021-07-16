@@ -113,6 +113,7 @@ void IoData::processDiearea(vector<pt> points)
 void IoData::parseDef(ifstream &f)
 {
     string linebuff, buff, buff1, buff2, buff3, buff4, buff5, buff6, buff7;
+    char c;
     int intbuff;
     bool isfixed;
     Macro *m;
@@ -122,16 +123,24 @@ void IoData::parseDef(ifstream &f)
     //--parse front part
     {
         //--version
-        getline(f, linebuff);
-        this->version = linebuff + "\n";
+        getline(f, linebuff, ';');
+        this->version = linebuff + ";";
         //cout<<this->version;
         //--design
-        getline(f, linebuff);
-        this->design = linebuff + "\n";
+        f.get(c);
+        getline(f, linebuff, ';');
+        if(c!='\015')
+            this->design = c + linebuff + ";";
+        else
+            this->design = linebuff + ";";
         //cout<<this->design;
         //--dbu per micron
-        getline(f, linebuff);
-        this->dbu_per_micron_string = linebuff + "\n";
+        f.get(c);
+        getline(f, linebuff, ';');
+        if(c!='\015')
+            this->dbu_per_micron_string = c + linebuff + ";";
+        else
+            this->dbu_per_micron_string = linebuff + ";";
         linestring.str(linebuff);
         linestring >> buff >> buff >> buff >> intbuff;
         this->dbu_per_micron = intbuff;
@@ -140,8 +149,14 @@ void IoData::parseDef(ifstream &f)
 
         //--die area
         vector<pt> points;
+        f.get(c);
+        f.get(c);
+        f.get(c);
         getline(f, linebuff, ';');
-        this->die_area_string = linebuff + ";" + "\n";
+        if(c!='\015')
+            this->die_area_string = "\n" + c + linebuff + ";" + "\n";
+        else
+            this->die_area_string = "\n" + linebuff + ";" + "\n";
         //cout<<this->die_area_string;
         linestring.str(linebuff);
         linestring >> buff >> buff;
