@@ -129,7 +129,7 @@ void IoData::parseDef(ifstream &f)
         //--design
         f.get(c);
         getline(f, linebuff, ';');
-        if(c!='\015')
+        if(c!='\r')
             this->design = c + linebuff + ";";
         else
             this->design = linebuff + ";";
@@ -137,7 +137,7 @@ void IoData::parseDef(ifstream &f)
         //--dbu per micron
         f.get(c);
         getline(f, linebuff, ';');
-        if(c!='\015')
+        if(c!='\r')
             this->dbu_per_micron_string = c + linebuff + ";";
         else
             this->dbu_per_micron_string = linebuff + ";";
@@ -149,14 +149,18 @@ void IoData::parseDef(ifstream &f)
 
         //--die area
         vector<pt> points;
+        buff.clear();
         f.get(c);
+        if(c!='\r')
+            buff+=c;
         f.get(c);
+        if(c!='\r')
+            buff+=c;
         f.get(c);
+        if(c!='\r')
+            buff+=c;
         getline(f, linebuff, ';');
-        if(c!='\015')
-            this->die_area_string = "\n" + c + linebuff + ";" + "\n";
-        else
-            this->die_area_string = "\n" + linebuff + ";" + "\n";
+        this->die_area_string = buff + linebuff + ";" + "\n";
         //cout<<this->die_area_string;
         linestring.str(linebuff);
         linestring >> buff >> buff;
