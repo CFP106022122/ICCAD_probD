@@ -1,4 +1,5 @@
 #include "LP.h"
+#include "corner_stitch/utils/update.h"
 #include "flow.h"
 #include "graph.h"
 #include "io.h"
@@ -22,6 +23,7 @@ double powerplan_width; // = 0.0,
 double min_spacing;		// = 0.0;
 Macro **macros;
 vector<Macro *> og_macros;
+vector<Macro *> after_lp_macros;
 IoData *shoatingMain(int argc, char *argv[]);
 void output();
 
@@ -365,9 +367,20 @@ int main(int argc, char *argv[])
 	// ====================Important====================
 	// Return values represent macros' "center" position
 	// =================================================
-	Linear_Program(og_macros, Gv, Gh);
+	for (auto &m : og_macros)
+	{
+		Macro *cp = new Macro(m->w(), m->h(), m->x1(), m->y1(), m->is_fixed(), m->id());
+		after_lp_macros.push_back(cp);
+	}
+	Linear_Program(after_lp_macros, Gv, Gh);
 
-	Linear_Check_Sol(og_macros, Gh, Gv);
+	Plane *plane_horizontal = CreateTilePlane();
+	Plane *plane_vertical = CreateTilePlane();
+	createInitCS(after_lp_macros, plane_horizontal, true);
+	createInitCS(after_lp_macros, plane_vertical, false);
+	double buff_cost = 0.0;
+	markSpaceTiles(plane_horizontal, plane_vertical, buff_cost);
+	bool legal = check_buff_constraint(plane_horizontal, buffer_constraint);
 
 	output();
 	return 0;
