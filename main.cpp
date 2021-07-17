@@ -380,7 +380,7 @@ int main(int argc, char *argv[])
 	createInitCS(after_lp_macros, plane_vertical, false);
 	double buff_cost = 0.0;
 	markSpaceTiles(plane_horizontal, plane_vertical, buff_cost);
-	bool legal = check_buff_constraint(plane_horizontal, buffer_constraint);
+	bool legal = check_buff_constraint(plane_horizontal);
 
 	output();
 	return 0;

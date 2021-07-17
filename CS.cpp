@@ -1,5 +1,5 @@
-#include "corner_stitch/tiles/tile.h"
-#include "corner_stitch/utils/update.h"
+#include "./corner_stitch/tiles/tile.h"
+#include "./corner_stitch/utils/update.h"
 #include "macro.h"
 #include <vector>
 
@@ -66,6 +66,8 @@ void createInitCS(vector<Macro *> after_lp_macros, Plane *plane, bool is_horizon
 }
 extern double chip_width;
 extern double chip_height;
+extern double powerplan_width;
+extern double buffer_constraint;
 
 struct info
 {
@@ -81,7 +83,6 @@ int marker(Tile *tile, ClientData cdata)
 {
     info *i = (info *)cdata;
     bool is_horizontal = i->is_horizontal;
-    int chip_w = (is_horizontal) ? (int)chip_width : int(chip_height);
     if (!TiGetBody(tile))
     {
         Rect rect, rect_the_other_dir;
@@ -103,7 +104,7 @@ int marker(Tile *tile, ClientData cdata)
         rect_the_other_dir.r_ll.p_y = new_lb.second;
         rect_the_other_dir.r_ur.p_x = new_rt.first;
         rect_the_other_dir.r_ur.p_y = new_rt.second;
-        if (width < chip_w)
+        if (width < powerplan_width)
         {
             InsertTile(&rect, i->now);
             InsertTile(&rect_the_other_dir, i->next);
@@ -142,20 +143,16 @@ void markSpaceTiles(Plane *plane_horizontal, Plane *plane_vertical, double &buff
 
 struct Checker_package
 {
-    Checker_package(bool _ok, double d, Plane *p) : ok{_ok}, buffer_constraint{d}, plane{p} {}
+    Checker_package(bool _ok, Plane *p) : ok{_ok}, plane{p} {}
     bool ok;
-    double buffer_constraint;
     Plane *plane;
 };
 
 int checker_helper(Tile *tile, ClientData cdata)
 {
     bool *legal = (bool *)cdata;
-    if (TiGetBody(tile))
-    {
-        *legal = false;
-        return 1;
-    }
+    if (!TiGetBody(tile)) // If there exist space tile.
+        *legal = true;
     return 0;
 }
 
@@ -166,25 +163,26 @@ int checker(Tile *tile, ClientData cdata)
     {
         Rect rect, buffer_area;
         TiToRect(tile, &rect);
-        buffer_area.r_ll.p_x = rect.r_ll.p_x - (p->buffer_constraint);
-        buffer_area.r_ll.p_y = rect.r_ll.p_y - (p->buffer_constraint);
-        buffer_area.r_ur.p_x = rect.r_ur.p_x + (p->buffer_constraint);
-        buffer_area.r_ur.p_y = rect.r_ur.p_y + (p->buffer_constraint);
-        bool legal = true;
+        // no boundry check yet.
+        buffer_area.r_ll.p_x = rect.r_ll.p_x - buffer_constraint;
+        buffer_area.r_ll.p_y = rect.r_ll.p_y - buffer_constraint;
+        buffer_area.r_ur.p_x = rect.r_ur.p_x + buffer_constraint;
+        buffer_area.r_ur.p_y = rect.r_ur.p_y + buffer_constraint;
+        bool legal = false;
         TiSrArea(NULL, p->plane, buffer_area, checker_helper, (ClientData)(&legal));
         if (!legal)
         {
             p->ok = false;
-            return 1;
+            return 1; // If there's one solid tile illegal, will return immediately now.
         }
     }
     return 0;
 }
 
-bool check_buff_constraint(Plane *plane, double buffer_constraint)
+bool check_buff_constraint(Plane *plane)
 {
     Rect rect = {{0, 0}, {(int)chip_width, (int)chip_height}};
-    Checker_package p(true, buffer_constraint, plane);
+    Checker_package p(true, plane);
     TiSrArea(NULL, plane, rect, checker, (ClientData)(&p));
     return (p.ok);
 }
