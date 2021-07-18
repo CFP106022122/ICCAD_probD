@@ -60,20 +60,20 @@ public:
 			for (int j = 0; j < MAX_N; ++j)
 				adj_matrix[i][j] = false;
 	}
-	// ~Graph()
-	// {
-	// 	delete g;
-	// 	delete g_reversed;
-	// 	delete L;
-	// 	delete R;
-	// 	delete visited;
+	~Graph()
+	{
+		delete[] g;
+		delete[] g_reversed;
+		delete[] L;
+		delete[] R;
+		delete[] visited;
 
-	// 	for (int i = 0; i < MAX_N; ++i)
-	// 	{
-	// 		delete[] adj_matrix[i];
-	// 	}
-	// 	delete adj_matrix;
-	// }
+		for (int i = 0; i < MAX_N; ++i)
+		{
+			delete[] adj_matrix[i];
+		}
+		delete[] adj_matrix;
+	}
 
 	void add_edge(int u, int v, double w)
 	{

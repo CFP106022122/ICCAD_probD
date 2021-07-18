@@ -199,12 +199,17 @@ void Linear_Program(vector<Macro*>& macro, Graph& Gv, Graph& Gh){
         printf("macro %d: x = %lf, y = %lf\n", i + 1, solution[i].first, solution[i].second);
     }
 
-    delete_lp(model);
-
     // update macros' position by result from LP
     for(int i = 0; i < n; i++){
         macro[i]->updateXY(solution[i]);
     }
+
+    // get total displacement
+    double total_displacement = 0;
+    total_displacement = get_objective(model);
+    printf("Total displacement = %lf\n", total_displacement);
+
+    delete_lp(model);
 
     // To change this function to return vector<pair<double, double>>
     // You can modify the declaration of this function as 

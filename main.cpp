@@ -3,6 +3,7 @@
 #include "io.h"
 #include "macro.h"
 #include "LP.h"
+#include "corner_stitch.h"
 #include <iostream>
 #include <random>
 #include <vector>
@@ -14,6 +15,7 @@ using namespace std;
 
 double chip_width;		// = 25.0;
 double chip_height;		// = 10.0;
+int micron;
 int V;					// = 7; // #macros;
 double alpha;			// = 1.0,
 double beta;			// = 4.0;
@@ -24,7 +26,6 @@ Macro **macros;
 vector<Macro *> og_macros;
 IoData *shoatingMain(int argc, char *argv[]);
 void output();
-
 double hyper_parameter = 0.1;
 int rebuild_cnt;
 
@@ -43,7 +44,8 @@ double determine_edge_weight(Macro *m1, Macro *m2, bool is_horizontal)
 {
 	double w = (is_horizontal) ? (m1->w() + m2->w()) / 2 : (m1->h() + m2->h()) / 2;
 	if (m1->name() != "null" && m2->name() != "null")
-		w += (lucky(beta / alpha)) ? powerplan_width : min_spacing;
+		w += min_spacing;
+		// w += (lucky(beta / alpha)) ? powerplan_width : min_spacing;
 	return w;
 }
 
@@ -325,8 +327,8 @@ void rebuild_constraint_graph(Graph &Gh, Graph &Gv)
 	Gh.rebuild();
 	Gv.rebuild();
 	build_init_constraint_graph(Gh, Gv, og_macros);
-	// Gh.transitive_reduction();
-	// Gv.transitive_reduction();
+	Gh.transitive_reduction();
+	Gv.transitive_reduction();
 	adjustment(Gh, Gv);
 }
 
@@ -338,6 +340,7 @@ int main(int argc, char *argv[])
 	iodata = shoatingMain(argc, argv);
 	chip_width = (double)iodata->die_width;						  // = 25.0;
 	chip_height = (double)iodata->die_height;					  // = 10.0;
+	micron = iodata->dbu_per_micron;
 	V = iodata->macros.size();									  // = 7; // #macros;
 	alpha = (double)iodata->weight_alpha;						  // = 1.0,
 	beta = (double)iodata->weight_beta;							  // = 4.0 ;
@@ -367,8 +370,9 @@ int main(int argc, char *argv[])
 	// =================================================
 	Linear_Program(og_macros, Gv, Gh);
 
-	Linear_Check_Sol(og_macros, Gh, Gv);
+	// Linear_Check_Sol(og_macros, Gh, Gv);
 
+	corner_stitch(og_macros);
 
 	output();
 	return 0;
