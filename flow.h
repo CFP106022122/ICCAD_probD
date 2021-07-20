@@ -2,28 +2,43 @@
 #define _FLOW_H_
 
 #include <algorithm>
+#include <cfloat>
 #include <iostream>
 #include <limits.h>
 #include <queue>
 #include <string.h>
 #include <vector>
 template <typename T>
-struct DICNIC
+struct DICNIC // O(V^2 E) -> O(VlogV E) // O(VE)
 {
-	constexpr static const int MAXN = 105;
-	constexpr static const T INF = INT_MAX;
-	int n;						/*點數*/
-	int level[MAXN], cur[MAXN]; /*層次、當前弧優化*/
+	int MAX_N;
+	constexpr static const T INF = DBL_MAX;
+	int n;			  /*點數*/
+	int *level, *cur; /*層次、當前弧優化*/
 	struct edge
 	{
 		int v, pre;
 		T cap, flow, r;
 		edge(int v, int pre, T cap) : v(v), pre(pre), cap(cap), flow(0), r(cap) {}
 	};
-	int g[MAXN];
+	int *g;
 	std::vector<edge> e;
+
+	~DICNIC()
+	{
+		delete[] level;
+		delete[] cur;
+		delete[] g;
+		delete[] vis;
+	}
+
 	void init(int _n)
 	{
+		MAX_N = _n + 5;
+		level = new int[MAX_N];
+		cur = new int[MAX_N];
+		g = new int[MAX_N];
+		vis = new bool[MAX_N];
 		memset(g, -1, sizeof(int) * ((n = _n) + 1));
 		e.clear();
 	}
@@ -99,7 +114,7 @@ struct DICNIC
 		return ans;
 	}
 	std::vector<edge> cut_e; //最小割邊集
-	bool vis[MAXN];
+	bool *vis;
 	void dfs_cut(int u)
 	{
 		vis[u] = 1; //表示u屬於source的最小割集
@@ -110,7 +125,7 @@ struct DICNIC
 				dfs_cut(e[i].v);
 		}
 	}
-	T min_cut(int s, int t)
+	bool min_cut(int s, int t)
 	{
 		T ans = dinic(s, t);
 		memset(vis, 0, sizeof(bool) * (n + 1));
@@ -118,16 +133,18 @@ struct DICNIC
 		for (int u = 0; u <= n; ++u)
 		{
 			if (vis[u])
+			{
 				for (int i = g[u]; ~i; i = e[i].pre)
 				{
 					if (!vis[e[i].v])
 					{
-						// std::cout << u << ' ' << e[i].v << '\n';
 						cut_e.push_back(edge(e[i].v, u, 5487.87));
 					}
 				}
+			}
 		}
-		return ans;
+		// std::cout << ans << "\n";
+		return ans >= DBL_MAX;
 	}
 };
 
