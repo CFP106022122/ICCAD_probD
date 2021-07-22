@@ -789,7 +789,7 @@ void improve_strategy2(vector<Macro*>& macro, Plane* horizontal_plane, Graph& Gh
 		}
 	}
 	// Check if the subregion is sparse
-	if(solid_area <= 0.1 * (chip_width / 2.0) * (chip_height / 2.0)){
+	if(solid_area <= 0.6 * (chip_width / 2.0) * (chip_height / 2.0)){
 		// for each cost tile in suregion, find macros which cause this cost_tile
 		// And adjust edge's weight which connect to these two macros
 		for(int i = 0; i < cost_tile.size(); i++){
@@ -848,7 +848,7 @@ void improve_strategy2(vector<Macro*>& macro, Plane* horizontal_plane, Graph& Gh
 		}
 	}
 	// Check if the subregion is sparse
-	if(solid_area <= 0.1 * (chip_width / 2.0) * (chip_height / 2.0)){
+	if(solid_area <= 0.6 * (chip_width / 2.0) * (chip_height / 2.0)){
 		// for each cost tile in suregion, find macros which cause this cost_tile
 		// And adjust edge's weight which connect to these two macros
 		for(int i = 0; i < cost_tile.size(); i++){
@@ -907,7 +907,7 @@ void improve_strategy2(vector<Macro*>& macro, Plane* horizontal_plane, Graph& Gh
 		}
 	}
 	// Check if the subregion is sparse
-	if(solid_area <= 0.1 * (chip_width / 2.0) * (chip_height / 2.0)){
+	if(solid_area <= 0.6 * (chip_width / 2.0) * (chip_height / 2.0)){
 		// for each cost tile in suregion, find macros which cause this cost_tile
 		// And adjust edge's weight which connect to these two macros
 		for(int i = 0; i < cost_tile.size(); i++){
@@ -966,7 +966,7 @@ void improve_strategy2(vector<Macro*>& macro, Plane* horizontal_plane, Graph& Gh
 		}
 	}
 	// Check if the subregion is sparse
-	if(solid_area <= 0.1 * (chip_width / 2.0) * (chip_height / 2.0)){
+	if(solid_area <= 0.6 * (chip_width / 2.0) * (chip_height / 2.0)){
 		// for each cost tile in suregion, find macros which cause this cost_tile
 		// And adjust edge's weight which connect to these two macros
 		for(int i = 0; i < cost_tile.size(); i++){
