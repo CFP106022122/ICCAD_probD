@@ -332,6 +332,10 @@ void rebuild_constraint_graph(Graph &Gh, Graph &Gv)
 	adjustment(Gh, Gv);
 }
 
+void handle_illegal(Graph &Gh, Graph &Gv, ){
+	0
+}
+
 int main(int argc, char *argv[])
 {
 	rng.seed(87);
@@ -366,7 +370,7 @@ int main(int argc, char *argv[])
 	// If you want to do so, wellcom to contact me
 	
 	// ====================Important====================
-	// Return values represent macros' "center" position
+	// Return values represent macros' "left_bottom" position
 	// =================================================
 	Linear_Program(og_macros, Gv, Gh);
 
