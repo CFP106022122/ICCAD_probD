@@ -12,9 +12,8 @@ using namespace std;
 void IoData::processDiearea(vector<pt> points)
 {
     int min_x, min_y, max_x, max_y;
-    Macro *m;
-    if (points.size() == 2)
-    {
+    Macro* m;
+    if(points.size()==2){//only two means that it's the two cross point, so just memorize the four number;
         this->die_x = points[0].x;
         this->die_y = points[0].y;
         max_x = points[0].x;
@@ -114,6 +113,7 @@ void IoData::processDiearea(vector<pt> points)
 void IoData::parseDef(ifstream &f)
 {
     string linebuff, buff, buff1, buff2, buff3, buff4, buff5, buff6, buff7;
+    char c;
     int intbuff;
     bool isfixed;
     Macro *m;
@@ -123,16 +123,24 @@ void IoData::parseDef(ifstream &f)
     //--parse front part
     {
         //--version
-        getline(f, linebuff);
-        this->version = linebuff + "\n";
+        getline(f, linebuff, ';');
+        this->version = linebuff + ";";
         //cout<<this->version;
         //--design
-        getline(f, linebuff);
-        this->design = linebuff + "\n";
+        f.get(c);
+        getline(f, linebuff, ';');
+        if(c!='\r')
+            this->design = c + linebuff + ";";
+        else
+            this->design = linebuff + ";";
         //cout<<this->design;
         //--dbu per micron
-        getline(f, linebuff);
-        this->dbu_per_micron_string = linebuff + "\n";
+        f.get(c);
+        getline(f, linebuff, ';');
+        if(c!='\r')
+            this->dbu_per_micron_string = c + linebuff + ";";
+        else
+            this->dbu_per_micron_string = linebuff + ";";
         linestring.str(linebuff);
         linestring >> buff >> buff >> buff >> intbuff;
         this->dbu_per_micron = intbuff;
@@ -141,8 +149,18 @@ void IoData::parseDef(ifstream &f)
 
         //--die area
         vector<pt> points;
+        buff.clear();
+        f.get(c);
+        if(c!='\r')
+            buff+=c;
+        f.get(c);
+        if(c!='\r')
+            buff+=c;
+        f.get(c);
+        if(c!='\r')
+            buff+=c;
         getline(f, linebuff, ';');
-        this->die_area_string = linebuff + ";" + "\n";
+        this->die_area_string = buff + linebuff + ";" + "\n";
         //cout<<this->die_area_string;
         linestring.str(linebuff);
         linestring >> buff >> buff;
