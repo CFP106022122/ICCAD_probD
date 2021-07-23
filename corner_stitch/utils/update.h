@@ -18,7 +18,7 @@
 
 #include "../tiles/tile.h"
 #define SOLID_TILE 1
-
+#define COST_TILE 2
 
 /*
  * --------------------------------------------------------------------
@@ -53,7 +53,7 @@ Tile* CreateTile(int x, int y);
  *
  * --------------------------------------------------------------------
  */
-Tile* InsertTile(Rect *rect, Plane *plane);
+Tile* InsertTile(Rect *rect, Plane *plane, int type, int id);
 
 
 /*

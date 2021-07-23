@@ -4,6 +4,7 @@
 #include "macro.h"
 #include "LP.h"
 #include "corner_stitch.h"
+#include "corner_stitch/utils/update.h"
 #include <iostream>
 #include <random>
 #include <vector>
@@ -327,13 +328,22 @@ void rebuild_constraint_graph(Graph &Gh, Graph &Gv)
 	Gh.rebuild();
 	Gv.rebuild();
 	build_init_constraint_graph(Gh, Gv, og_macros);
-	Gh.transitive_reduction();
-	Gv.transitive_reduction();
+	// Gh.transitive_reduction();
+	// Gv.transitive_reduction();
 	adjustment(Gh, Gv);
 }
 
-void handle_illegal(Graph &Gh, Graph &Gv, ){
-	0
+double displacement_evaluation(vector<Macro*>& macro, vector<Macro*>& native_macro){
+	double displacement_cost = 0;
+	for(int i = 0; i < native_macro.size(); i++){
+		displacement_cost += abs(macro[i]->x1() - native_macro[i]->x1());
+		displacement_cost += abs(macro[i]->y1() - native_macro[i]->y1());
+	}
+	return displacement_cost / micron;
+}
+
+double total_cost(double displace, double powerplan){
+	return alpha * displace + beta * sqrt(powerplan);
 }
 
 int main(int argc, char *argv[])
@@ -351,32 +361,98 @@ int main(int argc, char *argv[])
 	buffer_constraint = (double)iodata->buffer_constraint;
 	powerplan_width = (double)iodata->powerplan_width_constraint; // = 0.0,
 	min_spacing = (double)iodata->minimum_spacing;				  // = 0.0;
-
+	vector<Macro*> native_macros;
+	for(int i = 0; i < iodata->macros.size(); i++){
+		native_macros.push_back(new Macro(iodata->macros[i]->w(), iodata->macros[i]->h(),
+											iodata->macros[i]->x1(), iodata->macros[i]->y1(),
+											iodata->macros[i]->is_fixed(), iodata->macros[i]->id()));
+	}
 	og_macros = iodata->macros;
 	macros = new Macro *[V + 5];
 	for (auto &m : og_macros)
 		macros[m->id()] = m;
 	Graph Gh(V), Gv(V);
 	build_init_constraint_graph(Gh, Gv, og_macros);
-	Gh.transitive_reduction();
-	Gv.transitive_reduction();
+	// Gh.transitive_reduction();
+	// Gv.transitive_reduction();
 	adjustment(Gh, Gv);
-	// Gh, Gv are ready.
-	//Gh.show();
 	
+	// Gh, Gv are ready.
 	// To change this function to return vector<pair<double, double>>
 	// Please refer the annotation in bottom of LP.cpp
 	// I also can modify macro[i].x, macro[i].y directly
 	// If you want to do so, wellcom to contact me
 	
 	// ====================Important====================
-	// Return values represent macros' "left_bottom" position
+	// Return values represent macros' "center" position
 	// =================================================
+
 	Linear_Program(og_macros, Gv, Gh);
 
-	// Linear_Check_Sol(og_macros, Gh, Gv);
+	double displacement = displacement_evaluation(og_macros, native_macros);
+	printf("Total displacement = %lf\n", displacement);
 
-	corner_stitch(og_macros);
+	// Create horizontal, vertical corner stitch data structure
+	Plane* horizontal_plane = CreateTilePlane(), *vertical_plane = CreateTilePlane();
+
+	// Calculate powerplan cost
+	double powerplan_cost;
+	powerplan_cost = cost_evaluation(og_macros, horizontal_plane, vertical_plane);
+
+	// Vector stores invalid macros found by corner stitch data structure
+	vector<int> invalid_macros;
+	invalid_macros = invalid_check(og_macros, horizontal_plane);
+
+	printf("Total cost = %lf\n", total_cost(displacement, powerplan_cost));
+
+	// If exist any invalid macros, then we only try to legalize placement result in this round
+	if(!invalid_macros.empty()){
+		fix_invalid(og_macros, invalid_macros, Gh, Gv);
+	}
+	// If current placement result is legal, then we try to improve our result
+	else{
+		// improvement strategy :
+		// 1. force macros near boundary to align boundary
+		// 2. reduce powerplan cost in sparse region
+		improve_strategy1(og_macros, native_macros, horizontal_plane, Gh, Gv);
+		improve_strategy2(og_macros, horizontal_plane, Gh, Gv);
+	}
+
+	// Remove tile plane
+	RemoveTilePlane(horizontal_plane);
+	RemoveTilePlane(vertical_plane);
+
+	// ======================
+	// end of post processing
+	// ======================
+
+	// ==============
+	// run next round
+	// ==============
+	
+	adjustment(Gh, Gv);
+	Linear_Program(og_macros, Gv, Gh);
+
+	displacement = displacement_evaluation(og_macros, native_macros);
+	printf("Total displacement = %lf\n", displacement);
+
+	horizontal_plane = CreateTilePlane();
+	vertical_plane = CreateTilePlane();
+
+	// Calculate powerplan cost
+	//double powerplan_cost;
+	powerplan_cost = 0;
+	powerplan_cost = cost_evaluation(og_macros, horizontal_plane, vertical_plane);
+
+	// Vector stores invalid macros found by corner stitch data structure
+	//vector<int> invalid_macros;
+	invalid_macros.clear();
+	invalid_macros = invalid_check(og_macros, horizontal_plane);
+
+	printf("Total cost = %lf\n", total_cost(displacement, powerplan_cost));
+
+	RemoveTilePlane(horizontal_plane);
+	RemoveTilePlane(vertical_plane);
 
 	output();
 	return 0;

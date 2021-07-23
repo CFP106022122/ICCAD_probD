@@ -214,61 +214,76 @@ public:
 
 	void dfs(int u, int v, vector<int> &delete_to_nodes)
 	{
-		if (u == 0)
-		{ // u is source, can't remove edge(source, fixed macro)
-			for (int i = 0; i < g[v].size(); i++)
-			{
-				if (adj_matrix[u][g[v][i].to] == true && !macros[g[v][i].to]->is_fixed())
+		if(v <= n){
+			if (u == 0)
+			{ // u is source, can't remove edge(source, fixed macro)
+				for (int i = 0; i < g[v].size(); i++)
 				{
-					// store node which will be deleted
-					delete_to_nodes.push_back(g[v][i].to);
-					adj_matrix[u][g[v][i].to] = false;
+					if (adj_matrix[u][g[v][i].to] == true && !(macros[g[v][i].to]->is_fixed()))
+					{
+						// store node which will be deleted
+						delete_to_nodes.push_back(g[v][i].to);
+						adj_matrix[u][g[v][i].to] = false;
+					}
+					dfs(u, g[v][i].to, delete_to_nodes);
 				}
-				dfs(u, g[v][i].to, delete_to_nodes);
 			}
-		}
-		else if (macros[u]->is_fixed())
-		{ // u is a fixed macro, can't remove edge(fixed macro, sink)
-			for (int i = 0; i < g[v].size(); i++)
-			{
-				if (adj_matrix[u][g[v][i].to] == true && g[v][i].to != n + 1)
+			else if (macros[u]->is_fixed())
+			{ // u is a fixed macro, can't remove edge(fixed macro, sink)
+				for (int i = 0; i < g[v].size(); i++)
 				{
-					// store node which will be deleted
-					delete_to_nodes.push_back(g[v][i].to);
-					adj_matrix[u][g[v][i].to] = false;
+					if (adj_matrix[u][g[v][i].to] == true && g[v][i].to != n + 1)
+					{
+						// store node which will be deleted
+						delete_to_nodes.push_back(g[v][i].to);
+						adj_matrix[u][g[v][i].to] = false;
+					}
+					dfs(u, g[v][i].to, delete_to_nodes);
 				}
-				dfs(u, g[v][i].to, delete_to_nodes);
 			}
-		}
-		else
-		{ // normal case
-			for (int i = 0; i < g[v].size(); i++)
-			{
-				if (adj_matrix[u][g[v][i].to] == true)
+			else
+			{ // normal case
+				for (int i = 0; i < g[v].size(); i++)
 				{
-					// store node which will be deleted
-					delete_to_nodes.push_back(g[v][i].to);
-					adj_matrix[u][g[v][i].to] = false;
+					// if(u == 145)
+					// 	cout << v << " has edge to " << g[v][i].to << endl;
+					if (adj_matrix[u][g[v][i].to] == true)
+					{
+						// if(u == 145)
+						// 	cout << "remove " << g[v][i].to << endl;
+						// store node which will be deleted
+						delete_to_nodes.push_back(g[v][i].to);
+						adj_matrix[u][g[v][i].to] = false;
+					}
+					// if(u == 145)
+					// 	cout << "run v = " << g[v][i].to << endl;
+					dfs(u, g[v][i].to, delete_to_nodes);
 				}
-				dfs(u, g[v][i].to, delete_to_nodes);
 			}
 		}
 	}
 
 	void transitive_reduction()
 	{
-		for (int i = 0; i <= n; ++i)
+		for (int i = 0; i <= n; i++)
 		{
 			// Create vector store deleted nodes
 			vector<int> delete_to_nodes;
 			for (int j = 0; j < g[i].size(); j++)
 			{
 				// Run DFS to find out nodes needed to remove
+				// if(i == 145){
+				// 	cout << macros[i]->name() << " starts run DFS on edge " << g[i][j].from << " to " << g[i][j].to << endl;
+				// }
 				dfs(g[i][j].from, g[i][j].to, delete_to_nodes);
 			}
 			// Remove stored nodes
 			for (int j = 0; j < delete_to_nodes.size(); j++)
 			{
+				// if(i == 145){
+				// 	cout << macros[i]->name() << " to " << delete_to_nodes[j] << " is removed" << endl;
+				// 	//printf("%s to %d is removed\n", macros[i]->name(), delete_to_nodes[j]);
+				// }
 				remove_edge(i, delete_to_nodes[j]);
 			}
 		}

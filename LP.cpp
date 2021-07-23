@@ -207,7 +207,7 @@ void Linear_Program(vector<Macro*>& macro, Graph& Gv, Graph& Gh){
     // get total displacement
     double total_displacement = 0;
     total_displacement = get_objective(model);
-    printf("Total displacement = %lf\n", total_displacement);
+    // printf("Total displacement = %lf\n", total_displacement);
 
     delete_lp(model);
 

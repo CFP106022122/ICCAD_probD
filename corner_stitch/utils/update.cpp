@@ -67,7 +67,7 @@ Tile* CreateTile(int x, int y)
 }
 
  
-Tile* InsertTile(Rect *rect, Plane *plane)
+Tile* InsertTile(Rect *rect, Plane *plane, int type, int id)
 {
 	// enumerate all the tiles which intersect with the given tiles
 	// Then split those tiles.
@@ -125,7 +125,10 @@ Tile* InsertTile(Rect *rect, Plane *plane)
 	#undef DOWN_MERGE
 	#undef SPLIT_AND_MERGE
 	
-	TiSetBody(target, SOLID_TILE);
+	TiSetBody(target, type);
+	if(type == SOLID_TILE){
+		TiSetClient(target, id);
+	}
 	return target;
 }
 
