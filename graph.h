@@ -32,6 +32,31 @@ private:
 	bool **adj_matrix;
 
 public:
+	void Copy(Graph& G_copy){
+		MAX_N = G_copy.MAX_N;
+		n = G_copy.n;
+		// g = new vector<edge>[MAX_N];
+		// g_reversed = new vector<edge>[MAX_N];
+		// L = new double[MAX_N];
+		// R = new double[MAX_N];
+		// visited = new bool[MAX_N];
+		// adj_matrix = new bool *[MAX_N];
+
+		for (int i = 0; i < MAX_N; ++i){
+			adj_matrix[i] = new bool[MAX_N];
+			L[i] = G_copy.L[i];
+			R[i] = G_copy.R[i];
+			visited[i] = G_copy.visited[i];
+		}
+
+		for (int i = 0; i < MAX_N; ++i){
+			for (int j = 0; j < MAX_N; ++j){
+				g[i].push_back(edge(G_copy.g[i][j]));
+				g_reversed[i].push_back(edge(G_copy.g[i][j]));
+				adj_matrix[i][j] = G_copy.adj_matrix[i][j];
+			}
+		}
+	}
 	Graph(int _n) : n{_n}
 	{
 		MAX_N = n + 5;

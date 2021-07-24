@@ -8,6 +8,7 @@
 #include <iostream>
 #include <random>
 #include <vector>
+#include <cmath>
 
 using namespace std;
 
@@ -414,8 +415,8 @@ int main(int argc, char *argv[])
 		// improvement strategy :
 		// 1. force macros near boundary to align boundary
 		// 2. reduce powerplan cost in sparse region
-		improve_strategy1(og_macros, native_macros, horizontal_plane, Gh, Gv);
-		improve_strategy2(og_macros, horizontal_plane, Gh, Gv);
+		//improve_strategy1(og_macros, native_macros, horizontal_plane, Gh, Gv);
+		//improve_strategy2(og_macros, horizontal_plane, Gh, Gv);
 	}
 
 	// Remove tile plane
@@ -449,10 +450,96 @@ int main(int argc, char *argv[])
 	invalid_macros.clear();
 	invalid_macros = invalid_check(og_macros, horizontal_plane);
 
-	printf("Total cost = %lf\n", total_cost(displacement, powerplan_cost));
+	double cost_now = total_cost(displacement, powerplan_cost);
+	printf("Total cost = %lf\n", cost_now);
 
-	RemoveTilePlane(horizontal_plane);
-	RemoveTilePlane(vertical_plane);
+	//RemoveTilePlane(horizontal_plane);
+	//RemoveTilePlane(vertical_plane);
+//------------------------------------------------------------------------------  SA
+	double T_cur, T_end, P, r, cost_best, cost_next;
+	int num_perturb_per_T;
+	vector<Macro *> macros_next(V), macros_best(V);
+	Graph Gv_next(V), Gh_next(V), Gv_best(V), Gh_best(V);
+	// args
+	P = 0.8;//possibility of accepting worse solution at begining
+	T_cur = -10000/log(P);//delta(avg) / ln(P)
+	r = 0.1;
+	num_perturb_per_T = 2;
+
+	Gv_best.Copy(Gv);
+	Gh_best.Copy(Gh);
+	for(int j=0;j<V;j++){
+		macros_best[j] = new Macro(og_macros[j]);
+	}
+	cost_best = cost_now;
+	while(T_cur>T_end){
+		for(int i=0;i<num_perturb_per_T;i++){
+			//sNext = Perturb(sNow);
+			Gv_next.Copy(Gv);
+			Gh_next.Copy(Gh);
+			for(int j=0;j<V;j++){
+				macros_next[j] = new Macro(og_macros[j]);
+			}
+
+			//   ? 
+
+			adjustment(Gh, Gv);
+			Linear_Program(macros_next, Gv, Gh);
+			//if (cost(sNext) < cost(sNow)){
+			displacement = displacement_evaluation(macros_next, native_macros);
+			RemoveTilePlane(horizontal_plane);
+			RemoveTilePlane(vertical_plane);
+			horizontal_plane = CreateTilePlane();
+			vertical_plane = CreateTilePlane();
+			powerplan_cost = 0;
+			powerplan_cost = cost_evaluation(macros_next, horizontal_plane, vertical_plane);
+			cost_next = total_cost(displacement, powerplan_cost);//unif(rng)*100;//
+			cout<<"cost "<<cost_next<<" "<<cost_now<<endl;
+			if(cost_next<cost_now){
+				//sNow = sNext;
+				Gv.rebuild();
+				Gh.rebuild();
+				Gv.Copy(Gv_next);
+				Gh.Copy(Gh_next);
+				cost_now = cost_next;
+				for(int k=0;k<V;k++){
+					delete og_macros[k];
+					og_macros[k] = new Macro(macros_next[k]);
+				}
+				// if (cost(sNow) < cost(sBest))
+				// 	sBest = sNow;
+				if(cost_now<cost_best){
+					Gv_best.rebuild();
+					Gh_best.rebuild();
+					Gv_best.Copy(Gv);
+					Gh_best.Copy(Gh);
+					cost_best = cost_now;
+					for(int k=0;k<V;k++){
+						delete macros_best[k];
+						macros_best[k] = new Macro(og_macros[k]);
+					}
+				}
+			//}
+			}
+			//else if (Accept(T, cost(sNext)-cost(sNow)))
+			else if(exp(-(cost_next-cost_now)/T_cur)>unif(rng)){
+				//sNow = sNext;
+				Gv.rebuild();
+				Gh.rebuild();
+				Gv.Copy(Gv_next);
+				Gh.Copy(Gh_next);
+				cost_now = cost_next;
+				for(int k=0;k<V;k++){
+					delete og_macros[k];
+					og_macros[k] = new Macro(macros_next[k]);
+				}
+			}
+			cout<<"cur T:"<<T_cur<<", costNow:"<<cost_now<<", costBest:"<<cost_best<<endl;
+		}
+
+		T_cur*=r;
+	}
+	iodata->macros = macros_best;
 
 	output();
 	return 0;

@@ -95,6 +95,21 @@ public:
 		_x2 = _x1 + width;
 		_y2 = _y1 + height;
 	}
+
+	Macro(Macro& m_copy){
+		width = m_copy.width;
+		height = m_copy.height;
+		_x1 = m_copy._x1;
+		_y1 = m_copy._y1;
+		_x2 = m_copy._x2;
+		_y2 = m_copy._y2;
+		_id = m_copy._id;
+		_is_fixed = m_copy._is_fixed;
+
+		macro_shape = m_copy.macro_shape;
+		macro_type = m_copy.macro_type;
+		macro_name = m_copy.macro_name;
+	}
 };
 
 #endif
