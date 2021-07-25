@@ -445,14 +445,14 @@ void sigalrm_handler(int sig)
 	cout<<"time's up!!!!!!!!!!!!"<<endl;
 	iodatas->macros = macros_best;
 	output();
-	return;
+	exit(sig);
 }
 
 int main(int argc, char *argv[])
 {
 	rng.seed(87);
 	signal(SIGALRM, &sigalrm_handler);  // set a signal handler
-	alarm(20000);  // set an alarm for 10 seconds from now
+	alarm(900);  // set an alarm for 15*60 seconds from now
 
 	iodatas = shoatingMain(argc, argv);
 	chip_width = (double)iodatas->die_width;						  // = 25.0;
