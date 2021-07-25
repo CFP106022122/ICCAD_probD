@@ -347,6 +347,21 @@ double total_cost(double displace, double powerplan){
 	return alpha * displace + beta * sqrt(powerplan);
 }
 
+void perturb_strategy(int T){
+	vector<edge>* h_edge_list = Gh.get_edge_list();
+	vector<edge>* v_edge_list = Gv.get_edge_list();
+	vector<edge>* r_h_edge_list = Gh.get_reverse_edge_list();
+	vector<edge>* r_v_edge_list = Gv.get_reverse_edge_list();
+	int from, to, w;
+	for(int i=0;i<V;i++){
+		for(int j=0;j<h_edge_list[i].size();j++){
+			if(unif(rng)<=0.3){
+				//
+			}
+		}
+	}
+}
+
 int main(int argc, char *argv[])
 {
 	rng.seed(87);
@@ -453,7 +468,7 @@ int main(int argc, char *argv[])
 	double cost_now = total_cost(displacement, powerplan_cost);
 	printf("Total cost = %lf\n", cost_now);
 
-	//RemoveTilePlane(horizontal_plane);
+	//RemoveTilePlane(horizontal_plane);// if no SA un-comment these
 	//RemoveTilePlane(vertical_plane);
 //------------------------------------------------------------------------------  SA
 	double T_cur, T_end, P, r, cost_best, cost_next;
@@ -469,7 +484,7 @@ int main(int argc, char *argv[])
 	Gv_best.Copy(Gv);
 	Gh_best.Copy(Gh);
 	for(int j=0;j<V;j++){
-		macros_best[j] = new Macro(og_macros[j]);
+		macros_best[j] = new Macro(*og_macros[j]);
 	}
 	cost_best = cost_now;
 	while(T_cur>T_end){
@@ -478,10 +493,11 @@ int main(int argc, char *argv[])
 			Gv_next.Copy(Gv);
 			Gh_next.Copy(Gh);
 			for(int j=0;j<V;j++){
-				macros_next[j] = new Macro(og_macros[j]);
+				macros_next[j] = new Macro(*og_macros[j]);
 			}
 
-			//   ? 
+			//   perturb? 
+			perturb_strategy(T_cur);
 
 			adjustment(Gh, Gv);
 			Linear_Program(macros_next, Gv, Gh);
@@ -494,7 +510,7 @@ int main(int argc, char *argv[])
 			powerplan_cost = 0;
 			powerplan_cost = cost_evaluation(macros_next, horizontal_plane, vertical_plane);
 			cost_next = total_cost(displacement, powerplan_cost);//unif(rng)*100;//
-			cout<<"cost "<<cost_next<<" "<<cost_now<<endl;
+			cout<<"SA before copy, cost(next, now):"<<cost_next<<", "<<cost_now<<endl;
 			if(cost_next<cost_now){
 				//sNow = sNext;
 				Gv.rebuild();
@@ -504,7 +520,7 @@ int main(int argc, char *argv[])
 				cost_now = cost_next;
 				for(int k=0;k<V;k++){
 					delete og_macros[k];
-					og_macros[k] = new Macro(macros_next[k]);
+					og_macros[k] = new Macro(*macros_next[k]);
 				}
 				// if (cost(sNow) < cost(sBest))
 				// 	sBest = sNow;
@@ -516,7 +532,7 @@ int main(int argc, char *argv[])
 					cost_best = cost_now;
 					for(int k=0;k<V;k++){
 						delete macros_best[k];
-						macros_best[k] = new Macro(og_macros[k]);
+						macros_best[k] = new Macro(*og_macros[k]);
 					}
 				}
 			//}
@@ -531,15 +547,16 @@ int main(int argc, char *argv[])
 				cost_now = cost_next;
 				for(int k=0;k<V;k++){
 					delete og_macros[k];
-					og_macros[k] = new Macro(macros_next[k]);
+					og_macros[k] = new Macro(*macros_next[k]);
 				}
 			}
-			cout<<"cur T:"<<T_cur<<", costNow:"<<cost_now<<", costBest:"<<cost_best<<endl;
+			cout<<"SA after copy, cur_T:"<<T_cur<<", costNow:"<<cost_now<<", costBest:"<<cost_best<<endl;
 		}
 
 		T_cur*=r;
 	}
 	iodata->macros = macros_best;
+	//----------------------------------------------------------------- SA
 
 	output();
 	return 0;
