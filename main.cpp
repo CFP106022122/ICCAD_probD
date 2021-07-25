@@ -9,6 +9,8 @@
 #include <random>
 #include <vector>
 #include <cmath>
+#include <unistd.h>
+#include <signal.h>
 
 using namespace std;
 
@@ -378,7 +380,7 @@ double total_cost(double displace, double powerplan){
 	return alpha * displace + beta * sqrt(powerplan);
 }
 
-void perturb_strategy(int T, Graph& Gv_next, Graph& Gh_next){
+void perturb_strategy(double P, Graph& Gv_next, Graph& Gh_next, vector<Macro *>& macros_next){
 	vector<edge>* h_edge_list = Gh_next.get_edge_list();
 	vector<edge>* v_edge_list = Gv_next.get_edge_list();
 	vector<edge>* r_h_edge_list = Gh_next.get_reverse_edge_list();
@@ -395,12 +397,17 @@ void perturb_strategy(int T, Graph& Gv_next, Graph& Gh_next){
 		for(int j=0;j<h_edge_list[i].size();j++){
 			if(modified[i][h_edge_list[i][j].to]==true)
 				continue;
-			if(unif(rng)<=0.3){
+			if(unif(rng)<=P){
 				from = h_edge_list[i][j].from;
 				to = h_edge_list[i][j].to;
 				w = h_edge_list[i][j].weight;
+				if(from==0 || from>=V || to==0 || to>=V)
+					continue;
 				Gh_next.remove_edge(from, to);
-				Gv_next.add_edge(from, to, w);
+				if(macros_next[from]->cy()<macros_next[to]->cy())
+					Gv_next.add_edge(from, to, w);
+				else
+					Gv_next.add_edge(to, from, w);
 				modified[from][to] = true;
 				modified[to][from] = true;
 			}
@@ -409,12 +416,17 @@ void perturb_strategy(int T, Graph& Gv_next, Graph& Gh_next){
 		for(int j=0;j<v_edge_list[i].size();j++){
 			if(modified[i][v_edge_list[i][j].to]==true)
 				continue;
-			if(unif(rng)<=0.3){
+			if(unif(rng)<=P){
 				from = v_edge_list[i][j].from;
 				to = v_edge_list[i][j].to;
 				w = v_edge_list[i][j].weight;
+				if(from==0 || from>=V || to==0 || to>=V)
+					continue;
 				Gv_next.remove_edge(from, to);
-				Gh_next.add_edge(from, to, w);
+				if(macros_next[from]->cx()<macros_next[to]->cx())
+					Gh_next.add_edge(from, to, w);
+				else
+					Gh_next.add_edge(to, from, w);
 				modified[from][to] = true;
 				modified[to][from] = true;
 			}
@@ -422,28 +434,43 @@ void perturb_strategy(int T, Graph& Gv_next, Graph& Gh_next){
 	}
 }
 
+
+	IoData *iodatas;
+vector<Macro *> macros_best(V);
+void sigalrm_handler(int sig)
+{
+    // This gets called when the timer runs out.  Try not to do too much here;
+    // the recommended practice is to set a flag (of type sig_atomic_t), and have
+    // code elsewhere check that flag (e.g. in the main loop of your program)
+	cout<<"time's up!!!!!!!!!!!!"<<endl;
+	iodatas->macros = macros_best;
+	output();
+	return;
+}
+
 int main(int argc, char *argv[])
 {
 	rng.seed(87);
+	signal(SIGALRM, &sigalrm_handler);  // set a signal handler
+	alarm(20000);  // set an alarm for 10 seconds from now
 
-	IoData *iodata;
-	iodata = shoatingMain(argc, argv);
-	chip_width = (double)iodata->die_width;						  // = 25.0;
-	chip_height = (double)iodata->die_height;					  // = 10.0;
-	micron = iodata->dbu_per_micron;
-	V = iodata->macros.size();									  // = 7; // #macros;
-	alpha = (double)iodata->weight_alpha;						  // = 1.0,
-	beta = (double)iodata->weight_beta;							  // = 4.0 ;
-	buffer_constraint = (double)iodata->buffer_constraint;
-	powerplan_width = (double)iodata->powerplan_width_constraint; // = 0.0,
-	min_spacing = (double)iodata->minimum_spacing;				  // = 0.0;
+	iodatas = shoatingMain(argc, argv);
+	chip_width = (double)iodatas->die_width;						  // = 25.0;
+	chip_height = (double)iodatas->die_height;					  // = 10.0;
+	micron = iodatas->dbu_per_micron;
+	V = iodatas->macros.size();									  // = 7; // #macros;
+	alpha = (double)iodatas->weight_alpha;						  // = 1.0,
+	beta = (double)iodatas->weight_beta;							  // = 4.0 ;
+	buffer_constraint = (double)iodatas->buffer_constraint;
+	powerplan_width = (double)iodatas->powerplan_width_constraint; // = 0.0,
+	min_spacing = (double)iodatas->minimum_spacing;				  // = 0.0;
 	vector<Macro*> native_macros;
-	for(int i = 0; i < iodata->macros.size(); i++){
-		native_macros.push_back(new Macro(iodata->macros[i]->w(), iodata->macros[i]->h(),
-											iodata->macros[i]->x1(), iodata->macros[i]->y1(),
-											iodata->macros[i]->is_fixed(), iodata->macros[i]->id()));
+	for(int i = 0; i < iodatas->macros.size(); i++){
+		native_macros.push_back(new Macro(iodatas->macros[i]->w(), iodatas->macros[i]->h(),
+											iodatas->macros[i]->x1(), iodatas->macros[i]->y1(),
+											iodatas->macros[i]->is_fixed(), iodatas->macros[i]->id()));
 	}
-	og_macros = iodata->macros;
+	og_macros = iodatas->macros;
 	macros = new Macro *[V + 5];
 	for (auto &m : og_macros)
 		macros[m->id()] = m;
@@ -533,7 +560,8 @@ int main(int argc, char *argv[])
 //------------------------------------------------------------------------------  SA
 	double T_cur, T_end, P, rate, cost_best, cost_next;
 	int num_perturb_per_T;
-	vector<Macro *> macros_next(V), macros_best(V);
+	vector<Macro *> macros_next(V);
+	macros_best.resize(V);
 	Graph Gv_next(V), Gh_next(V), Gv_best(V), Gh_best(V);
 	// args
 	P = 0.8;//possibility of accepting worse solution at begining
@@ -562,7 +590,7 @@ int main(int argc, char *argv[])
 			}
 
 			//   perturb
-			perturb_strategy(T_cur, Gv_next, Gh_next);
+			perturb_strategy(T_cur/T_end, Gv_next, Gh_next, macros_next);
 
 			adjustment(Gh_next, Gv_next);
 			Linear_Program(macros_next, Gv_next, Gh_next);
@@ -620,7 +648,7 @@ int main(int argc, char *argv[])
 
 		T_cur*=rate;
 	}
-	iodata->macros = macros_best;
+	iodatas->macros = macros_best;
 	//----------------------------------------------------------------- SA
 
 	output();
