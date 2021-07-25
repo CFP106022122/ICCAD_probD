@@ -141,7 +141,7 @@ void build_init_constraint_graph(Graph &Gh, Graph &Gv, vector<Macro *> macros) /
 	}
 }
 
-bool build_Gc(Graph &G, DICNIC<double> &Gc, Graph &G_the_other_dir, bool test_g_is_horizontal) // using macros
+bool build_Gc(Graph &G, DICNIC<double> *Gc, Graph &G_the_other_dir, bool test_g_is_horizontal) // using macros
 {
 	vector<edge> &zero_slack_edges = G.zero_slack_edges();
 	// G.show();
@@ -159,7 +159,7 @@ bool build_Gc(Graph &G, DICNIC<double> &Gc, Graph &G_the_other_dir, bool test_g_
 		if (e.from == 0 || e.to == V + 1)
 		{
 			cout << "1\n";
-			Gc.add_edge(e.from, e.to, DBL_MAX, true);
+			Gc->add_edge(e.from, e.to, DBL_MAX, true);
 			++cnt;
 			// cout << "adding edge from " << e.from << " to " << e.to << " with weight " << DBL_MAX << '\n';
 		}
@@ -167,14 +167,32 @@ bool build_Gc(Graph &G, DICNIC<double> &Gc, Graph &G_the_other_dir, bool test_g_
 		{
 			cout << "2";
 			double w = determine_edge_weight(macros[e.from], macros[e.to], test_g_is_horizontal);
-			G_the_other_dir.add_edge(e.from, e.to, w);
+			bool from_to_to;
+			if (test_g_is_horizontal) {
+				if (macros[e.from]->cx() < macros[e.to]->cx()) {
+					from_to_to = true;
+				} else {
+					from_to_to = false;
+				}
+			} else {
+				if (macros[e.from]->cy() < macros[e.to]->cy()) {
+					from_to_to = true;
+				} else {
+					from_to_to = false;
+				}
+			}
+			if (from_to_to)
+				G_the_other_dir.add_edge(e.from, e.to, w);
+			else
+				G_the_other_dir.add_edge(e.to, e.from, w);
+
 			double Rvj = G.R[e.to];
 			double Lvi = G.L[e.from];
 			double test_longest_path = G_the_other_dir.longest_path(test_g_is_horizontal);
 			double boundry = (test_g_is_horizontal) ? chip_width : chip_height;
 			if (test_longest_path > boundry)
 			{
-				Gc.add_edge(e.from, e.to, DBL_MAX, true);
+				Gc->add_edge(e.from, e.to, DBL_MAX, true);
 				++cnt;
 				cout << "a\n";
 			}
@@ -183,24 +201,29 @@ bool build_Gc(Graph &G, DICNIC<double> &Gc, Graph &G_the_other_dir, bool test_g_
 				double avg = determine_edge_weight(macros[e.from], macros[e.to], test_g_is_horizontal);
 				double coord_from = (test_g_is_horizontal) ? macros[e.from]->cx() : macros[e.from]->cy();
 				double coord_to = (test_g_is_horizontal) ? macros[e.to]->cx() : macros[e.to]->cy();
-				w = max(coord_from - Rvj + avg, 0) + max(Lvi + avg - coord_to, 0);
-				Gc.add_edge(e.from, e.to, w, true);
+				w = max(coord_from - Rvj + avg, 0) + max(Lvi + avg - coord_to, 0); //??
+				Gc->add_edge(e.from, e.to, w, true);
 				cout << "b " << w << endl;
 				// cout << "adding edge from " << e.from << " to " << e.to << " with weight " << w << '\n';
 			}
-			G_the_other_dir.remove_edge(e.from, e.to);
+			if (from_to_to)
+				G_the_other_dir.remove_edge(e.from, e.to);
+			else
+				G_the_other_dir.remove_edge(e.to, e.from);
+				
 		}
 	}
 	return cnt == zero_slack_edges.size();
 }
 
-bool adjustment_helper(Graph &G, DICNIC<double> &Gc, Graph &G_the_other_dir, bool adjust_g_is_horizontal) //using macros
+bool adjustment_helper(Graph &G, DICNIC<double> *Gc, Graph &G_the_other_dir, bool adjust_g_is_horizontal) //using macros
 {
-	if (Gc.min_cut(0, V + 1))
+	if (Gc->min_cut(0, V + 1))
 	{
 		return true;
 	}
-	for (auto &e : Gc.cut_e)
+	cout <<"Cut size: " <<Gc->cut_e.size() << endl;
+	for (auto &e : Gc->cut_e)
 	{
 		cout << e.pre << ' ' << e.v << endl;
 		double w = determine_edge_weight(macros[e.pre], macros[e.v], !adjust_g_is_horizontal);
@@ -228,6 +251,10 @@ bool adjustment_helper(Graph &G, DICNIC<double> &Gc, Graph &G_the_other_dir, boo
 		}
 		G.remove_edge(e.pre, e.v);
 	}
+	if (G_the_other_dir.hasCycle()) {
+		cout < "Adjustment induces cycle";
+		return true;
+	}
 	return false;
 }
 
@@ -249,26 +276,29 @@ void adjustment(Graph &Gh, Graph &Gv)
 		cout << "Vertical constraint graph has longest path: " << longest_path_v << "\n\n";
 
 		double prev_longest_path_h = longest_path_h, prev_longest_path_v = longest_path_v;
-		DICNIC<double> Gc;
-		Gc.init(V + 2);
+		DICNIC<double>* Gc = new DICNIC<double>;
+		Gc->init(V + 2);
 		if (longest_path_h > chip_width && longest_path_v <= chip_height)
 		{
 			if (build_Gc(Gh, Gc, Gv, false))
 			{
+				cout << "???\n";
 				chip_height = copy_of_chip_height;
 				rebuild_constraint_graph(Gh, Gv);
 				return;
 			}
 			if (adjustment_helper(Gh, Gc, Gv, true))
 			{
+				cout << "123213\n";
 				chip_height = copy_of_chip_height;
 				rebuild_constraint_graph(Gh, Gv);
 				return;
 			}
 			longest_path_h = Gh.longest_path(true);
 			longest_path_v = Gv.longest_path(false);
-			if (longest_path_h >= prev_longest_path_h)
+			if (longest_path_h == prev_longest_path_h)
 			{
+				cout << "456456\n";
 				chip_height = copy_of_chip_height;
 				rebuild_constraint_graph(Gh, Gv);
 				return;
@@ -311,6 +341,7 @@ void adjustment(Graph &Gh, Graph &Gv)
 				has_changed_chip_height = true;
 			}
 		}
+		delete Gc;
 	}
 	cout << "After adjustment:\n";
 	cout << "Horizontal constraint graph has longest path: " << longest_path_h << " less than chip_width: " << chip_width << '\n';
@@ -329,8 +360,8 @@ void rebuild_constraint_graph(Graph &Gh, Graph &Gv)
 	Gh.rebuild();
 	Gv.rebuild();
 	build_init_constraint_graph(Gh, Gv, og_macros);
-	// Gh.transitive_reduction();
-	// Gv.transitive_reduction();
+	//Gh.transitive_reduction();
+	//Gv.transitive_reduction();
 	adjustment(Gh, Gv);
 }
 
@@ -418,8 +449,8 @@ int main(int argc, char *argv[])
 		macros[m->id()] = m;
 	Graph Gh(V), Gv(V);
 	build_init_constraint_graph(Gh, Gv, og_macros);
-	// Gh.transitive_reduction();
-	// Gv.transitive_reduction();
+	//Gh.transitive_reduction();
+	//Gv.transitive_reduction();
 	adjustment(Gh, Gv);
 	
 	// Gh, Gv are ready.

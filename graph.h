@@ -168,7 +168,7 @@ public:
 		_zero_slack_edges.clear();
 		for (int i = 0; i <= n; ++i)
 			for (auto &e : g[i])
-				if (R[e.to] - L[e.from] - e.weight == 0)
+				if (R[e.to] - L[e.from] - e.weight <= 0)
 					_zero_slack_edges.push_back(e);
 		return _zero_slack_edges;
 	}
@@ -314,6 +314,35 @@ public:
 				remove_edge(i, delete_to_nodes[j]);
 			}
 		}
+	}
+
+	bool visit(int u, bool *onStack) {
+		visited[u] = true;
+		onStack[u] = true;
+		for (auto& e:g[u]) {
+			if (!visited[e.to])
+				if (visit(e.to, onStack))
+					return true;
+			else if (onStack[e.to])
+				return true;
+		}
+		onStack[u] = false;
+		return false;
+	}
+		
+	bool hasCycle() {
+		bool onStack[n+2];
+		for (int i=0; i<=n+1; ++i) {
+			visited[i] = false;
+			onStack[i] = false;
+		}	
+		for (int i=0; i<=n+1; ++i) {
+			if (!visited[i]) {
+				if (visit(i, onStack))
+					return true;
+			}
+		}
+		return false;
 	}
 
 	void show()
