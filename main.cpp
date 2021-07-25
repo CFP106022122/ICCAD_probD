@@ -347,16 +347,45 @@ double total_cost(double displace, double powerplan){
 	return alpha * displace + beta * sqrt(powerplan);
 }
 
-void perturb_strategy(int T){
-	vector<edge>* h_edge_list = Gh.get_edge_list();
-	vector<edge>* v_edge_list = Gv.get_edge_list();
-	vector<edge>* r_h_edge_list = Gh.get_reverse_edge_list();
-	vector<edge>* r_v_edge_list = Gv.get_reverse_edge_list();
+void perturb_strategy(int T, Graph& Gv_next, Graph& Gh_next){
+	vector<edge>* h_edge_list = Gh_next.get_edge_list();
+	vector<edge>* v_edge_list = Gv_next.get_edge_list();
+	vector<edge>* r_h_edge_list = Gh_next.get_reverse_edge_list();
+	vector<edge>* r_v_edge_list = Gv_next.get_reverse_edge_list();
+	bool **modified = new bool*[V];
+	for(int i=0;i<V;i++){
+		modified[i] = new bool[V];
+		for(int j=0;j<V;j++){
+			modified[i][j] = false;
+		}
+	}
 	int from, to, w;
 	for(int i=0;i<V;i++){
 		for(int j=0;j<h_edge_list[i].size();j++){
+			if(modified[i][h_edge_list[i][j].to]==true)
+				continue;
 			if(unif(rng)<=0.3){
-				//
+				from = h_edge_list[i][j].from;
+				to = h_edge_list[i][j].to;
+				w = h_edge_list[i][j].weight;
+				Gh_next.remove_edge(from, to);
+				Gv_next.add_edge(from, to, w);
+				modified[from][to] = true;
+				modified[to][from] = true;
+			}
+		}
+
+		for(int j=0;j<v_edge_list[i].size();j++){
+			if(modified[i][v_edge_list[i][j].to]==true)
+				continue;
+			if(unif(rng)<=0.3){
+				from = v_edge_list[i][j].from;
+				to = v_edge_list[i][j].to;
+				w = v_edge_list[i][j].weight;
+				Gv_next.remove_edge(from, to);
+				Gh_next.add_edge(from, to, w);
+				modified[from][to] = true;
+				modified[to][from] = true;
 			}
 		}
 	}
@@ -496,8 +525,8 @@ int main(int argc, char *argv[])
 				macros_next[j] = new Macro(*og_macros[j]);
 			}
 
-			//   perturb? 
-			perturb_strategy(T_cur);
+			//   perturb
+			perturb_strategy(T_cur, Gv_next, Gh_next);
 
 			adjustment(Gh, Gv);
 			Linear_Program(macros_next, Gv, Gh);
