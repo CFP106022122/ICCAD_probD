@@ -564,23 +564,16 @@ int main(int argc, char *argv[])
 			//   perturb
 			perturb_strategy(T_cur, Gv_next, Gh_next);
 
-			cout<<"-2"<<endl;
 			adjustment(Gh_next, Gv_next);
-			cout<<"-1"<<endl;
 			Linear_Program(macros_next, Gv_next, Gh_next);
-			cout<<"0"<<endl;
 			//if (cost(sNext) < cost(sNow)){
 			displacement = displacement_evaluation(macros_next, native_macros);
-			cout<<"1"<<endl;
 			RemoveTilePlane(horizontal_plane);
 			RemoveTilePlane(vertical_plane);
-			cout<<"2"<<endl;
 			horizontal_plane = CreateTilePlane();
 			vertical_plane = CreateTilePlane();
 			powerplan_cost = 0;
-			cout<<"3"<<endl;
 			powerplan_cost = cost_evaluation(macros_next, horizontal_plane, vertical_plane);
-			cout<<"4"<<endl;
 			cost_next = total_cost(displacement, powerplan_cost);//unif(rng)*100;//
 			cout<<"SA before copy, cost(next, now):"<<cost_next<<", "<<cost_now<<endl;
 			if(cost_next<cost_now){
