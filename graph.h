@@ -42,17 +42,19 @@ public:
 		// visited = new bool[MAX_N];
 		// adj_matrix = new bool *[MAX_N];
 
-		for (int i = 0; i < MAX_N; ++i){
-			adj_matrix[i] = new bool[MAX_N];
+		for (int i = 0; i < n; ++i){
+			//adj_matrix[i] = new bool[MAX_N];
 			L[i] = G_copy.L[i];
 			R[i] = G_copy.R[i];
 			visited[i] = G_copy.visited[i];
 		}
 
-		for (int i = 0; i < MAX_N; ++i){
-			for (int j = 0; j < MAX_N; ++j){
+		for (int i = 0; i < n; ++i){
+			for(int j=0;j<G_copy.g[i].size();j++)
 				g[i].push_back(edge(G_copy.g[i][j]));
-				g_reversed[i].push_back(edge(G_copy.g[i][j]));
+			for(int j=0;j<G_copy.g_reversed[i].size();j++)
+				g_reversed[i].push_back(edge(G_copy.g_reversed[i][j]));
+			for (int j = 0; j < n; ++j){
 				adj_matrix[i][j] = G_copy.adj_matrix[i][j];
 			}
 		}

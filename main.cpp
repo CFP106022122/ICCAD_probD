@@ -352,10 +352,10 @@ void perturb_strategy(int T, Graph& Gv_next, Graph& Gh_next){
 	vector<edge>* v_edge_list = Gv_next.get_edge_list();
 	vector<edge>* r_h_edge_list = Gh_next.get_reverse_edge_list();
 	vector<edge>* r_v_edge_list = Gv_next.get_reverse_edge_list();
-	bool **modified = new bool*[V];
-	for(int i=0;i<V;i++){
-		modified[i] = new bool[V];
-		for(int j=0;j<V;j++){
+	bool **modified = new bool*[V+5];
+	for(int i=0;i<V+5;i++){
+		modified[i] = new bool[V+5];
+		for(int j=0;j<V+5;j++){
 			modified[i][j] = false;
 		}
 	}
@@ -500,44 +500,56 @@ int main(int argc, char *argv[])
 	//RemoveTilePlane(horizontal_plane);// if no SA un-comment these
 	//RemoveTilePlane(vertical_plane);
 //------------------------------------------------------------------------------  SA
-	double T_cur, T_end, P, r, cost_best, cost_next;
+	double T_cur, T_end, P, rate, cost_best, cost_next;
 	int num_perturb_per_T;
 	vector<Macro *> macros_next(V), macros_best(V);
 	Graph Gv_next(V), Gh_next(V), Gv_best(V), Gh_best(V);
 	// args
 	P = 0.8;//possibility of accepting worse solution at begining
 	T_cur = -10000/log(P);//delta(avg) / ln(P)
-	r = 0.1;
+	rate = 0.1;
 	num_perturb_per_T = 2;
-
+	T_end = 1;
 	Gv_best.Copy(Gv);
 	Gh_best.Copy(Gh);
 	for(int j=0;j<V;j++){
+		macros_next[j] = new Macro(*og_macros[j]);
 		macros_best[j] = new Macro(*og_macros[j]);
 	}
 	cost_best = cost_now;
 	while(T_cur>T_end){
+		cout<<"Temp:"<<T_cur<<" begin"<<endl;
 		for(int i=0;i<num_perturb_per_T;i++){
 			//sNext = Perturb(sNow);
+			Gv_next.rebuild();
+			Gh_next.rebuild();
 			Gv_next.Copy(Gv);
 			Gh_next.Copy(Gh);
 			for(int j=0;j<V;j++){
+				delete macros_next[j];
 				macros_next[j] = new Macro(*og_macros[j]);
 			}
 
 			//   perturb
 			perturb_strategy(T_cur, Gv_next, Gh_next);
 
-			adjustment(Gh, Gv);
-			Linear_Program(macros_next, Gv, Gh);
+			cout<<"-2"<<endl;
+			adjustment(Gh_next, Gv_next);
+			cout<<"-1"<<endl;
+			Linear_Program(macros_next, Gv_next, Gh_next);
+			cout<<"0"<<endl;
 			//if (cost(sNext) < cost(sNow)){
 			displacement = displacement_evaluation(macros_next, native_macros);
+			cout<<"1"<<endl;
 			RemoveTilePlane(horizontal_plane);
 			RemoveTilePlane(vertical_plane);
+			cout<<"2"<<endl;
 			horizontal_plane = CreateTilePlane();
 			vertical_plane = CreateTilePlane();
 			powerplan_cost = 0;
+			cout<<"3"<<endl;
 			powerplan_cost = cost_evaluation(macros_next, horizontal_plane, vertical_plane);
+			cout<<"4"<<endl;
 			cost_next = total_cost(displacement, powerplan_cost);//unif(rng)*100;//
 			cout<<"SA before copy, cost(next, now):"<<cost_next<<", "<<cost_now<<endl;
 			if(cost_next<cost_now){
@@ -582,7 +594,7 @@ int main(int argc, char *argv[])
 			cout<<"SA after copy, cur_T:"<<T_cur<<", costNow:"<<cost_now<<", costBest:"<<cost_best<<endl;
 		}
 
-		T_cur*=r;
+		T_cur*=rate;
 	}
 	iodata->macros = macros_best;
 	//----------------------------------------------------------------- SA
