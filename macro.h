@@ -26,6 +26,14 @@ private:
 	string macro_name;
 
 public:
+	Macro(double w, double h, double _x, double _y, bool is_f, int i, string name) : width{w}, height{h}, _x1{_x}, _y1{_y}, _is_fixed{is_f}, _id{i}
+	{
+		_x2 = _x1 + width;
+		_y2 = _y1 + height;
+		macro_shape = "null";
+		macro_type = 3;
+		macro_name = name;
+	}
 	Macro(double w, double h, double _x, double _y, bool is_f, int i) : width{w}, height{h}, _x1{_x}, _y1{_y}, _is_fixed{is_f}, _id{i}
 	{
 		_x2 = _x1 + width;
@@ -34,7 +42,6 @@ public:
 		macro_type = 3;
 		macro_name = "null";
 	}
-
 	double x1() const { return _x1; }
 	double x2() const { return _x2; }
 	double y1() const { return _y1; }
