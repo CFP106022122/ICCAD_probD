@@ -260,6 +260,6 @@ void RemoveTilePlane(Plane *plane)
 	Rect rect = { {MINFINITY + 1, MINFINITY + 1}, {INFINITY - 1, INFINITY - 1} };
 	//Rect rect = { {0, 0}, {600, 400} };
 	TiSrArea(nullptr, plane, &rect, deleteTile, (ClientData)plane);
-	TiFree(plane->pl_hint);
+	// TiFree(plane->pl_hint);
 	TiFreePlane(plane);
 }
