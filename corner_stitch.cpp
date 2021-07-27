@@ -59,12 +59,12 @@ bool Horizontal_update(Plane* horizontal_plane, Plane* vertical_plane,
 		// 									LEFT(horizontal_tiles[i]), TOP(horizontal_tiles[i]));
 
 		// Decides left, right boundary of tile
-		int left = LEFT(horizontal_tiles[i]), right = RIGHT(horizontal_tiles[i]);
+		double left = LEFT(horizontal_tiles[i]), right = RIGHT(horizontal_tiles[i]);
 		if(left < 0)	left = 0;
-		if(right > (int)chip_width) right = (int)chip_width;
+		if(right > chip_width) right = chip_width;
 
 		// If tile's width is smaller than powerplan_width, makes the tile become cost_area
-		if(right - left < (int)powerplan_width){
+		if(right - left < powerplan_width){
 			Rect horizontal_cost_tile = { {left, BOTTOM(horizontal_tiles[i])}, {right, TOP(horizontal_tiles[i])} };
 			if (InsertTile(&horizontal_cost_tile, horizontal_plane, SOLID_TILE, -1) == NULL) {
 				printf("(Horizontal)Invalid insertion due to the overlapping with existing rectangles: (%d, %d) - (%d, %d).\n",
@@ -105,19 +105,13 @@ bool Vertical_update(Plane* horizontal_plane, Plane* vertical_plane,
 		if(TiGetBody(vertical_tiles[i]) == SOLID_TILE)
 			continue;
 
-		// Show this tile's position
-		// printf("%d %d %d %d %d %d %d %d\n", LEFT(vertical_tiles[i]), BOTTOM(vertical_tiles[i]),
-		// 									RIGHT(vertical_tiles[i]), BOTTOM(vertical_tiles[i]),
-		// 									RIGHT(vertical_tiles[i]), TOP(vertical_tiles[i]),
-		// 									LEFT(vertical_tiles[i]), TOP(vertical_tiles[i]));
-
 		// Decides left, right boundary of tile
-		int left = LEFT(vertical_tiles[i]), right = RIGHT(vertical_tiles[i]);
-		if(left < -(int)chip_height)	left = -(int)chip_height;
+		double left = LEFT(vertical_tiles[i]), right = RIGHT(vertical_tiles[i]);
+		if(left < -chip_height)	left = -chip_height;
 		if(right > 0) right = 0;
 
 		// If tile's width is smaller than powerplan_width, makes the tile become cost_area
-		if(right - left < (int)powerplan_width){
+		if(right - left < powerplan_width){
 			// Needs to add corresponding tile into horizontal corner_stitch data structure at the same time
 			Rect horizontal_cost_tile = { {BOTTOM(vertical_tiles[i]), -right}, {TOP(vertical_tiles[i]), -left} };
 			if (InsertTile(&horizontal_cost_tile, horizontal_plane, SOLID_TILE, -1) == NULL) {
@@ -147,31 +141,27 @@ double cost_evaluation(vector<Macro*>& macro, Plane* horizontal_plane, Plane* ve
 	// powerplan_cost
 	double powerplan_cost = 0;
 
-	// // Create horizontal, vertical corner stitch data structure
-	// Plane* horizontal_plane = CreateTilePlane();
-	// Plane* vertical_plane = CreateTilePlane();
-
 	// Insert macros into plane
 	for(int i = 0; i < macro.size(); i++){
 
 		// In horizontal (left, bottom), (right, top) = (x1, y1), (x2, y2)
-		Rect horizontal_rect = { {(int)macro[i]->x1(), (int)macro[i]->y1()}, {(int)macro[i]->x2(), (int)macro[i]->y2()} };
+		Rect horizontal_rect = { {macro[i]->x1(), macro[i]->y1()}, {macro[i]->x2(), macro[i]->y2()} };
 		// In vertical (left, bottom), (right, top) = (-y2, x1), (-y1, x2)
-		Rect vertical_rect = { {-(int)macro[i]->y2(), (int)macro[i]->x1()}, {-(int)macro[i]->y1(), (int)macro[i]->x2()} };
+		Rect vertical_rect = { {-macro[i]->y2(), macro[i]->x1()}, {-macro[i]->y1(), macro[i]->x2()} };
 
 		if (InsertTile(&horizontal_rect, horizontal_plane, SOLID_TILE, i) == NULL) {
 			printf("(Horizontal)Invalid insertion due to the overlapping with existing rectangles: (%d, %d) - (%d, %d).\n",
-					(int)macro[i]->x1(), (int)macro[i]->y1(), (int)macro[i]->x2(), (int)macro[i]->y2());
+					macro[i]->x1(), macro[i]->y1(), macro[i]->x2(), macro[i]->y2());
 		}
 		if (InsertTile(&vertical_rect, vertical_plane, SOLID_TILE, i) == NULL) {
 			printf("(Vertical)Invalid insertion due to the overlapping with existing rectangles: (%d, %d) - (%d, %d).\n",
-					-(int)macro[i]->y2(), (int)macro[i]->x1(), -(int)macro[i]->y1(), (int)macro[i]->x2());
+					-macro[i]->y2(), macro[i]->x1(), -macro[i]->y1(), macro[i]->x2());
 		}
 	}
 
 	// Rect horizontal(vertical)_region represents place region
-	Rect horizontal_region = { {0, 0}, {(int)chip_width, (int)chip_height} };
-	Rect vertical_region = { {-(int)chip_height, 0}, {0, (int)chip_width} };
+	Rect horizontal_region = { {0, 0}, {chip_width, chip_height} };
+	Rect vertical_region = { {-chip_height, 0}, {0, chip_width} };
 
 	// Update corner stitch data structure until all cost_area are found
 	bool horizontal_updated = true, vertical_updated = true;
@@ -183,7 +173,7 @@ double cost_evaluation(vector<Macro*>& macro, Plane* horizontal_plane, Plane* ve
 	}
 
 	// Show powerplan cost
-	printf("Powerplan Cost = %lf\n", powerplan_cost);
+	// printf("Powerplan Cost = %lf\n", powerplan_cost);
 
 	return powerplan_cost;
 }
@@ -196,13 +186,13 @@ vector<int> invalid_check(vector<Macro*>& macro, Plane* horizontal_plane){
 		if(macro[i]->name() == "null")
 			continue;
 		// Calculate search area boundary for macro
-		int left = (int)(macro[i]->x1() - buffer_constraint - powerplan_width),
-			right = (int)(macro[i]->x2() + buffer_constraint + powerplan_width),
-			top = (int)(macro[i]->y2() + buffer_constraint + powerplan_width),
-			bottom = (int)(macro[i]->y1() - buffer_constraint - powerplan_width);
+		double left = macro[i]->x1() - buffer_constraint - powerplan_width,
+			right = macro[i]->x2() + buffer_constraint + powerplan_width,
+			top = macro[i]->y2() + buffer_constraint + powerplan_width,
+			bottom = macro[i]->y1() - buffer_constraint - powerplan_width;
 		if(left < 0) left = 0;
-		if(right > (int)chip_width) right = (int)chip_width;
-		if(top > (int)chip_height) top = (int)chip_height;
+		if(right > chip_width) right = chip_width;
+		if(top > chip_height) top = chip_height;
 		if(bottom < 0) bottom = 0;
 
 		// Create search area
@@ -238,13 +228,13 @@ void fix_invalid(vector<Macro*>& macro, vector<int>& invalid_macros, Graph& Gh, 
 	map<edge*, int> edges_table;
 	for(int i = 0; i < invalid_macros.size(); i++){
 		// Set buffer + powerplan boundary of invalid macro
-		int left = (int)(macro[invalid_macros[i]]->x1() - powerplan_width),
-			right = (int)(macro[invalid_macros[i]]->x2() + powerplan_width),
-			top = (int)(macro[invalid_macros[i]]->y2() + powerplan_width),
-			bottom = (int)(macro[invalid_macros[i]]->y1() - powerplan_width);
+		double left = macro[invalid_macros[i]]->x1() - powerplan_width,
+			right = macro[invalid_macros[i]]->x2() + powerplan_width,
+			top = macro[invalid_macros[i]]->y2() + powerplan_width,
+			bottom = macro[invalid_macros[i]]->y1() - powerplan_width;
 		if(left < 0) left = 0;
-		if(right > (int)chip_width) right = (int)chip_width;
-		if(top > (int)chip_height) top = (int)chip_height;
+		if(right > chip_width) right = chip_width;
+		if(top > chip_height) top = chip_height;
 		if(bottom < 0) bottom = 0;
 
 		// Horizontal_edge : invalid -> neighbor
@@ -439,12 +429,6 @@ void improve_strategy1(vector<Macro*>& macro, vector<Macro*>& native_macro, Plan
 				// needs to add constraint in to LP model by reverse constraint graph.
 				// We can only ensure that "a" will at right hand side of "b" by distance at least w(a, b).
 				if(alpha * std::abs(native_macro[m]->x2() - (chip_width - powerplan_width)) / micron < current_cost){
-					// r_h_edge_list[macro.size() + 1][i].weight = powerplan_width;
-					// for(int j = 0; j < h_edge_list[r_h_edge_list[macro.size() + 1][i].to].size(); j++){
-					// 	if(h_edge_list[r_h_edge_list[macro.size() + 1][i].to][j].to == macro.size() + 1){
-					// 		h_edge_list[r_h_edge_list[macro.size() + 1][i].to][j].weight += powerplan_width;
-					// 	}
-					// }
 					macro[m]->updateXY(make_pair(chip_width - powerplan_width - macro[m]->w() / 2, macro[m]->cy()));
 				}
 			}
@@ -493,12 +477,6 @@ void improve_strategy1(vector<Macro*>& macro, vector<Macro*>& native_macro, Plan
 				// needs to add constraint in to LP model by reverse constraint graph.
 				// We can only ensure that "a" will higher than "b" at least w(a, b),
 				if(alpha * std::abs(native_macro[m]->y2() - (chip_height - powerplan_width)) / micron < current_cost){
-					// r_v_edge_list[macro.size() + 1][i].weight += powerplan_width;
-					// for(int j = 0; j < v_edge_list[r_v_edge_list[macro.size() + 1][i].to].size(); j++){
-					// 	if(v_edge_list[r_v_edge_list[macro.size() + 1][i].to][j].to == macro.size() + 1){
-					// 		v_edge_list[r_v_edge_list[macro.size() + 1][i].to][j].weight += powerplan_width;
-					// 	}
-					// }
 					macro[m]->updateXY(make_pair(macro[m]->cx(), chip_height - powerplan_width - macro[m]->h() / 2));
 				}
 			}
@@ -596,29 +574,7 @@ void search_sparse(vector<Macro*>& macro, Plane* horizontal_plane, double left, 
 	}
 	if(!pre_found){
 		pre_found = search_area(macro, horizontal_plane, left_bottom, left, (left + right) / 2, (top + bottom) / 2, bottom, Gh, Gv);
-	}	
-
-	// if(right - left <= chip_width / 8.0)
-	// 	pre_found = true;
-
-	// bool found = false;
-	// // Search left_top subregion
-	// if(!found && !pre_found){
-	// 	search_sparse(macro, horizontal_plane, left, (left + right) / 2, (top + bottom) / 2, top, Gh, Gv, found);
-	// }
-	// // Search right_top subregion
-	// if(!found && !pre_found){
-	// 	search_sparse(macro, horizontal_plane, (left + right) / 2, right, (top + bottom) / 2, top, Gh, Gv, found);
-	// }
-	// // Search right_bottom subregion
-	// if(!found && !pre_found){
-	// 	search_sparse(macro, horizontal_plane, (left + right) / 2, right, bottom, (top + bottom) / 2, Gh, Gv, found);
-	// }
-	// // Search left_bottom subregion
-	// if(!found && !pre_found){
-	// 	search_sparse(macro, horizontal_plane, left, (left + right) / 2, bottom, (top + bottom) / 2, Gh, Gv, found);
-	// }
-	// pre_found = found;
+	}
 }
 
 void improve_strategy2(vector<Macro*>& macro, Plane* horizontal_plane, Graph& Gh, Graph& Gv){

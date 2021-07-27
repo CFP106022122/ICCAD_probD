@@ -4,9 +4,13 @@
 #include "macro.h"
 #include "LP.h"
 #include "corner_stitch.h"
+#include "corner_stitch/utils/update.h"
 #include <iostream>
 #include <random>
 #include <vector>
+#include <cmath>
+#include <unistd.h>
+#include <signal.h>
 
 using namespace std;
 
@@ -146,24 +150,13 @@ bool build_Gc(Graph &G, DICNIC<double> *Gc, Graph &G_the_other_dir, bool test_g_
 	int cnt = 0;
 	for (auto &e : zero_slack_edges)
 	{
-		if (e.from != 0)
-			cout << macros[e.from]->name() << ' ';
-		else
-			cout << "source ";
-		if (e.to != V + 1)
-			cout << macros[e.to]->name() << " ";
-		else
-			cout << "sink ";
 		if (e.from == 0 || e.to == V + 1)
 		{
-			cout << "1\n";
 			Gc->add_edge(e.from, e.to, DBL_MAX, true);
 			++cnt;
-			// cout << "adding edge from " << e.from << " to " << e.to << " with weight " << DBL_MAX << '\n';
 		}
 		else
 		{
-			cout << "2";
 			double w = determine_edge_weight(macros[e.from], macros[e.to], test_g_is_horizontal);
 			bool from_to_to;
 			if (test_g_is_horizontal) {
@@ -192,7 +185,6 @@ bool build_Gc(Graph &G, DICNIC<double> *Gc, Graph &G_the_other_dir, bool test_g_
 			{
 				Gc->add_edge(e.from, e.to, DBL_MAX, true);
 				++cnt;
-				cout << "a\n";
 			}
 			else
 			{
@@ -201,8 +193,6 @@ bool build_Gc(Graph &G, DICNIC<double> *Gc, Graph &G_the_other_dir, bool test_g_
 				double coord_to = (test_g_is_horizontal) ? macros[e.to]->cx() : macros[e.to]->cy();
 				w = max(coord_from - Rvj + avg, 0) + max(Lvi + avg - coord_to, 0); //??
 				Gc->add_edge(e.from, e.to, w, true);
-				cout << "b " << w << endl;
-				// cout << "adding edge from " << e.from << " to " << e.to << " with weight " << w << '\n';
 			}
 			if (from_to_to)
 				G_the_other_dir.remove_edge(e.from, e.to);
@@ -220,10 +210,8 @@ bool adjustment_helper(Graph &G, DICNIC<double> *Gc, Graph &G_the_other_dir, boo
 	{
 		return true;
 	}
-	cout <<"Cut size: " <<Gc->cut_e.size() << endl;
 	for (auto &e : Gc->cut_e)
 	{
-		cout << e.pre << ' ' << e.v << endl;
 		double w = determine_edge_weight(macros[e.pre], macros[e.v], !adjust_g_is_horizontal);
 		if (adjust_g_is_horizontal)
 		{
@@ -259,15 +247,9 @@ void adjustment(Graph &Gh, Graph &Gv)
 	double longest_path_h = Gh.longest_path(true);
 	double longest_path_v = Gv.longest_path(false);
 	double copy_of_chip_height = chip_height; // for safety
-	cout << "Before adjustment:\n";
-	cout << "Horizontal constraint graph has longest path: " << longest_path_h << '\n';
-	cout << "Vertical constraint graph has longest path: " << longest_path_v << "\n\n";
 
 	while (longest_path_h > chip_width || longest_path_v > chip_height)
 	{
-		cout << "Now:\n";
-		cout << "Horizontal constraint graph has longest path: " << longest_path_h << '\n';
-		cout << "Vertical constraint graph has longest path: " << longest_path_v << "\n\n";
 
 		double prev_longest_path_h = longest_path_h, prev_longest_path_v = longest_path_v;
 		DICNIC<double>* Gc = new DICNIC<double>;
@@ -276,14 +258,12 @@ void adjustment(Graph &Gh, Graph &Gv)
 		{
 			if (build_Gc(Gh, Gc, Gv, false))
 			{
-				cout << "???\n";
 				chip_height = copy_of_chip_height;
 				rebuild_constraint_graph(Gh, Gv);
 				return;
 			}
 			if (adjustment_helper(Gh, Gc, Gv, true))
 			{
-				cout << "123213\n";
 				chip_height = copy_of_chip_height;
 				rebuild_constraint_graph(Gh, Gv);
 				return;
@@ -292,7 +272,6 @@ void adjustment(Graph &Gh, Graph &Gv)
 			longest_path_v = Gv.longest_path(false);
 			if (longest_path_h == prev_longest_path_h)
 			{
-				cout << "456456\n";
 				chip_height = copy_of_chip_height;
 				rebuild_constraint_graph(Gh, Gv);
 				return;
@@ -337,20 +316,14 @@ void adjustment(Graph &Gh, Graph &Gv)
 		}
 		delete Gc;
 	}
-	cout << "After adjustment:\n";
-	cout << "Horizontal constraint graph has longest path: " << longest_path_h << " less than chip_width: " << chip_width << '\n';
-	cout << "Vertical constraint graph has longest path: " << longest_path_v << " less than chip_height: " << copy_of_chip_height << '\n';
 	chip_height = copy_of_chip_height;
 }
 
 void rebuild_constraint_graph(Graph &Gh, Graph &Gv)
 {
-	if (++rebuild_cnt > 10)
-	{
-		cout << "End of the world\n";
+	if (++rebuild_cnt > 10){
 		return;
 	}
-	// cout << rebuild_cnt << "th time rebuild\n";
 	Gh.rebuild();
 	Gv.rebuild();
 	build_init_constraint_graph(Gh, Gv, og_macros);
@@ -372,200 +345,230 @@ double total_cost(double displace, double powerplan){
 	return alpha * displace + beta * sqrt(powerplan);
 }
 
+void perturb_strategy(double P, Graph& Gv_next, Graph& Gh_next, vector<Macro *>& macros_next){
+	vector<edge>* h_edge_list = Gh_next.get_edge_list();
+	vector<edge>* v_edge_list = Gv_next.get_edge_list();
+	vector<edge>* r_h_edge_list = Gh_next.get_reverse_edge_list();
+	vector<edge>* r_v_edge_list = Gv_next.get_reverse_edge_list();
+	bool **modified = new bool*[V+5];
+	for(int i=0;i<V+5;i++){
+		modified[i] = new bool[V+5];
+		for(int j=0;j<V+5;j++){
+			modified[i][j] = false;
+		}
+	}
+	int from, to, w;
+	for(int i=0;i<V;i++){
+		for(int j=0;j<h_edge_list[i].size();j++){
+			if(modified[i][h_edge_list[i][j].to]==true)
+				continue;
+			if(unif(rng)<=P){
+				from = h_edge_list[i][j].from;
+				to = h_edge_list[i][j].to;
+				w = h_edge_list[i][j].weight;
+				if(from==0 || from>=V || to==0 || to>=V)
+					continue;
+				Gh_next.remove_edge(from, to);
+				if(macros_next[from]->cy()<macros_next[to]->cy())
+					Gv_next.add_edge(from, to, w);
+				else
+					Gv_next.add_edge(to, from, w);
+				modified[from][to] = true;
+				modified[to][from] = true;
+			}
+		}
+
+		for(int j=0;j<v_edge_list[i].size();j++){
+			if(modified[i][v_edge_list[i][j].to]==true)
+				continue;
+			if(unif(rng)<=P){
+				from = v_edge_list[i][j].from;
+				to = v_edge_list[i][j].to;
+				w = v_edge_list[i][j].weight;
+				if(from==0 || from>=V || to==0 || to>=V)
+					continue;
+				Gv_next.remove_edge(from, to);
+				if(macros_next[from]->cx()<macros_next[to]->cx())
+					Gh_next.add_edge(from, to, w);
+				else
+					Gh_next.add_edge(to, from, w);
+				modified[from][to] = true;
+				modified[to][from] = true;
+			}
+		}
+	}
+}
+
+
+	IoData *iodatas;
+vector<Macro *> macros_best(V);
+void sigalrm_handler(int sig)
+{
+    // This gets called when the timer runs out.  Try not to do too much here;
+    // the recommended practice is to set a flag (of type sig_atomic_t), and have
+    // code elsewhere check that flag (e.g. in the main loop of your program)
+	cout<<"time's up!!!!!!!!!!!!"<<endl;
+	iodatas->macros = macros_best;
+	output();
+	exit(sig);
+}
+
 int main(int argc, char *argv[])
 {
 	rng.seed(87);
+	signal(SIGALRM, &sigalrm_handler);  // set a signal handler
+	alarm(900);  // set an alarm for 15*60 seconds from now
 
-	IoData *iodata;
-	iodata = shoatingMain(argc, argv);
-	chip_width = (double)iodata->die_width;						  // = 25.0;
-	chip_height = (double)iodata->die_height;					  // = 10.0;
-	micron = iodata->dbu_per_micron;
-	V = iodata->macros.size();									  // = 7; // #macros;
-	alpha = (double)iodata->weight_alpha;						  // = 1.0,
-	beta = (double)iodata->weight_beta;							  // = 4.0 ;
-	buffer_constraint = (double)iodata->buffer_constraint;
-	powerplan_width = (double)iodata->powerplan_width_constraint; // = 0.0,
-	min_spacing = (double)iodata->minimum_spacing;				  // = 0.0;
+	iodatas = shoatingMain(argc, argv);
+	chip_width = (double)iodatas->die_width;						  // = 25.0;
+	chip_height = (double)iodatas->die_height;					  // = 10.0;
+	micron = iodatas->dbu_per_micron;
+	V = iodatas->macros.size();									  // = 7; // #macros;
+	alpha = (double)iodatas->weight_alpha;						  // = 1.0,
+	beta = (double)iodatas->weight_beta;							  // = 4.0 ;
+	buffer_constraint = (double)iodatas->buffer_constraint;
+	powerplan_width = (double)iodatas->powerplan_width_constraint; // = 0.0,
+	min_spacing = (double)iodatas->minimum_spacing;				  // = 0.0;
 	vector<Macro*> native_macros;
-	for(int i = 0; i < iodata->macros.size(); i++){
-		native_macros.push_back(new Macro(iodata->macros[i]->w(), iodata->macros[i]->h(),
-											iodata->macros[i]->x1(), iodata->macros[i]->y1(),
-											iodata->macros[i]->is_fixed(), iodata->macros[i]->id(), iodata->macros[i]->name()));
+	for(int i = 0; i < iodatas->macros.size(); i++){
+		native_macros.push_back(new Macro(iodatas->macros[i]->w(), iodatas->macros[i]->h(),
+											iodatas->macros[i]->x1(), iodatas->macros[i]->y1(),
+											iodatas->macros[i]->is_fixed(), iodatas->macros[i]->id()));
 	}
-	og_macros = iodata->macros;
+	og_macros = iodatas->macros;
 	macros = new Macro *[V + 5];
 	for (auto &m : og_macros)
 		macros[m->id()] = m;
 	Graph Gh(V), Gv(V);
 	build_init_constraint_graph(Gh, Gv, og_macros);
-	// Gh.transitive_reduction();
-	// Gv.transitive_reduction();
-	adjustment(Gh, Gv);
-	
-	// Gh, Gv are ready.
-	// To change this function to return vector<pair<double, double>>
-	// Please refer the annotation in bottom of LP.cpp
-	// I also can modify macro[i].x, macro[i].y directly
-	// If you want to do so, wellcom to contact me
-	
-	// ====================Important====================
-	// Return values represent macros' "center" position
-	// =================================================
 
+	adjustment(Gh, Gv);
 	Linear_Program(og_macros, Gv, Gh);
 
-	//=====================================
-	// Use om_macros to store best solution
-	//=====================================
+	double displacement = displacement_evaluation(og_macros, native_macros);
 
-	// Displacement cost
-	double displacement_cost = displacement_evaluation(og_macros, native_macros);
-	printf("Displacement Cost = %lf\n", displacement_cost);
-	// Powerplan & invalid cost
+	// Create horizontal, vertical corner stitch data structure
 	Plane* horizontal_plane = CreateTilePlane(), *vertical_plane = CreateTilePlane();
 
-	double powerplan_cost = 0;
+	// Calculate powerplan cost
+	double powerplan_cost;
 	powerplan_cost = cost_evaluation(og_macros, horizontal_plane, vertical_plane);
+
+	// Vector stores invalid macros found by corner stitch data structure
 	vector<int> invalid_macros;
 	invalid_macros = invalid_check(og_macros, horizontal_plane);
-	double invalid_cost = sqrt(invalid_macros.size() * (chip_width / micron) * (chip_height / micron));
 
-	double best_cost = DBL_MAX;
-	best_cost = total_cost(displacement_cost, powerplan_cost);
-	double initial_cost = best_cost;
-	cout << "CURRENT_COST = " << best_cost << endl;
+	// Should add invalid penalty into cost
+	double cost_now = total_cost(displacement, powerplan_cost);
+	printf("Initial cost = %lf\n", cost_now);
 
-	if(!invalid_macros.empty()){
-		fix_invalid(og_macros, invalid_macros, Gh, Gv);
+//------------------------------------------------------------------------------  SA
+	double T_cur, T_end, P, rate, cost_best, cost_next;
+	int num_perturb_per_T;
+	vector<Macro *> macros_next(V);
+	macros_best.resize(V);
+	Graph Gv_next(V), Gh_next(V), Gv_best(V), Gh_best(V);
+	// args
+	P = 0.8;//possibility of accepting worse solution at begining
+	T_cur = -10000/log(P);//delta(avg) / ln(P)
+	rate = 0.1;
+	num_perturb_per_T = 5;
+	T_end = 1;
+	Gv_best.Copy(Gv);
+	Gh_best.Copy(Gh);
+	for(int j=0;j<V;j++){
+		macros_next[j] = new Macro(*og_macros[j]);
+		macros_best[j] = new Macro(*og_macros[j]);
 	}
-	// If current placement result is legal, then we try to improve our result
-	else{
-		// improvement strategy :
-		// 1. force macros near boundary to align boundary
-		// 2. reduce powerplan cost in sparse region
-		improve_strategy1(og_macros, native_macros, horizontal_plane, Gh, Gv);
-		improve_strategy2(og_macros, horizontal_plane, Gh, Gv);
-	}
-
-	// // Remove tile plane
-	// RemoveTilePlane(horizontal_plane);
-	// RemoveTilePlane(vertical_plane);
-
-	adjustment(Gh, Gv);
-	Linear_Program(og_macros, Gv, Gh);
-
-
-	displacement_cost = displacement_evaluation(og_macros, native_macros);
-	horizontal_plane = CreateTilePlane(), vertical_plane = CreateTilePlane();
-	powerplan_cost = cost_evaluation(og_macros, horizontal_plane, vertical_plane);
-	invalid_macros.clear();
-	invalid_macros = invalid_check(og_macros, horizontal_plane);
-	invalid_cost = sqrt(invalid_macros.size() * (chip_width / micron) * (chip_height / micron));
-	if(total_cost(displacement_cost, powerplan_cost) < best_cost)
-		best_cost = total_cost(displacement_cost, powerplan_cost);
-	cout << "CURRENT_COST = " << total_cost(displacement_cost, powerplan_cost) << endl;
-	// SA data
-	int SA_COUNT = 0;
-	double SA_COST = best_cost;
-	vector<Macro*> SA_SOLUTION;
-	for(int i = 0; i < og_macros.size(); i++){
-		SA_SOLUTION.push_back(new Macro(og_macros[i]->w(), og_macros[i]->h(),
-											og_macros[i]->x1(), og_macros[i]->y1(),
-											og_macros[i]->is_fixed(), og_macros[i]->id(), og_macros[i]->name()));
-	}
-	// SA
-	while(SA_COUNT < 10){
-		// =================================================================
-		// ISSUE: With this method, if CURRENT_SOLUTION doesn't accepted.
-		// 			Then in next round the perturbation would have no effect
-		// =================================================================
-		// If exist any invalid macros, then we only try to legalize placement result in this round
-		if(!invalid_macros.empty()){
-			fix_invalid(SA_SOLUTION, invalid_macros, Gh, Gv);
-		}
-		// If current placement result is legal, then we try to improve our result
-		else{
-			// improvement strategy :
-			// 1. force macros near boundary to align boundary
-			// 2. reduce powerplan cost in sparse region
-			improve_strategy1(SA_SOLUTION, native_macros, horizontal_plane, Gh, Gv);
-			improve_strategy2(SA_SOLUTION, horizontal_plane, Gh, Gv);
-		}
-
-		// Remove tile plane
-		RemoveTilePlane(horizontal_plane);
-		RemoveTilePlane(vertical_plane);
-
-		adjustment(Gh, Gv);
-		// Copy SA_SOLUTION to do Linear_Program
-		vector<Macro*> CURRENT_SOLUTION;
-		for(int i = 0; i < SA_SOLUTION.size(); i++){
-			CURRENT_SOLUTION.push_back(new Macro(SA_SOLUTION[i]->w(), SA_SOLUTION[i]->h(),
-												SA_SOLUTION[i]->x1(), SA_SOLUTION[i]->y1(),
-												SA_SOLUTION[i]->is_fixed(), SA_SOLUTION[i]->id(), SA_SOLUTION[i]->name()));
-		}		
-		Linear_Program(CURRENT_SOLUTION, Gv, Gh);
-
-		// Displacement cost
-		displacement_cost = displacement_evaluation(CURRENT_SOLUTION, native_macros);
-		// Powerplan & invalid cost
-		horizontal_plane = CreateTilePlane();
-		vertical_plane = CreateTilePlane();
-		powerplan_cost = cost_evaluation(CURRENT_SOLUTION, horizontal_plane, vertical_plane);
-		invalid_macros.clear();
-		invalid_macros = invalid_check(CURRENT_SOLUTION, horizontal_plane);
-		invalid_cost = sqrt(invalid_macros.size() * (chip_width / micron) * (chip_height / micron));
-
-		// Calculate new cost in this
-		double CURRENT_COST = total_cost(displacement_cost, powerplan_cost) + invalid_cost;
-		cout << "CURRENT_COST = " << CURRENT_COST << endl;
-		// If this round's cost smaller than best_cost, update best solution,
-		// and accept this solution(SA_SOLUTION = CURRENT_SOLUTION)
-		if(CURRENT_COST < best_cost){
-			og_macros.clear();
-			for(int i = 0; i < CURRENT_SOLUTION.size(); i++){
-				og_macros.push_back(new Macro(CURRENT_SOLUTION[i]->w(), CURRENT_SOLUTION[i]->h(),
-													CURRENT_SOLUTION[i]->x1(), CURRENT_SOLUTION[i]->y1(),
-													CURRENT_SOLUTION[i]->is_fixed(), CURRENT_SOLUTION[i]->id(), CURRENT_SOLUTION[i]->name()));
+	cost_best = cost_now;
+	while(T_cur>T_end){
+		cout<<"Temp:"<<T_cur<<" begin"<<endl;
+		for(int i=0;i<num_perturb_per_T;i++){
+			//sNext = Perturb(sNow);
+			Gv_next.rebuild();
+			Gh_next.rebuild();
+			Gv_next.Copy(Gv);
+			Gh_next.Copy(Gh);
+			for(int j=0;j<V;j++){
+				delete macros_next[j];
+				macros_next[j] = new Macro(*og_macros[j]);
 			}
-			best_cost = CURRENT_COST;
-			// If CURRENT_COST smaller than best_cost, then it must smaller than SA_COST
-			SA_SOLUTION.clear();
-			for(int i = 0; i < CURRENT_SOLUTION.size(); i++){
-				SA_SOLUTION.push_back(new Macro(CURRENT_SOLUTION[i]->w(), CURRENT_SOLUTION[i]->h(),
-													CURRENT_SOLUTION[i]->x1(), CURRENT_SOLUTION[i]->y1(),
-													CURRENT_SOLUTION[i]->is_fixed(), CURRENT_SOLUTION[i]->id(), CURRENT_SOLUTION[i]->name()));
-			}			
-			SA_COST = CURRENT_COST;
-		}
-		// new cost smaller than previous round
-		else if(CURRENT_COST < SA_COST){
-			SA_SOLUTION.clear();
-			for(int i = 0; i < CURRENT_SOLUTION.size(); i++){
-				SA_SOLUTION.push_back(new Macro(CURRENT_SOLUTION[i]->w(), CURRENT_SOLUTION[i]->h(),
-													CURRENT_SOLUTION[i]->x1(), CURRENT_SOLUTION[i]->y1(),
-													CURRENT_SOLUTION[i]->is_fixed(), CURRENT_SOLUTION[i]->id(), CURRENT_SOLUTION[i]->name()));
-			}			
-			SA_COST = CURRENT_COST;
-		}
-		// new cost bigger than previous round
-		else{
-			if(rand() % 10 < 5){
-				// Accept this higher cost solution
-				SA_SOLUTION.clear();
-				for(int i = 0; i < CURRENT_SOLUTION.size(); i++){
-					SA_SOLUTION.push_back(new Macro(CURRENT_SOLUTION[i]->w(), CURRENT_SOLUTION[i]->h(),
-														CURRENT_SOLUTION[i]->x1(), CURRENT_SOLUTION[i]->y1(),
-														CURRENT_SOLUTION[i]->is_fixed(), CURRENT_SOLUTION[i]->id(), CURRENT_SOLUTION[i]->name()));
-				}			
-				SA_COST = CURRENT_COST;
+
+			//   perturb
+			if(!invalid_macros.empty()){
+				fix_invalid(macros_next, invalid_macros, Gh, Gv);
 			}
+			// If current placement result is legal, then we try to improve our result
+			else{
+				// improvement strategy :
+				// 1. force macros near boundary to align boundary
+				// 2. reduce powerplan cost in sparse region
+				improve_strategy1(macros_next, native_macros, horizontal_plane, Gh_next, Gv_next);
+				improve_strategy2(macros_next, horizontal_plane, Gh_next, Gv_next);
+			}
+
+			adjustment(Gh_next, Gv_next);
+			Linear_Program(macros_next, Gv_next, Gh_next);
+
+			displacement = displacement_evaluation(macros_next, native_macros);
+
+			RemoveTilePlane(horizontal_plane);
+			RemoveTilePlane(vertical_plane);
+
+			horizontal_plane = CreateTilePlane();
+			vertical_plane = CreateTilePlane();
+
+			powerplan_cost = cost_evaluation(macros_next, horizontal_plane, vertical_plane);
+			cost_next = total_cost(displacement, powerplan_cost);
+			
+			cout<<"SA before copy, cost(next, now):"<<cost_next<<", "<<cost_now<<endl;
+			if(cost_next<cost_now){
+				//sNow = sNext;
+				Gv.rebuild();
+				Gh.rebuild();
+				Gv.Copy(Gv_next);
+				Gh.Copy(Gh_next);
+				cost_now = cost_next;
+				for(int k=0;k<V;k++){
+					delete og_macros[k];
+					og_macros[k] = new Macro(*macros_next[k]);
+				}
+				// if (cost(sNow) < cost(sBest))
+				// 	sBest = sNow;
+				if(cost_now<cost_best){
+					Gv_best.rebuild();
+					Gh_best.rebuild();
+					Gv_best.Copy(Gv);
+					Gh_best.Copy(Gh);
+					cost_best = cost_now;
+					for(int k=0;k<V;k++){
+						delete macros_best[k];
+						macros_best[k] = new Macro(*og_macros[k]);
+					}
+				}
+			//}
+			}
+			//else if (Accept(T, cost(sNext)-cost(sNow)))
+			else if(exp(-(cost_next-cost_now)/T_cur)>unif(rng)){
+				//sNow = sNext;
+				Gv.rebuild();
+				Gh.rebuild();
+				Gv.Copy(Gv_next);
+				Gh.Copy(Gh_next);
+				cost_now = cost_next;
+				for(int k=0;k<V;k++){
+					delete og_macros[k];
+					og_macros[k] = new Macro(*macros_next[k]);
+				}
+			}
+			cout<<"SA after copy, cur_T:"<<T_cur<<", costNow:"<<cost_now<<", costBest:"<<cost_best<<endl;
 		}
-		SA_COUNT++;
+
+		T_cur*=rate;
 	}
-	cout << "INITIAL COST = " << initial_cost << endl;
-	cout << "BEST COST = " << best_cost << endl;
+	iodatas->macros = macros_best;
+	//----------------------------------------------------------------- SA
+
 	output();
 	return 0;
 }
