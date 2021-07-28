@@ -51,8 +51,8 @@
 
 typedef struct
 {
-    int p_x;
-    int p_y;
+    double p_x;
+    double p_y;
 } Point;
 
 typedef struct

@@ -32,6 +32,34 @@ private:
 	bool **adj_matrix;
 
 public:
+	void Copy(Graph& G_copy){
+		MAX_N = G_copy.MAX_N;
+		n = G_copy.n;
+		// g = new vector<edge>[MAX_N];
+		// g_reversed = new vector<edge>[MAX_N];
+		// L = new double[MAX_N];
+		// R = new double[MAX_N];
+		// visited = new bool[MAX_N];
+		// adj_matrix = new bool *[MAX_N];
+
+		for (int i = 0; i < MAX_N; ++i){
+			//adj_matrix[i] = new bool[MAX_N];
+			L[i] = G_copy.L[i];
+			R[i] = G_copy.R[i];
+			visited[i] = G_copy.visited[i];
+		}
+
+		for (int i = 0; i < MAX_N; ++i){
+			for(int j=0;j<G_copy.g[i].size();j++)
+				g[i].push_back(G_copy.g[i][j]);
+			for(int j=0;j<G_copy.g_reversed[i].size();j++)
+				g_reversed[i].push_back(G_copy.g_reversed[i][j]);
+		}
+		for (int i = 0; i < MAX_N; ++i){
+			for(int j = 0; j < MAX_N; ++j)
+				adj_matrix[i][j] = G_copy.adj_matrix[i][j];
+		}		
+	}
 	Graph(int _n) : n{_n}
 	{
 		MAX_N = n + 5;
@@ -141,9 +169,21 @@ public:
 		_zero_slack_edges.clear();
 		for (int i = 0; i <= n; ++i)
 			for (auto &e : g[i])
-				if (R[e.to] - L[e.from] - e.weight == 0)
+				if (R[e.to] - L[e.from] - e.weight <= 0)
 					_zero_slack_edges.push_back(e);
 		return _zero_slack_edges;
+	}
+
+	vector<edge*> zero_slack(){
+		vector<edge*> zero_slack;
+		for(int i = 0; i <= n; i++){
+			for(int j = 0; j < g[i].size(); j++){
+				if(R[g[i][j].to] - L[g[i][j].from] - g[i][j].weight == 0){
+					zero_slack.push_back(&g[i][j]);
+				}
+			}
+		}
+		return zero_slack;
 	}
 
 	double *L, *R; // as required in UCLA paper
@@ -263,6 +303,21 @@ public:
 		}
 	}
 
+	bool hasCycle() {
+		bool onStack[n+2];
+		for (int i=0; i<=n+1; ++i) {
+			visited[i] = false;
+			onStack[i] = false;
+		}	
+		for (int i=0; i<=n+1; ++i) {
+			if (!visited[i]) {
+				if (visit(i, onStack))
+					return true;
+			}
+		}
+		return false;
+	}
+
 	void transitive_reduction()
 	{
 		for (int i = 0; i <= n; i++)
@@ -287,6 +342,20 @@ public:
 				remove_edge(i, delete_to_nodes[j]);
 			}
 		}
+	}
+
+	bool visit(int u, bool *onStack) {
+		visited[u] = true;
+		onStack[u] = true;
+		for (auto& e:g[u]) {
+			if (!visited[e.to])
+				if (visit(e.to, onStack))
+					return true;
+			else if (onStack[e.to])
+				return true;
+		}
+		onStack[u] = false;
+		return false;
 	}
 
 	void show()

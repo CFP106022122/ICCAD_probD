@@ -59,12 +59,12 @@ bool Horizontal_update(Plane* horizontal_plane, Plane* vertical_plane,
 		// 									LEFT(horizontal_tiles[i]), TOP(horizontal_tiles[i]));
 
 		// Decides left, right boundary of tile
-		int left = LEFT(horizontal_tiles[i]), right = RIGHT(horizontal_tiles[i]);
+		double left = LEFT(horizontal_tiles[i]), right = RIGHT(horizontal_tiles[i]);
 		if(left < 0)	left = 0;
-		if(right > (int)chip_width) right = (int)chip_width;
+		if(right > chip_width) right = chip_width;
 
 		// If tile's width is smaller than powerplan_width, makes the tile become cost_area
-		if(right - left < (int)powerplan_width){
+		if(right - left < powerplan_width){
 			Rect horizontal_cost_tile = { {left, BOTTOM(horizontal_tiles[i])}, {right, TOP(horizontal_tiles[i])} };
 			if (InsertTile(&horizontal_cost_tile, horizontal_plane, SOLID_TILE, -1) == NULL) {
 				printf("(Horizontal)Invalid insertion due to the overlapping with existing rectangles: (%d, %d) - (%d, %d).\n",
@@ -105,19 +105,13 @@ bool Vertical_update(Plane* horizontal_plane, Plane* vertical_plane,
 		if(TiGetBody(vertical_tiles[i]) == SOLID_TILE)
 			continue;
 
-		// Show this tile's position
-		// printf("%d %d %d %d %d %d %d %d\n", LEFT(vertical_tiles[i]), BOTTOM(vertical_tiles[i]),
-		// 									RIGHT(vertical_tiles[i]), BOTTOM(vertical_tiles[i]),
-		// 									RIGHT(vertical_tiles[i]), TOP(vertical_tiles[i]),
-		// 									LEFT(vertical_tiles[i]), TOP(vertical_tiles[i]));
-
 		// Decides left, right boundary of tile
-		int left = LEFT(vertical_tiles[i]), right = RIGHT(vertical_tiles[i]);
-		if(left < -(int)chip_height)	left = -(int)chip_height;
+		double left = LEFT(vertical_tiles[i]), right = RIGHT(vertical_tiles[i]);
+		if(left < -chip_height)	left = -chip_height;
 		if(right > 0) right = 0;
 
 		// If tile's width is smaller than powerplan_width, makes the tile become cost_area
-		if(right - left < (int)powerplan_width){
+		if(right - left < powerplan_width){
 			// Needs to add corresponding tile into horizontal corner_stitch data structure at the same time
 			Rect horizontal_cost_tile = { {BOTTOM(vertical_tiles[i]), -right}, {TOP(vertical_tiles[i]), -left} };
 			if (InsertTile(&horizontal_cost_tile, horizontal_plane, SOLID_TILE, -1) == NULL) {
@@ -147,31 +141,27 @@ double cost_evaluation(vector<Macro*>& macro, Plane* horizontal_plane, Plane* ve
 	// powerplan_cost
 	double powerplan_cost = 0;
 
-	// // Create horizontal, vertical corner stitch data structure
-	// Plane* horizontal_plane = CreateTilePlane();
-	// Plane* vertical_plane = CreateTilePlane();
-
 	// Insert macros into plane
 	for(int i = 0; i < macro.size(); i++){
 
 		// In horizontal (left, bottom), (right, top) = (x1, y1), (x2, y2)
-		Rect horizontal_rect = { {(int)macro[i]->x1(), (int)macro[i]->y1()}, {(int)macro[i]->x2(), (int)macro[i]->y2()} };
+		Rect horizontal_rect = { {macro[i]->x1(), macro[i]->y1()}, {macro[i]->x2(), macro[i]->y2()} };
 		// In vertical (left, bottom), (right, top) = (-y2, x1), (-y1, x2)
-		Rect vertical_rect = { {-(int)macro[i]->y2(), (int)macro[i]->x1()}, {-(int)macro[i]->y1(), (int)macro[i]->x2()} };
+		Rect vertical_rect = { {-macro[i]->y2(), macro[i]->x1()}, {-macro[i]->y1(), macro[i]->x2()} };
 
 		if (InsertTile(&horizontal_rect, horizontal_plane, SOLID_TILE, i) == NULL) {
 			printf("(Horizontal)Invalid insertion due to the overlapping with existing rectangles: (%d, %d) - (%d, %d).\n",
-					(int)macro[i]->x1(), (int)macro[i]->y1(), (int)macro[i]->x2(), (int)macro[i]->y2());
+					macro[i]->x1(), macro[i]->y1(), macro[i]->x2(), macro[i]->y2());
 		}
 		if (InsertTile(&vertical_rect, vertical_plane, SOLID_TILE, i) == NULL) {
 			printf("(Vertical)Invalid insertion due to the overlapping with existing rectangles: (%d, %d) - (%d, %d).\n",
-					-(int)macro[i]->y2(), (int)macro[i]->x1(), -(int)macro[i]->y1(), (int)macro[i]->x2());
+					-macro[i]->y2(), macro[i]->x1(), -macro[i]->y1(), macro[i]->x2());
 		}
 	}
 
 	// Rect horizontal(vertical)_region represents place region
-	Rect horizontal_region = { {0, 0}, {(int)chip_width, (int)chip_height} };
-	Rect vertical_region = { {-(int)chip_height, 0}, {0, (int)chip_width} };
+	Rect horizontal_region = { {0, 0}, {chip_width, chip_height} };
+	Rect vertical_region = { {-chip_height, 0}, {0, chip_width} };
 
 	// Update corner stitch data structure until all cost_area are found
 	bool horizontal_updated = true, vertical_updated = true;
@@ -183,7 +173,7 @@ double cost_evaluation(vector<Macro*>& macro, Plane* horizontal_plane, Plane* ve
 	}
 
 	// Show powerplan cost
-	printf("Powerplan Cost = %lf\n", powerplan_cost);
+	// printf("Powerplan Cost = %lf\n", powerplan_cost);
 
 	return powerplan_cost;
 }
@@ -196,13 +186,13 @@ vector<int> invalid_check(vector<Macro*>& macro, Plane* horizontal_plane){
 		if(macro[i]->name() == "null")
 			continue;
 		// Calculate search area boundary for macro
-		int left = (int)(macro[i]->x1() - buffer_constraint - powerplan_width),
-			right = (int)(macro[i]->x2() + buffer_constraint + powerplan_width),
-			top = (int)(macro[i]->y2() + buffer_constraint + powerplan_width),
-			bottom = (int)(macro[i]->y1() - buffer_constraint - powerplan_width);
+		double left = macro[i]->x1() - buffer_constraint - powerplan_width,
+			right = macro[i]->x2() + buffer_constraint + powerplan_width,
+			top = macro[i]->y2() + buffer_constraint + powerplan_width,
+			bottom = macro[i]->y1() - buffer_constraint - powerplan_width;
 		if(left < 0) left = 0;
-		if(right > (int)chip_width) right = (int)chip_width;
-		if(top > (int)chip_height) top = (int)chip_height;
+		if(right > chip_width) right = chip_width;
+		if(top > chip_height) top = chip_height;
 		if(bottom < 0) bottom = 0;
 
 		// Create search area
@@ -238,13 +228,13 @@ void fix_invalid(vector<Macro*>& macro, vector<int>& invalid_macros, Graph& Gh, 
 	map<edge*, int> edges_table;
 	for(int i = 0; i < invalid_macros.size(); i++){
 		// Set buffer + powerplan boundary of invalid macro
-		int left = (int)(macro[invalid_macros[i]]->x1() - powerplan_width),
-			right = (int)(macro[invalid_macros[i]]->x2() + powerplan_width),
-			top = (int)(macro[invalid_macros[i]]->y2() + powerplan_width),
-			bottom = (int)(macro[invalid_macros[i]]->y1() - powerplan_width);
+		double left = macro[invalid_macros[i]]->x1() - powerplan_width,
+			right = macro[invalid_macros[i]]->x2() + powerplan_width,
+			top = macro[invalid_macros[i]]->y2() + powerplan_width,
+			bottom = macro[invalid_macros[i]]->y1() - powerplan_width;
 		if(left < 0) left = 0;
-		if(right > (int)chip_width) right = (int)chip_width;
-		if(top > (int)chip_height) top = (int)chip_height;
+		if(right > chip_width) right = chip_width;
+		if(top > chip_height) top = chip_height;
 		if(bottom < 0) bottom = 0;
 
 		// Horizontal_edge : invalid -> neighbor
@@ -252,57 +242,65 @@ void fix_invalid(vector<Macro*>& macro, vector<int>& invalid_macros, Graph& Gh, 
 			// ==============================
 			// .to need to smaller than n + 1
 			// ==============================
-			if(macro[h_edge_list[invalid_macros[i] + 1][j].to - 1]->x1() < right){
-				map<edge*, int>::iterator it;
-				it = edges_table.find(&h_edge_list[invalid_macros[i] + 1][j]);
-				// If the edge hasn't been found, add it into global table
-				if(it != edges_table.end()){
-					it->second ++;
-				}
-				else{
-					edges_table.insert(make_pair(&h_edge_list[invalid_macros[i] + 1][j], 1));
+			if(h_edge_list[invalid_macros[i] + 1][j].to != macro.size() + 1){
+				if(macro[h_edge_list[invalid_macros[i] + 1][j].to - 1]->x1() < right){
+					map<edge*, int>::iterator it;
+					it = edges_table.find(&h_edge_list[invalid_macros[i] + 1][j]);
+					// If the edge hasn't been found, add it into global table
+					if(it != edges_table.end()){
+						it->second ++;
+					}
+					else{
+						edges_table.insert(make_pair(&h_edge_list[invalid_macros[i] + 1][j], 1));
+					}
 				}
 			}
 		}
 		// Horizontal_edge : neighbor -> invalid
 		for(int j = 0; j < r_h_edge_list[invalid_macros[i] + 1].size(); j++){
-			if(macro[r_h_edge_list[invalid_macros[i] + 1][j].from - 1]->x2() > left){
-				map<edge*, int>::iterator it;
-				it = edges_table.find(&r_h_edge_list[invalid_macros[i] + 1][j]);
-				// If the edge hasn't been found, add it into global table
-				if(it != edges_table.end()){
-					it->second ++;
-				}
-				else{
-					edges_table.insert(make_pair(&r_h_edge_list[invalid_macros[i] + 1][j], 1));
+			if(r_h_edge_list[invalid_macros[i] + 1][j].from != 0){
+				if(macro[r_h_edge_list[invalid_macros[i] + 1][j].from - 1]->x2() > left){
+					map<edge*, int>::iterator it;
+					it = edges_table.find(&r_h_edge_list[invalid_macros[i] + 1][j]);
+					// If the edge hasn't been found, add it into global table
+					if(it != edges_table.end()){
+						it->second ++;
+					}
+					else{
+						edges_table.insert(make_pair(&r_h_edge_list[invalid_macros[i] + 1][j], 1));
+					}
 				}
 			}
 		}
 		// Vertical_edge : invalid -> neighbor
 		for(int j = 0; j < v_edge_list[invalid_macros[i] + 1].size(); j++){
-			if(macro[v_edge_list[invalid_macros[i] + 1][j].to - 1]->y1() < top){
-				map<edge*, int>::iterator it;
-				it = edges_table.find(&v_edge_list[invalid_macros[i] + 1][j]);
-				// If the edge hasn't been found, add it into global table
-				if(it != edges_table.end()){
-					it->second ++;
-				}
-				else{
-					edges_table.insert(make_pair(&v_edge_list[invalid_macros[i] + 1][j], 1));
+			if(v_edge_list[invalid_macros[i] + 1][j].to != macro.size() + 1){
+				if(macro[v_edge_list[invalid_macros[i] + 1][j].to - 1]->y1() < top){
+					map<edge*, int>::iterator it;
+					it = edges_table.find(&v_edge_list[invalid_macros[i] + 1][j]);
+					// If the edge hasn't been found, add it into global table
+					if(it != edges_table.end()){
+						it->second ++;
+					}
+					else{
+						edges_table.insert(make_pair(&v_edge_list[invalid_macros[i] + 1][j], 1));
+					}
 				}
 			}
 		}		
 		// Vertical_edge : neighbor -> invalid
 		for(int j = 0; j < r_v_edge_list[invalid_macros[i] + 1].size(); j++){
-			if(macro[r_v_edge_list[invalid_macros[i] + 1][j].from - 1]->y2() > bottom){
-				map<edge*, int>::iterator it;
-				// If the edge hasn't been found, add it into global table
-				it = edges_table.find(&r_v_edge_list[invalid_macros[i] + 1][j]);
-				if(it != edges_table.end()){
-					it->second ++;
-				}
-				else{
-					edges_table.insert(make_pair(&r_v_edge_list[invalid_macros[i] + 1][j], 1));
+			if(r_v_edge_list[invalid_macros[i] + 1][j].from != 0){
+				if(macro[r_v_edge_list[invalid_macros[i] + 1][j].from - 1]->y2() > bottom){
+					map<edge*, int>::iterator it;
+					// If the edge hasn't been found, add it into global table
+					it = edges_table.find(&r_v_edge_list[invalid_macros[i] + 1][j]);
+					if(it != edges_table.end()){
+						it->second ++;
+					}
+					else{
+						edges_table.insert(make_pair(&r_v_edge_list[invalid_macros[i] + 1][j], 1));
+					}
 				}
 			}
 		}
@@ -314,45 +312,53 @@ void fix_invalid(vector<Macro*>& macro, vector<int>& invalid_macros, Graph& Gh, 
 		for(int j = 0; j < h_edge_list[invalid_macros[i] + 1].size(); j++){
 			// Search invalid macro's right edge. If it has maximum count, updates target edge.
 			it = edges_table.find(&h_edge_list[invalid_macros[i] + 1][j]);
-			if(it->second > h_max_count){
-				h_target = &h_edge_list[invalid_macros[i] + 1][j];
-				h_max_count = it->second;
+			if(it != edges_table.end()){
+				if(it->second > h_max_count){
+					h_target = &h_edge_list[invalid_macros[i] + 1][j];
+					h_max_count = it->second;
+				}
 			}
 		}
 		for(int j = 0; j < v_edge_list[invalid_macros[i] + 1].size(); j++){
 			// Search invalid macro's up edge. If it has maximum count, updates target edge.
 			it = edges_table.find(&v_edge_list[invalid_macros[i] + 1][j]);
-			if(it->second > v_max_count){
-				v_target = &v_edge_list[invalid_macros[i] + 1][j];
-				v_max_count = it->second;
+			if(it != edges_table.end()){
+				if(it->second > v_max_count){
+					v_target = &v_edge_list[invalid_macros[i] + 1][j];
+					v_max_count = it->second;
+				}
 			}
 		}
 		for(int j = 0; j < r_h_edge_list[invalid_macros[i] + 1].size(); j++){
 			// Search invalid macro's left edge. If it has maximum count, updates target edge.
 			it = edges_table.find(&r_h_edge_list[invalid_macros[i] + 1][j]);
-			if(it->second > h_max_count){
-				h_target = &r_h_edge_list[invalid_macros[i] + 1][j];
-				h_max_count = it->second;
+			if(it != edges_table.end()){
+				if(it->second > h_max_count){
+					h_target = &r_h_edge_list[invalid_macros[i] + 1][j];
+					h_max_count = it->second;
+				}
 			}
 		}
 		for(int j = 0; j < r_v_edge_list[invalid_macros[i] + 1].size(); j++){
 			// Search invalid macro's down edge. If it has maximum count, updates target edge.
 			it = edges_table.find(&r_v_edge_list[invalid_macros[i] + 1][j]);
-			if(it->second > v_max_count){
-				v_target = &r_v_edge_list[invalid_macros[i] + 1][j];
-				v_max_count = it->second;
+			if(it != edges_table.end()){
+				if(it->second > v_max_count){
+					v_target = &r_v_edge_list[invalid_macros[i] + 1][j];
+					v_max_count = it->second;
+				}
 			}
 		}
 		// Horizontal target edge has higher count than vertical edge.
 		if(h_max_count > v_max_count){
 			for(int j = 0; j < h_edge_list[h_target->from].size(); j++){
 				if(h_edge_list[h_target->from][j].to == h_target->to){
-					h_edge_list[h_target->from][j].weight = h_edge_list[h_target->from][j].weight + powerplan_width - min_spacing;
+					h_edge_list[h_target->from][j].weight = (macro[h_target->from - 1]->w() + macro[h_target->to - 1]->w()) / 2 + powerplan_width;
 				}
 			}
 			for(int j = 0; j < r_h_edge_list[h_target->to].size(); j++){
-				if(r_h_edge_list[h_target->from][j].to == h_target->to){
-					r_h_edge_list[h_target->from][j].weight = r_h_edge_list[h_target->from][j].weight + powerplan_width - min_spacing;
+				if(r_h_edge_list[h_target->to][j].from == h_target->from){
+					r_h_edge_list[h_target->to][j].weight = (macro[h_target->from - 1]->w() + macro[h_target->to - 1]->w()) / 2 + powerplan_width;
 				}
 			}
 		}
@@ -360,12 +366,12 @@ void fix_invalid(vector<Macro*>& macro, vector<int>& invalid_macros, Graph& Gh, 
 		else{
 			for(int j = 0; j < v_edge_list[v_target->from].size(); j++){
 				if(v_edge_list[v_target->from][j].to == v_target->to){
-					v_edge_list[v_target->from][j].weight = v_edge_list[v_target->from][j].weight + powerplan_width - min_spacing;
+					v_edge_list[v_target->from][j].weight = (macro[v_target->from - 1]->h() + macro[v_target->to - 1]->h()) / 2 + powerplan_width;
 				}
 			}
 			for(int j = 0; j < r_v_edge_list[v_target->to].size(); j++){
-				if(r_v_edge_list[v_target->from][j].to == v_target->to){
-					r_v_edge_list[v_target->from][j].weight = r_v_edge_list[v_target->from][j].weight + powerplan_width - min_spacing;
+				if(r_v_edge_list[v_target->to][j].from == v_target->from){
+					r_v_edge_list[v_target->to][j].weight = (macro[v_target->from - 1]->h() + macro[v_target->to - 1]->h()) / 2 + powerplan_width;
 				}
 			}			
 		}
@@ -395,10 +401,10 @@ void improve_strategy1(vector<Macro*>& macro, vector<Macro*>& native_macro, Plan
 			}
 			else{
 				if(alpha * std::abs(powerplan_width - native_macro[m]->x1()) / micron < current_cost){
-					h_edge_list[0][i].weight += powerplan_width;
+					h_edge_list[0][i].weight = macro[m]->w() / 2 + powerplan_width;
 					for(int j = 0; j < r_h_edge_list[h_edge_list[0][i].to].size(); j++){
 						if(r_h_edge_list[h_edge_list[0][i].to][j].from == 0){
-							r_h_edge_list[h_edge_list[0][i].to][j].weight += powerplan_width;
+							r_h_edge_list[h_edge_list[0][i].to][j].weight = macro[m]->w() / 2 + powerplan_width;
 						}
 					}
 				}
@@ -423,12 +429,6 @@ void improve_strategy1(vector<Macro*>& macro, vector<Macro*>& native_macro, Plan
 				// needs to add constraint in to LP model by reverse constraint graph.
 				// We can only ensure that "a" will at right hand side of "b" by distance at least w(a, b).
 				if(alpha * std::abs(native_macro[m]->x2() - (chip_width - powerplan_width)) / micron < current_cost){
-					r_h_edge_list[macro.size() + 1][i].weight += powerplan_width;
-					for(int j = 0; j < h_edge_list[r_h_edge_list[macro.size() + 1][i].to].size(); j++){
-						if(h_edge_list[r_h_edge_list[macro.size() + 1][i].to][j].to == macro.size() + 1){
-							h_edge_list[r_h_edge_list[macro.size() + 1][i].to][j].weight += powerplan_width;
-						}
-					}
 					macro[m]->updateXY(make_pair(chip_width - powerplan_width - macro[m]->w() / 2, macro[m]->cy()));
 				}
 			}
@@ -449,10 +449,10 @@ void improve_strategy1(vector<Macro*>& macro, vector<Macro*>& native_macro, Plan
 			}
 			else{
 				if(alpha * std::abs(powerplan_width - native_macro[m]->y1()) / micron < current_cost){
-					v_edge_list[0][i].weight += powerplan_width;
+					v_edge_list[0][i].weight = macro[m]->h() / 2 + powerplan_width;
 					for(int j = 0; j < r_v_edge_list[v_edge_list[0][i].to].size(); j++){
 						if(r_v_edge_list[v_edge_list[0][i].to][j].from == 0){
-							r_v_edge_list[v_edge_list[0][i].to][j].weight += powerplan_width;
+							r_v_edge_list[v_edge_list[0][i].to][j].weight = macro[m]->h() / 2 + powerplan_width;
 						}
 					}					
 				}
@@ -477,12 +477,6 @@ void improve_strategy1(vector<Macro*>& macro, vector<Macro*>& native_macro, Plan
 				// needs to add constraint in to LP model by reverse constraint graph.
 				// We can only ensure that "a" will higher than "b" at least w(a, b),
 				if(alpha * std::abs(native_macro[m]->y2() - (chip_height - powerplan_width)) / micron < current_cost){
-					r_v_edge_list[macro.size() + 1][i].weight += powerplan_width;
-					for(int j = 0; j < v_edge_list[r_v_edge_list[macro.size() + 1][i].to].size(); j++){
-						if(v_edge_list[r_v_edge_list[macro.size() + 1][i].to][j].to == macro.size() + 1){
-							v_edge_list[r_v_edge_list[macro.size() + 1][i].to][j].weight += powerplan_width;
-						}
-					}
 					macro[m]->updateXY(make_pair(macro[m]->cx(), chip_height - powerplan_width - macro[m]->h() / 2));
 				}
 			}
@@ -490,273 +484,129 @@ void improve_strategy1(vector<Macro*>& macro, vector<Macro*>& native_macro, Plan
 	}
 }
 
-void search_sparse(vector<Macro*>& macro, Plane* horizontal_plane, double left, double right, double bottom, double top,
-						Graph& Gh, Graph& Gv, bool& pre_found){
+bool search_area(vector<Macro*>& macro, Plane* horizontal_plane, Rect& region,
+					double left, double right, double top, double bottom, Graph& Gh, Graph& Gv, double threshold){
 	vector<edge>* h_edge_list = Gh.get_edge_list();
 	vector<edge>* v_edge_list = Gv.get_edge_list();
 	vector<edge>* r_h_edge_list = Gh.get_reverse_edge_list();
 	vector<edge>* r_v_edge_list = Gv.get_reverse_edge_list();
+	bool found = false;
+
+	vector<Tile*> horizontal_tiles;
+	// Find out all solid tiles in this subregion
+	TiSrArea(NULL, horizontal_plane, &region, collectSolidTiles, (ClientData)&horizontal_tiles);
+
+	double solid_area = 0;
+	vector<Tile*> cost_tile;
+	// Iterative go through solid tiles, calculate macros total area in this subregion, and find out cost tiles
+	for(int i = 0; i < horizontal_tiles.size(); i++){
+		if(TiGetClient(horizontal_tiles[i]) == -1)
+			cost_tile.push_back(horizontal_tiles[i]);
+		else{
+			double tile_left = (LEFT(horizontal_tiles[i]) < left) ? left : LEFT(horizontal_tiles[i]);
+			double tile_right = (RIGHT(horizontal_tiles[i]) > right) ? right : RIGHT(horizontal_tiles[i]);
+			double tile_top = (TOP(horizontal_tiles[i]) > top) ? top : TOP(horizontal_tiles[i]);
+			double tile_bottom = (BOTTOM(horizontal_tiles[i]) < bottom) ? bottom : BOTTOM(horizontal_tiles[i]);
+			solid_area += (tile_right - tile_left) * (tile_top - tile_bottom);
+		}
+	}
+	// Check if the subregion is sparse
+	if(solid_area <= threshold * (right - left) * (top - bottom)){
+		// for each cost tile in suregion, find macros which cause this cost_tile
+		// And adjust edge's weight which connect to these two macros
+		for(int i = 0; i < cost_tile.size(); i++){
+			// if(rand() % 10 > int(threshold * 10) + 2)
+			// 	continue;
+			if(TiGetBody(BL(cost_tile[i])) == SOLID_TILE && TiGetBody(TR(cost_tile[i])) == SOLID_TILE &&
+				TiGetClient(BL(cost_tile[i])) != -1 && TiGetClient(TR(cost_tile[i])) != -1){
+				bool pre = false;
+				if(macro[TiGetClient(TR(cost_tile[i]))]->y2() > macro[TiGetClient(BL(cost_tile[i]))]->y2()){
+					if(macro[TiGetClient(BL(cost_tile[i]))]->y2() - macro[TiGetClient(TR(cost_tile[i]))]->y1() <
+						powerplan_width - (macro[TiGetClient(TR(cost_tile[i]))]->x1() - macro[TiGetClient(BL(cost_tile[i]))]->x2())){
+						Gv.add_edge(TiGetClient(BL(cost_tile[i])) + 1, TiGetClient(TR(cost_tile[i])) + 1, (macro[TiGetClient(BL(cost_tile[i]))]->h() + macro[TiGetClient(TR(cost_tile[i]))]->h()) / 2);
+						// cout << "move " << macro[TiGetClient(BL(cost_tile[i]))]->name() << " " << macro[TiGetClient(TR(cost_tile[i]))]->name() << endl;
+						pre = true;
+					}
+				}
+				else if(macro[TiGetClient(BL(cost_tile[i]))]->y2() > macro[TiGetClient(TR(cost_tile[i]))]->y2()){
+					if(macro[TiGetClient(TR(cost_tile[i]))]->y2() - macro[TiGetClient(BL(cost_tile[i]))]->y1() <
+						powerplan_width - (macro[TiGetClient(TR(cost_tile[i]))]->x1() - macro[TiGetClient(BL(cost_tile[i]))]->x2())){
+						Gv.add_edge(TiGetClient(TR(cost_tile[i])) + 1, TiGetClient(BL(cost_tile[i])) + 1, (macro[TiGetClient(TR(cost_tile[i]))]->h() + macro[TiGetClient(BL(cost_tile[i]))]->h()) / 2);
+						pre = true;
+					}
+				}
+				if(!pre){
+					// cout << "space h " << macro[TiGetClient(BL(cost_tile[i]))]->name() << " " << macro[TiGetClient(TR(cost_tile[i]))]->name() << endl;
+					for(int j = 0; j < h_edge_list[TiGetClient(BL(cost_tile[i])) + 1].size(); j++){
+						if(h_edge_list[TiGetClient(BL(cost_tile[i])) + 1][j].to - 1 == TiGetClient(TR(cost_tile[i]))){
+							h_edge_list[TiGetClient(BL(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(BL(cost_tile[i]))]->w() + macro[TiGetClient(TR(cost_tile[i]))]->w()) / 2 + powerplan_width;
+						}
+					}
+					for(int j = 0; j < r_h_edge_list[TiGetClient(TR(cost_tile[i])) + 1].size(); j++){
+						if(r_h_edge_list[TiGetClient(TR(cost_tile[i])) + 1][j].from - 1 == TiGetClient(BL(cost_tile[i]))){
+							r_h_edge_list[TiGetClient(TR(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(BL(cost_tile[i]))]->w() + macro[TiGetClient(TR(cost_tile[i]))]->w()) / 2 + powerplan_width;
+						}
+					}
+				}
+			}
+			if(TiGetBody(LB(cost_tile[i])) == SOLID_TILE && TiGetBody(RT(cost_tile[i])) == SOLID_TILE &&
+				TiGetClient(LB(cost_tile[i])) != -1 && TiGetClient(RT(cost_tile[i])) != -1){
+				bool pre = false;
+				if(macro[TiGetClient(LB(cost_tile[i]))]->x2() > macro[TiGetClient(RT(cost_tile[i]))]->x2()){
+					if(macro[TiGetClient(LB(cost_tile[i]))]->x2() - macro[TiGetClient(RT(cost_tile[i]))]->x1() <
+						powerplan_width - (macro[TiGetClient(RT(cost_tile[i]))]->y1() - macro[TiGetClient(LB(cost_tile[i]))]->y2())){
+						Gh.add_edge(TiGetClient(LB(cost_tile[i])) + 1, TiGetClient(RT(cost_tile[i])) + 1, (macro[TiGetClient(LB(cost_tile[i]))]->w() + macro[TiGetClient(RT(cost_tile[i]))]->h()) / 2);
+						// cout << "move " << macro[TiGetClient(LB(cost_tile[i]))]->name() << " " << macro[TiGetClient(RT(cost_tile[i]))]->name() << endl;
+						pre = true;
+					}
+				}
+				else if(macro[TiGetClient(LB(cost_tile[i]))]->x2() > macro[TiGetClient(RT(cost_tile[i]))]->x2()){
+					if(macro[TiGetClient(RT(cost_tile[i]))]->y2() - macro[TiGetClient(LB(cost_tile[i]))]->y1() <
+						powerplan_width - (macro[TiGetClient(RT(cost_tile[i]))]->y1() - macro[TiGetClient(LB(cost_tile[i]))]->y2())){
+						Gh.add_edge(TiGetClient(RT(cost_tile[i])) + 1, TiGetClient(LB(cost_tile[i])) + 1, (macro[TiGetClient(RT(cost_tile[i]))]->w() + macro[TiGetClient(LB(cost_tile[i]))]->w()) / 2);
+						pre = true;
+					}
+				}					
+				// cout << "space v " << macro[TiGetClient(LB(cost_tile[i]))]->name() << " " << macro[TiGetClient(RT(cost_tile[i]))]->name() << endl;
+				for(int j = 0; j < v_edge_list[TiGetClient(LB(cost_tile[i])) + 1].size(); j++){
+					if(v_edge_list[TiGetClient(LB(cost_tile[i])) + 1][j].to - 1 == TiGetClient(RT(cost_tile[i]))){
+						v_edge_list[TiGetClient(LB(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(LB(cost_tile[i]))]->h() + macro[TiGetClient(RT(cost_tile[i]))]->h()) / 2 + powerplan_width;
+					}
+				}
+				for(int j = 0; j < r_v_edge_list[TiGetClient(RT(cost_tile[i])) + 1].size(); j++){
+					if(r_v_edge_list[TiGetClient(RT(cost_tile[i])) + 1][j].from - 1 == TiGetClient(LB(cost_tile[i]))){
+						r_v_edge_list[TiGetClient(RT(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(LB(cost_tile[i]))]->h() + macro[TiGetClient(RT(cost_tile[i]))]->h()) / 2 + powerplan_width;
+					}
+				}
+			}
+		}
+		found = true;
+	}
+	return found;
+}
+
+void search_sparse(vector<Macro*>& macro, Plane* horizontal_plane, double left, double right, double bottom, double top,
+						Graph& Gh, Graph& Gv, double threshold, bool& pre_found){
 	Rect left_top = { {left, (top + bottom) / 2}, {(left + right) / 2, top} };
 	Rect right_top = { {(left + right) / 2, (top + bottom) / 2}, {right, top} };
 	Rect right_bottom = { {(left + right) / 2, bottom}, {right, (top + bottom) / 2} };
 	Rect left_bottom = { {left, bottom}, {(left + right) / 2, (top + bottom) / 2} };
 
-	// check if left_top subregion is sparse. If yes, set pre_found = true. And do not search into next level
 	if(!pre_found){
-		vector<Tile*> horizontal_tiles;
-		// Find out all solid tiles in this subregion
-		TiSrArea(NULL, horizontal_plane, &left_top, collectSolidTiles, (ClientData)&horizontal_tiles);
-
-		double solid_area = 0;
-		vector<Tile*> cost_tile;
-		// Iterative go through solid tiles, calculate macros total area in this subregion, and find out cost tiles
-		for(int i = 0; i < horizontal_tiles.size(); i++){
-			if(TiGetClient(horizontal_tiles[i]) == -1)
-				cost_tile.push_back(horizontal_tiles[i]);
-			else{
-				double tile_left = (LEFT(horizontal_tiles[i]) < left) ? left : LEFT(horizontal_tiles[i]);
-				double tile_right = (RIGHT(horizontal_tiles[i]) > (left + right) / 2) ? (left + right) / 2 : RIGHT(horizontal_tiles[i]);
-				double tile_top = (TOP(horizontal_tiles[i]) > top) ? top : TOP(horizontal_tiles[i]);
-				double tile_bottom = (BOTTOM(horizontal_tiles[i]) < (top + bottom) / 2) ? (top + bottom) / 2 : BOTTOM(horizontal_tiles[i]);
-				solid_area += (tile_right - tile_left) * (tile_top - tile_bottom);
-			}
-		}
-		// Check if the subregion is sparse
-		if(solid_area <= 0.1 * ((left + right) / 2.0 - left) * (top - (top + bottom) / 2.0)){
-			// for each cost tile in suregion, find macros which cause this cost_tile
-			// And adjust edge's weight which connect to these two macros
-			for(int i = 0; i < cost_tile.size(); i++){
-				if(TiGetBody(BL(cost_tile[i])) == SOLID_TILE && TiGetBody(TR(cost_tile[i])) == SOLID_TILE &&
-					TiGetClient(BL(cost_tile[i])) != -1 && TiGetClient(TR(cost_tile[i])) != -1){
-					cout << "space " << macro[TiGetClient(BL(cost_tile[i]))]->name() << " " << macro[TiGetClient(TR(cost_tile[i]))]->name() << endl;
-					for(int j = 0; j < h_edge_list[TiGetClient(BL(cost_tile[i])) + 1].size(); j++){
-						if(h_edge_list[TiGetClient(BL(cost_tile[i])) + 1][j].to - 1 == TiGetClient(TR(cost_tile[i]))){
-							h_edge_list[TiGetClient(BL(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(BL(cost_tile[i]))]->w() + macro[TiGetClient(TR(cost_tile[i]))]->w()) / 2 + powerplan_width;
-						}
-					}
-					for(int j = 0; j < r_h_edge_list[TiGetClient(TR(cost_tile[i])) + 1].size(); j++){
-						if(r_h_edge_list[TiGetClient(TR(cost_tile[i])) + 1][j].from - 1 == TiGetClient(BL(cost_tile[i]))){
-							r_h_edge_list[TiGetClient(TR(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(BL(cost_tile[i]))]->w() + macro[TiGetClient(TR(cost_tile[i]))]->w()) / 2 + powerplan_width;
-						}
-					}
-				}
-				// if(TiGetBody(LB(cost_tile[i])) == SOLID_TILE && TiGetBody(RT(cost_tile[i])) == SOLID_TILE &&
-				// 	TiGetClient(LB(cost_tile[i])) != -1 && TiGetClient(RT(cost_tile[i])) != -1){
-				// 	cout << "space " << macro[TiGetClient(LB(cost_tile[i]))]->name() << " " << macro[TiGetClient(RT(cost_tile[i]))]->name() << endl;
-				// 	for(int j = 0; j < v_edge_list[TiGetClient(LB(cost_tile[i])) + 1].size(); j++){
-				// 		if(v_edge_list[TiGetClient(LB(cost_tile[i])) + 1][j].to - 1 == TiGetClient(RT(cost_tile[i]))){
-				// 			v_edge_list[TiGetClient(LB(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(LB(cost_tile[i]))]->h() + macro[TiGetClient(RT(cost_tile[i]))]->h()) / 2 + powerplan_width;
-				// 		}
-				// 	}
-				// 	for(int j = 0; j < r_v_edge_list[TiGetClient(RT(cost_tile[i])) + 1].size(); j++){
-				// 		if(r_v_edge_list[TiGetClient(RT(cost_tile[i])) + 1][j].from - 1 == TiGetClient(LB(cost_tile[i]))){
-				// 			r_v_edge_list[TiGetClient(RT(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(LB(cost_tile[i]))]->h() + macro[TiGetClient(RT(cost_tile[i]))]->h()) / 2 + powerplan_width;
-				// 		}
-				// 	}
-				// }
-			}
-			pre_found = true;
-		}
+		pre_found = search_area(macro, horizontal_plane, left_top, left, (left + right) / 2, top, (top + bottom) / 2, Gh, Gv, threshold);
 	}
-
-	// check if right_top region is sparse. If yes, set pre_found = true. And do not search into next level
 	if(!pre_found){
-		vector<Tile*> horizontal_tiles;
-		// Find out all solid tiles in this subregion
-		TiSrArea(NULL, horizontal_plane, &right_top, collectSolidTiles, (ClientData)&horizontal_tiles);
-
-		double solid_area = 0;
-		vector<Tile*> cost_tile;
-		// Iterative go through solid tiles, calculate macros total area in this subregion, and find out cost tiles
-		for(int i = 0; i < horizontal_tiles.size(); i++){
-			if(TiGetClient(horizontal_tiles[i]) == -1)
-				cost_tile.push_back(horizontal_tiles[i]);
-			else{
-				double tile_left = (LEFT(horizontal_tiles[i]) < (left + right) / 2) ? (left + right) / 2 : LEFT(horizontal_tiles[i]);
-				double tile_right = (RIGHT(horizontal_tiles[i]) > right) ? right : RIGHT(horizontal_tiles[i]);
-				double tile_top = (TOP(horizontal_tiles[i]) > top) ? top : TOP(horizontal_tiles[i]);
-				double tile_bottom = (BOTTOM(horizontal_tiles[i]) < (top + bottom) / 2) ? (top + bottom) / 2 : BOTTOM(horizontal_tiles[i]);
-				solid_area += (tile_right - tile_left) * (tile_top - tile_bottom);
-			}
-		}
-		// Check if the subregion is sparse
-		if(solid_area <= 0.1 * (right - (left + right) / 2.0) * (top - (top + bottom) / 2.0)){
-			// for each cost tile in suregion, find macros which cause this cost_tile
-			// And adjust edge's weight which connect to these two macros
-			for(int i = 0; i < cost_tile.size(); i++){
-				if(TiGetBody(BL(cost_tile[i])) == SOLID_TILE && TiGetBody(TR(cost_tile[i])) == SOLID_TILE &&
-					TiGetClient(BL(cost_tile[i])) != -1 && TiGetClient(TR(cost_tile[i])) != -1){
-					cout << "space " << macro[TiGetClient(BL(cost_tile[i]))]->name() << " " << macro[TiGetClient(TR(cost_tile[i]))]->name() << endl;
-					for(int j = 0; j < h_edge_list[TiGetClient(BL(cost_tile[i])) + 1].size(); j++){
-						if(h_edge_list[TiGetClient(BL(cost_tile[i])) + 1][j].to - 1 == TiGetClient(TR(cost_tile[i]))){
-							h_edge_list[TiGetClient(BL(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(BL(cost_tile[i]))]->w() + macro[TiGetClient(TR(cost_tile[i]))]->w()) / 2 + powerplan_width;
-						}
-					}
-					for(int j = 0; j < r_h_edge_list[TiGetClient(TR(cost_tile[i])) + 1].size(); j++){
-						if(r_h_edge_list[TiGetClient(TR(cost_tile[i])) + 1][j].from - 1 == TiGetClient(BL(cost_tile[i]))){
-							r_h_edge_list[TiGetClient(TR(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(BL(cost_tile[i]))]->w() + macro[TiGetClient(TR(cost_tile[i]))]->w()) / 2 + powerplan_width;
-						}
-					}
-				}
-				// if(TiGetBody(LB(cost_tile[i])) == SOLID_TILE && TiGetBody(RT(cost_tile[i])) == SOLID_TILE &&
-				// 	TiGetClient(LB(cost_tile[i])) != -1 && TiGetClient(RT(cost_tile[i])) != -1){
-				// 	cout << "space " << macro[TiGetClient(LB(cost_tile[i]))]->name() << " " << macro[TiGetClient(RT(cost_tile[i]))]->name() << endl;
-				// 	for(int j = 0; j < v_edge_list[TiGetClient(LB(cost_tile[i])) + 1].size(); j++){
-				// 		if(v_edge_list[TiGetClient(LB(cost_tile[i])) + 1][j].to - 1 == TiGetClient(RT(cost_tile[i]))){
-				// 			v_edge_list[TiGetClient(LB(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(LB(cost_tile[i]))]->h() + macro[TiGetClient(RT(cost_tile[i]))]->h()) / 2 + powerplan_width;
-				// 		}
-				// 	}
-				// 	for(int j = 0; j < r_v_edge_list[TiGetClient(RT(cost_tile[i])) + 1].size(); j++){
-				// 		if(r_v_edge_list[TiGetClient(RT(cost_tile[i])) + 1][j].from - 1 == TiGetClient(LB(cost_tile[i]))){
-				// 			r_v_edge_list[TiGetClient(RT(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(LB(cost_tile[i]))]->h() + macro[TiGetClient(RT(cost_tile[i]))]->h()) / 2 + powerplan_width;
-				// 		}
-				// 	}
-				// }
-			}
-			pre_found = true;
-		}
+		pre_found = search_area(macro, horizontal_plane, right_top, (left + right) / 2, right, top, (top + bottom) / 2, Gh, Gv, threshold);
 	}
-
-	// check if right_bottom region is sparse. If yes, set pre_found = true. And do not search into next level
 	if(!pre_found){
-		vector<Tile*> horizontal_tiles;
-		// Find out all solid tiles in this subregion
-		TiSrArea(NULL, horizontal_plane, &right_bottom, collectSolidTiles, (ClientData)&horizontal_tiles);
-
-		double solid_area = 0;
-		vector<Tile*> cost_tile;
-		// Iterative go through solid tiles, calculate macros total area in this subregion, and find out cost tiles
-		for(int i = 0; i < horizontal_tiles.size(); i++){
-			if(TiGetClient(horizontal_tiles[i]) == -1)
-				cost_tile.push_back(horizontal_tiles[i]);
-			else{
-				double tile_left = (LEFT(horizontal_tiles[i]) < (left + right) / 2) ? (left + right) / 2 : LEFT(horizontal_tiles[i]);
-				double tile_right = (RIGHT(horizontal_tiles[i]) > right) ? right : RIGHT(horizontal_tiles[i]);
-				double tile_top = (TOP(horizontal_tiles[i]) > (top + bottom) / 2) ? (top + bottom) / 2 : TOP(horizontal_tiles[i]);
-				double tile_bottom = (BOTTOM(horizontal_tiles[i]) < bottom) ? bottom : BOTTOM(horizontal_tiles[i]);
-				solid_area += (tile_right - tile_left) * (tile_top - tile_bottom);
-			}
-		}
-		// Check if the subregion is sparse
-		if(solid_area <= 0.1 * (right - (left + right) / 2.0) * ((top + bottom) / 2.0 - bottom)){
-			// for each cost tile in suregion, find macros which cause this cost_tile
-			// And adjust edge's weight which connect to these two macros
-			for(int i = 0; i < cost_tile.size(); i++){
-				if(TiGetBody(BL(cost_tile[i])) == SOLID_TILE && TiGetBody(TR(cost_tile[i])) == SOLID_TILE &&
-					TiGetClient(BL(cost_tile[i])) != -1 && TiGetClient(TR(cost_tile[i])) != -1){
-					cout << "space " << macro[TiGetClient(BL(cost_tile[i]))]->name() << " " << macro[TiGetClient(TR(cost_tile[i]))]->name() << endl;
-					for(int j = 0; j < h_edge_list[TiGetClient(BL(cost_tile[i])) + 1].size(); j++){
-						if(h_edge_list[TiGetClient(BL(cost_tile[i])) + 1][j].to - 1 == TiGetClient(TR(cost_tile[i]))){
-							h_edge_list[TiGetClient(BL(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(BL(cost_tile[i]))]->w() + macro[TiGetClient(TR(cost_tile[i]))]->w()) / 2 + powerplan_width;
-						}
-					}
-					for(int j = 0; j < r_h_edge_list[TiGetClient(TR(cost_tile[i])) + 1].size(); j++){
-						if(r_h_edge_list[TiGetClient(TR(cost_tile[i])) + 1][j].from - 1 == TiGetClient(BL(cost_tile[i]))){
-							r_h_edge_list[TiGetClient(TR(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(BL(cost_tile[i]))]->w() + macro[TiGetClient(TR(cost_tile[i]))]->w()) / 2 + powerplan_width;
-						}
-					}
-				}
-				// if(TiGetBody(LB(cost_tile[i])) == SOLID_TILE && TiGetBody(RT(cost_tile[i])) == SOLID_TILE &&
-				// 	TiGetClient(LB(cost_tile[i])) != -1 && TiGetClient(RT(cost_tile[i])) != -1){
-				// 	cout << "space " << macro[TiGetClient(LB(cost_tile[i]))]->name() << " " << macro[TiGetClient(RT(cost_tile[i]))]->name() << endl;
-				// 	for(int j = 0; j < v_edge_list[TiGetClient(LB(cost_tile[i])) + 1].size(); j++){
-				// 		if(v_edge_list[TiGetClient(LB(cost_tile[i])) + 1][j].to - 1 == TiGetClient(RT(cost_tile[i]))){
-				// 			v_edge_list[TiGetClient(LB(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(LB(cost_tile[i]))]->h() + macro[TiGetClient(RT(cost_tile[i]))]->h()) / 2 + powerplan_width;
-				// 		}
-				// 	}
-				// 	for(int j = 0; j < r_v_edge_list[TiGetClient(RT(cost_tile[i])) + 1].size(); j++){
-				// 		if(r_v_edge_list[TiGetClient(RT(cost_tile[i])) + 1][j].from - 1 == TiGetClient(LB(cost_tile[i]))){
-				// 			r_v_edge_list[TiGetClient(RT(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(LB(cost_tile[i]))]->h() + macro[TiGetClient(RT(cost_tile[i]))]->h()) / 2 + powerplan_width;
-				// 		}
-				// 	}
-				// }
-			}
-			pre_found = true;
-		}
+		pre_found = search_area(macro, horizontal_plane, right_bottom, (left + right) / 2, right, (top + bottom) / 2, bottom, Gh, Gv, threshold);
 	}
-
-	// check if left_bottom region is sparse. If yes, set pre_found = true. And do not search into next level
 	if(!pre_found){
-		vector<Tile*> horizontal_tiles;
-		// Find out all solid tiles in this subregion
-		TiSrArea(NULL, horizontal_plane, &left_bottom, collectSolidTiles, (ClientData)&horizontal_tiles);
-
-		double solid_area = 0;
-		vector<Tile*> cost_tile;
-		// Iterative go through solid tiles, calculate macros total area in this subregion, and find out cost tiles
-		for(int i = 0; i < horizontal_tiles.size(); i++){
-			if(TiGetClient(horizontal_tiles[i]) == -1)
-				cost_tile.push_back(horizontal_tiles[i]);
-			else{
-				double tile_left = (LEFT(horizontal_tiles[i]) < left) ? left : LEFT(horizontal_tiles[i]);
-				double tile_right = (RIGHT(horizontal_tiles[i]) > (left + right) / 2) ? (left + right) / 2 : RIGHT(horizontal_tiles[i]);
-				double tile_top = (TOP(horizontal_tiles[i]) > (top + bottom) / 2) ? (top + bottom) / 2 : TOP(horizontal_tiles[i]);
-				double tile_bottom = (BOTTOM(horizontal_tiles[i]) < bottom) ? bottom : BOTTOM(horizontal_tiles[i]);
-				solid_area += (tile_right - tile_left) * (tile_top - tile_bottom);
-			}
-		}
-		// Check if the subregion is sparse
-		if(solid_area <= 0.1 * ((left + right) / 2.0 - left) * ((top + bottom) / 2.0 - bottom)){
-			// for each cost tile in suregion, find macros which cause this cost_tile
-			// And adjust edge's weight which connect to these two macros
-			for(int i = 0; i < cost_tile.size(); i++){
-				if(TiGetBody(BL(cost_tile[i])) == SOLID_TILE && TiGetBody(TR(cost_tile[i])) == SOLID_TILE &&
-					TiGetClient(BL(cost_tile[i])) != -1 && TiGetClient(TR(cost_tile[i])) != -1){
-					cout << "space " << macro[TiGetClient(BL(cost_tile[i]))]->name() << " " << macro[TiGetClient(TR(cost_tile[i]))]->name() << endl;
-					for(int j = 0; j < h_edge_list[TiGetClient(BL(cost_tile[i])) + 1].size(); j++){
-						if(h_edge_list[TiGetClient(BL(cost_tile[i])) + 1][j].to - 1 == TiGetClient(TR(cost_tile[i]))){
-							h_edge_list[TiGetClient(BL(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(BL(cost_tile[i]))]->w() + macro[TiGetClient(TR(cost_tile[i]))]->w()) / 2 + powerplan_width;
-						}
-					}
-					for(int j = 0; j < r_h_edge_list[TiGetClient(TR(cost_tile[i])) + 1].size(); j++){
-						if(r_h_edge_list[TiGetClient(TR(cost_tile[i])) + 1][j].from - 1 == TiGetClient(BL(cost_tile[i]))){
-							r_h_edge_list[TiGetClient(TR(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(BL(cost_tile[i]))]->w() + macro[TiGetClient(TR(cost_tile[i]))]->w()) / 2 + powerplan_width;
-						}
-					}
-				}
-				// if(TiGetBody(LB(cost_tile[i])) == SOLID_TILE && TiGetBody(RT(cost_tile[i])) == SOLID_TILE &&
-				// 	TiGetClient(LB(cost_tile[i])) != -1 && TiGetClient(RT(cost_tile[i])) != -1){
-				// 	cout << "space " << macro[TiGetClient(LB(cost_tile[i]))]->name() << " " << macro[TiGetClient(RT(cost_tile[i]))]->name() << endl;
-				// 	for(int j = 0; j < v_edge_list[TiGetClient(LB(cost_tile[i])) + 1].size(); j++){
-				// 		if(v_edge_list[TiGetClient(LB(cost_tile[i])) + 1][j].to - 1 == TiGetClient(RT(cost_tile[i]))){
-				// 			v_edge_list[TiGetClient(LB(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(LB(cost_tile[i]))]->h() + macro[TiGetClient(RT(cost_tile[i]))]->h()) / 2 + powerplan_width;
-				// 		}
-				// 	}
-				// 	for(int j = 0; j < r_v_edge_list[TiGetClient(RT(cost_tile[i])) + 1].size(); j++){
-				// 		if(r_v_edge_list[TiGetClient(RT(cost_tile[i])) + 1][j].from - 1 == TiGetClient(LB(cost_tile[i]))){
-				// 			r_v_edge_list[TiGetClient(RT(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(LB(cost_tile[i]))]->h() + macro[TiGetClient(RT(cost_tile[i]))]->h()) / 2 + powerplan_width;
-				// 		}
-				// 	}
-				// }
-			}
-			pre_found = true;
-		}
+		pre_found = search_area(macro, horizontal_plane, left_bottom, left, (left + right) / 2, (top + bottom) / 2, bottom, Gh, Gv, threshold);
 	}
-
-	if(right - left <= chip_width / 8.0)
-		pre_found = true;
-
-	bool found = false;
-	// Search left_top subregion
-	if(!found && !pre_found){
-		search_sparse(macro, horizontal_plane, left, (left + right) / 2, (top + bottom) / 2, top, Gh, Gv, found);
-	}
-	// Search right_top subregion
-	if(!found && !pre_found){
-		search_sparse(macro, horizontal_plane, (left + right) / 2, right, (top + bottom) / 2, top, Gh, Gv, found);
-	}
-	// Search right_bottom subregion
-	if(!found && !pre_found){
-		search_sparse(macro, horizontal_plane, (left + right) / 2, right, bottom, (top + bottom) / 2, Gh, Gv, found);
-	}
-	// Search left_bottom subregion
-	if(!found && !pre_found){
-		search_sparse(macro, horizontal_plane, left, (left + right) / 2, bottom, (top + bottom) / 2, Gh, Gv, found);
-	}
-	pre_found = found;
 }
 
-void improve_strategy2(vector<Macro*>& macro, Plane* horizontal_plane, Graph& Gh, Graph& Gv){
+void improve_strategy2(vector<Macro*>& macro, Plane* horizontal_plane, Graph& Gh, Graph& Gv, int SA_COUNT){
 
 	vector<edge>* h_edge_list = Gh.get_edge_list();
 	vector<edge>* v_edge_list = Gv.get_edge_list();
@@ -766,243 +616,81 @@ void improve_strategy2(vector<Macro*>& macro, Plane* horizontal_plane, Graph& Gh
 	Rect right_top = { {chip_width / 2, chip_height / 2}, {chip_width, chip_height} };
 	Rect right_bottom = { {chip_width / 2, 0}, {chip_width, chip_height / 2} };
 	Rect left_bottom = { {0, 0}, {chip_width / 2, chip_height / 2} };
-
-	// data
-	vector<Tile*> horizontal_tiles;
-	double solid_area = 0;
-	vector<Tile*> cost_tile;
-
+	
+	double threshold = 0.1 * double(SA_COUNT);
 	// Check if left_top subregion is sparse. If yes, set left_top_sparse = true. And do not search into next level
 	bool left_top_sparse = false;
-	// Find out all solid tiles in this subregion
-	TiSrArea(NULL, horizontal_plane, &left_top, collectSolidTiles, (ClientData)&horizontal_tiles);
-	// Iterative go through solid tiles, calculate macros total area in this subregion, and find out cost tiles
-	for(int i = 0; i < horizontal_tiles.size(); i++){
-		if(TiGetClient(horizontal_tiles[i]) == -1)
-			cost_tile.push_back(horizontal_tiles[i]);
-		else{
-			double tile_left = LEFT(horizontal_tiles[i]);
-			double tile_right = (RIGHT(horizontal_tiles[i]) > chip_width / 2) ? chip_width / 2 : RIGHT(horizontal_tiles[i]);
-			double tile_top = TOP(horizontal_tiles[i]);
-			double tile_bottom = (BOTTOM(horizontal_tiles[i]) < chip_height / 2) ? chip_height / 2 : BOTTOM(horizontal_tiles[i]);
-			solid_area += (tile_right - tile_left) * (tile_top - tile_bottom);
-		}
-	}
-	// Check if the subregion is sparse
-	if(solid_area <= 0.6 * (chip_width / 2.0) * (chip_height / 2.0)){
-		// for each cost tile in suregion, find macros which cause this cost_tile
-		// And adjust edge's weight which connect to these two macros
-		for(int i = 0; i < cost_tile.size(); i++){
-			if(TiGetBody(BL(cost_tile[i])) == SOLID_TILE && TiGetBody(TR(cost_tile[i])) == SOLID_TILE &&
-				TiGetClient(BL(cost_tile[i])) != -1 && TiGetClient(TR(cost_tile[i])) != -1){
-				cout << "space " << macro[TiGetClient(BL(cost_tile[i]))]->name() << " " << macro[TiGetClient(TR(cost_tile[i]))]->name() << endl;
-				for(int j = 0; j < h_edge_list[TiGetClient(BL(cost_tile[i])) + 1].size(); j++){
-					if(h_edge_list[TiGetClient(BL(cost_tile[i])) + 1][j].to - 1 == TiGetClient(TR(cost_tile[i]))){
-						h_edge_list[TiGetClient(BL(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(BL(cost_tile[i]))]->w() + macro[TiGetClient(TR(cost_tile[i]))]->w()) / 2 + powerplan_width;
-					}
-				}
-				for(int j = 0; j < r_h_edge_list[TiGetClient(TR(cost_tile[i])) + 1].size(); j++){
-					if(r_h_edge_list[TiGetClient(TR(cost_tile[i])) + 1][j].from - 1 == TiGetClient(BL(cost_tile[i]))){
-						r_h_edge_list[TiGetClient(TR(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(BL(cost_tile[i]))]->w() + macro[TiGetClient(TR(cost_tile[i]))]->w()) / 2 + powerplan_width;
-					}
-				}
-			}
-			// if(TiGetBody(LB(cost_tile[i])) == SOLID_TILE && TiGetBody(RT(cost_tile[i])) == SOLID_TILE &&
-			// 	TiGetClient(LB(cost_tile[i])) != -1 && TiGetClient(RT(cost_tile[i])) != -1){
-			// 	cout << "space " << macro[TiGetClient(LB(cost_tile[i]))]->name() << " " << macro[TiGetClient(RT(cost_tile[i]))]->name() << endl;
-			// 	for(int j = 0; j < v_edge_list[TiGetClient(LB(cost_tile[i])) + 1].size(); j++){
-			// 		if(v_edge_list[TiGetClient(LB(cost_tile[i])) + 1][j].to - 1 == TiGetClient(RT(cost_tile[i]))){
-			// 			v_edge_list[TiGetClient(LB(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(LB(cost_tile[i]))]->h() + macro[TiGetClient(RT(cost_tile[i]))]->h()) / 2 + powerplan_width;
-			// 		}
-			// 	}
-			// 	for(int j = 0; j < r_v_edge_list[TiGetClient(RT(cost_tile[i])) + 1].size(); j++){
-			// 		if(r_v_edge_list[TiGetClient(RT(cost_tile[i])) + 1][j].from - 1 == TiGetClient(LB(cost_tile[i]))){
-			// 			r_v_edge_list[TiGetClient(RT(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(LB(cost_tile[i]))]->h() + macro[TiGetClient(RT(cost_tile[i]))]->h()) / 2 + powerplan_width;
-			// 		}
-			// 	}
-			// }
-		}
-		left_top_sparse = true;
-	}
+	left_top_sparse = search_area(macro, horizontal_plane, left_top, 0, chip_width / 2, chip_height, chip_height / 2, Gh, Gv, threshold);
 	if(!left_top_sparse){
-		search_sparse(macro, horizontal_plane, 0, chip_width / 2, chip_height / 2, chip_height, Gh, Gv, left_top_sparse);
+		search_sparse(macro, horizontal_plane, 0, chip_width / 2, chip_height / 2, chip_height, Gh, Gv, threshold, left_top_sparse);
 	}
 
-	horizontal_tiles.clear();
-	solid_area = 0;
-	cost_tile.clear();
 	// Check if right_top subregion is sparse. If yes, set right_top_sparse = true. And do not search into next level
 	bool right_top_sparse = false;
-	// Find out all solid tiles in this subregion
-	TiSrArea(NULL, horizontal_plane, &right_top, collectSolidTiles, (ClientData)&horizontal_tiles);
-	// Iterative go through solid tiles, calculate macros total area in this subregion, and find out cost tiles
-	for(int i = 0; i < horizontal_tiles.size(); i++){
-		if(TiGetClient(horizontal_tiles[i]) == -1)
-			cost_tile.push_back(horizontal_tiles[i]);
-		else{
-			double tile_left = (LEFT(horizontal_tiles[i]) < chip_width / 2) ? chip_width / 2 : LEFT(horizontal_tiles[i]);
-			double tile_right = RIGHT(horizontal_tiles[i]);
-			double tile_top = TOP(horizontal_tiles[i]);
-			double tile_bottom = (BOTTOM(horizontal_tiles[i]) < chip_height / 2) ? chip_height / 2 : BOTTOM(horizontal_tiles[i]);
-			solid_area += (tile_right - tile_left) * (tile_top - tile_bottom);
-		}
-	}
-	// Check if the subregion is sparse
-	if(solid_area <= 0.6 * (chip_width / 2.0) * (chip_height / 2.0)){
-		// for each cost tile in suregion, find macros which cause this cost_tile
-		// And adjust edge's weight which connect to these two macros
-		for(int i = 0; i < cost_tile.size(); i++){
-			if(TiGetBody(BL(cost_tile[i])) == SOLID_TILE && TiGetBody(TR(cost_tile[i])) == SOLID_TILE &&
-				TiGetClient(BL(cost_tile[i])) != -1 && TiGetClient(TR(cost_tile[i])) != -1){
-				cout << "space " << macro[TiGetClient(BL(cost_tile[i]))]->name() << " " << macro[TiGetClient(TR(cost_tile[i]))]->name() << endl;
-				for(int j = 0; j < h_edge_list[TiGetClient(BL(cost_tile[i])) + 1].size(); j++){
-					if(h_edge_list[TiGetClient(BL(cost_tile[i])) + 1][j].to - 1 == TiGetClient(TR(cost_tile[i]))){
-						h_edge_list[TiGetClient(BL(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(BL(cost_tile[i]))]->w() + macro[TiGetClient(TR(cost_tile[i]))]->w()) / 2 + powerplan_width;
-					}
-				}
-				for(int j = 0; j < r_h_edge_list[TiGetClient(TR(cost_tile[i])) + 1].size(); j++){
-					if(r_h_edge_list[TiGetClient(TR(cost_tile[i])) + 1][j].from - 1 == TiGetClient(BL(cost_tile[i]))){
-						r_h_edge_list[TiGetClient(TR(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(BL(cost_tile[i]))]->w() + macro[TiGetClient(TR(cost_tile[i]))]->w()) / 2 + powerplan_width;
-					}
-				}
-			}
-			// if(TiGetBody(LB(cost_tile[i])) == SOLID_TILE && TiGetBody(RT(cost_tile[i])) == SOLID_TILE &&
-			// 	TiGetClient(LB(cost_tile[i])) != -1 && TiGetClient(RT(cost_tile[i])) != -1){
-			// 	cout << "space " << macro[TiGetClient(LB(cost_tile[i]))]->name() << " " << macro[TiGetClient(RT(cost_tile[i]))]->name() << endl;
-			// 	for(int j = 0; j < v_edge_list[TiGetClient(LB(cost_tile[i])) + 1].size(); j++){
-			// 		if(v_edge_list[TiGetClient(LB(cost_tile[i])) + 1][j].to - 1 == TiGetClient(RT(cost_tile[i]))){
-			// 			v_edge_list[TiGetClient(LB(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(LB(cost_tile[i]))]->h() + macro[TiGetClient(RT(cost_tile[i]))]->h()) / 2 + powerplan_width;
-			// 		}
-			// 	}
-			// 	for(int j = 0; j < r_v_edge_list[TiGetClient(RT(cost_tile[i])) + 1].size(); j++){
-			// 		if(r_v_edge_list[TiGetClient(RT(cost_tile[i])) + 1][j].from - 1 == TiGetClient(LB(cost_tile[i]))){
-			// 			r_v_edge_list[TiGetClient(RT(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(LB(cost_tile[i]))]->h() + macro[TiGetClient(RT(cost_tile[i]))]->h()) / 2 + powerplan_width;
-			// 		}
-			// 	}
-			// }
-		}
-		right_top_sparse = true;
-	}
+	right_top_sparse = search_area(macro, horizontal_plane, right_top, chip_width / 2, chip_width, chip_height, chip_height / 2, Gh, Gv, threshold);
 	if(!right_top_sparse){
-		search_sparse(macro, horizontal_plane, chip_width / 2, chip_width, chip_height / 2, chip_height, Gh, Gv, right_top_sparse);
+		search_sparse(macro, horizontal_plane, chip_width / 2, chip_width, chip_height / 2, chip_height, Gh, Gv, threshold, right_top_sparse);
 	}
 
-	horizontal_tiles.clear();
-	solid_area = 0;
-	cost_tile.clear();
 	// Check if right_bottom subregion is sparse. If yes, set right_bottom_sparse = true. And do not search into next level
 	bool right_bottom_sparse = false;
-	// Find out all solid tiles in this subregion
-	TiSrArea(NULL, horizontal_plane, &right_bottom, collectSolidTiles, (ClientData)&horizontal_tiles);
-	// Iterative go through solid tiles, calculate macros total area in this subregion, and find out cost tiles
-	for(int i = 0; i < horizontal_tiles.size(); i++){
-		if(TiGetClient(horizontal_tiles[i]) == -1)
-			cost_tile.push_back(horizontal_tiles[i]);
-		else{
-			double tile_left = (LEFT(horizontal_tiles[i]) < chip_width / 2) ? chip_width / 2 : LEFT(horizontal_tiles[i]);
-			double tile_right = RIGHT(horizontal_tiles[i]);
-			double tile_top = (TOP(horizontal_tiles[i]) > chip_height / 2) ? chip_height / 2 : TOP(horizontal_tiles[i]);
-			double tile_bottom = BOTTOM(horizontal_tiles[i]);
-			solid_area += (tile_right - tile_left) * (tile_top - tile_bottom);
-		}
-	}
-	// Check if the subregion is sparse
-	if(solid_area <= 0.6 * (chip_width / 2.0) * (chip_height / 2.0)){
-		// for each cost tile in suregion, find macros which cause this cost_tile
-		// And adjust edge's weight which connect to these two macros
-		for(int i = 0; i < cost_tile.size(); i++){
-			if(TiGetBody(BL(cost_tile[i])) == SOLID_TILE && TiGetBody(TR(cost_tile[i])) == SOLID_TILE &&
-				TiGetClient(BL(cost_tile[i])) != -1 && TiGetClient(TR(cost_tile[i])) != -1){
-				cout << "space " << macro[TiGetClient(BL(cost_tile[i]))]->name() << " " << macro[TiGetClient(TR(cost_tile[i]))]->name() << endl;
-				for(int j = 0; j < h_edge_list[TiGetClient(BL(cost_tile[i])) + 1].size(); j++){
-					if(h_edge_list[TiGetClient(BL(cost_tile[i])) + 1][j].to - 1 == TiGetClient(TR(cost_tile[i]))){
-						h_edge_list[TiGetClient(BL(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(BL(cost_tile[i]))]->w() + macro[TiGetClient(TR(cost_tile[i]))]->w()) / 2 + powerplan_width;
-					}
-				}
-				for(int j = 0; j < r_h_edge_list[TiGetClient(TR(cost_tile[i])) + 1].size(); j++){
-					if(r_h_edge_list[TiGetClient(TR(cost_tile[i])) + 1][j].from - 1 == TiGetClient(BL(cost_tile[i]))){
-						r_h_edge_list[TiGetClient(TR(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(BL(cost_tile[i]))]->w() + macro[TiGetClient(TR(cost_tile[i]))]->w()) / 2 + powerplan_width;
-					}
-				}
-			}
-			// if(TiGetBody(LB(cost_tile[i])) == SOLID_TILE && TiGetBody(RT(cost_tile[i])) == SOLID_TILE &&
-			// 	TiGetClient(LB(cost_tile[i])) != -1 && TiGetClient(RT(cost_tile[i])) != -1){
-			// 	cout << "space " << macro[TiGetClient(LB(cost_tile[i]))]->name() << " " << macro[TiGetClient(RT(cost_tile[i]))]->name() << endl;
-			// 	for(int j = 0; j < v_edge_list[TiGetClient(LB(cost_tile[i])) + 1].size(); j++){
-			// 		if(v_edge_list[TiGetClient(LB(cost_tile[i])) + 1][j].to - 1 == TiGetClient(RT(cost_tile[i]))){
-			// 			v_edge_list[TiGetClient(LB(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(LB(cost_tile[i]))]->h() + macro[TiGetClient(RT(cost_tile[i]))]->h()) / 2 + powerplan_width;
-			// 		}
-			// 	}
-			// 	for(int j = 0; j < r_v_edge_list[TiGetClient(RT(cost_tile[i])) + 1].size(); j++){
-			// 		if(r_v_edge_list[TiGetClient(RT(cost_tile[i])) + 1][j].from - 1 == TiGetClient(LB(cost_tile[i]))){
-			// 			r_v_edge_list[TiGetClient(RT(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(LB(cost_tile[i]))]->h() + macro[TiGetClient(RT(cost_tile[i]))]->h()) / 2 + powerplan_width;
-			// 		}
-			// 	}
-			// }
-		}
-		right_bottom_sparse = true;
-	}
+	right_bottom_sparse = search_area(macro, horizontal_plane, right_bottom, chip_width / 2, chip_width, chip_height / 2, 0, Gh, Gv, threshold);
 	if(!right_bottom_sparse){
-		search_sparse(macro, horizontal_plane, chip_width / 2, chip_width, 0, chip_height / 2, Gh, Gv, right_bottom_sparse);
+		search_sparse(macro, horizontal_plane, chip_width / 2, chip_width, 0, chip_height / 2, Gh, Gv, threshold, right_bottom_sparse);
 	}
 
-	horizontal_tiles.clear();
-	solid_area = 0;
-	cost_tile.clear();
 	// Check if left_bottom subregion is sparse. If yes, set left_bottom_sparse = true. And do not search into next level
 	bool left_bottom_sparse = false;
-	// Find out all solid tiles in this subregion
-	TiSrArea(NULL, horizontal_plane, &left_bottom, collectSolidTiles, (ClientData)&horizontal_tiles);
-	// Iterative go through solid tiles, calculate macros total area in this subregion, and find out cost tiles
-	for(int i = 0; i < horizontal_tiles.size(); i++){
-		if(TiGetClient(horizontal_tiles[i]) == -1)
-			cost_tile.push_back(horizontal_tiles[i]);
-		else{
-			double tile_left = LEFT(horizontal_tiles[i]);
-			double tile_right = (RIGHT(horizontal_tiles[i]) > chip_width / 2) ? chip_width / 2 : RIGHT(horizontal_tiles[i]);
-			double tile_top = (TOP(horizontal_tiles[i]) > chip_height / 2) ? chip_height / 2 : TOP(horizontal_tiles[i]);
-			double tile_bottom = BOTTOM(horizontal_tiles[i]);
-			solid_area += (tile_right - tile_left) * (tile_top - tile_bottom);
-		}
-	}
-	// Check if the subregion is sparse
-	if(solid_area <= 0.6 * (chip_width / 2.0) * (chip_height / 2.0)){
-		// for each cost tile in suregion, find macros which cause this cost_tile
-		// And adjust edge's weight which connect to these two macros
-		for(int i = 0; i < cost_tile.size(); i++){
-			if(TiGetBody(BL(cost_tile[i])) == SOLID_TILE && TiGetBody(TR(cost_tile[i])) == SOLID_TILE &&
-				TiGetClient(BL(cost_tile[i])) != -1 && TiGetClient(TR(cost_tile[i])) != -1){
-				cout << "space " << macro[TiGetClient(BL(cost_tile[i]))]->name() << " " << macro[TiGetClient(TR(cost_tile[i]))]->name() << endl;
-				for(int j = 0; j < h_edge_list[TiGetClient(BL(cost_tile[i])) + 1].size(); j++){
-					if(h_edge_list[TiGetClient(BL(cost_tile[i])) + 1][j].to - 1 == TiGetClient(TR(cost_tile[i]))){
-						h_edge_list[TiGetClient(BL(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(BL(cost_tile[i]))]->w() + macro[TiGetClient(TR(cost_tile[i]))]->w()) / 2 + powerplan_width;
-					}
-				}
-				for(int j = 0; j < r_h_edge_list[TiGetClient(TR(cost_tile[i])) + 1].size(); j++){
-					if(r_h_edge_list[TiGetClient(TR(cost_tile[i])) + 1][j].from - 1 == TiGetClient(BL(cost_tile[i]))){
-						r_h_edge_list[TiGetClient(TR(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(BL(cost_tile[i]))]->w() + macro[TiGetClient(TR(cost_tile[i]))]->w()) / 2 + powerplan_width;
-					}
-				}
-			}
-			// if(TiGetBody(LB(cost_tile[i])) == SOLID_TILE && TiGetBody(RT(cost_tile[i])) == SOLID_TILE &&
-			// 	TiGetClient(LB(cost_tile[i])) != -1 && TiGetClient(RT(cost_tile[i])) != -1){
-			// 	cout << "space " << macro[TiGetClient(LB(cost_tile[i]))]->name() << " " << macro[TiGetClient(RT(cost_tile[i]))]->name() << endl;
-			// 	for(int j = 0; j < v_edge_list[TiGetClient(LB(cost_tile[i])) + 1].size(); j++){
-			// 		if(v_edge_list[TiGetClient(LB(cost_tile[i])) + 1][j].to - 1 == TiGetClient(RT(cost_tile[i]))){
-			// 			v_edge_list[TiGetClient(LB(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(LB(cost_tile[i]))]->h() + macro[TiGetClient(RT(cost_tile[i]))]->h()) / 2 + powerplan_width;
-			// 		}
-			// 	}
-			// 	for(int j = 0; j < r_v_edge_list[TiGetClient(RT(cost_tile[i])) + 1].size(); j++){
-			// 		if(r_v_edge_list[TiGetClient(RT(cost_tile[i])) + 1][j].from - 1 == TiGetClient(LB(cost_tile[i]))){
-			// 			r_v_edge_list[TiGetClient(RT(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(LB(cost_tile[i]))]->h() + macro[TiGetClient(RT(cost_tile[i]))]->h()) / 2 + powerplan_width;
-			// 		}
-			// 	}
-			// }
-		}
-		left_bottom_sparse = true;
-	}
+	left_bottom_sparse = search_area(macro, horizontal_plane, left_bottom, 0, chip_width / 2, chip_height / 2, 0, Gh, Gv, threshold);
 	if(!left_bottom_sparse){
-		search_sparse(macro, horizontal_plane, 0, chip_width / 2, 0, chip_height / 2, Gh, Gv, left_bottom_sparse);
+		search_sparse(macro, horizontal_plane, 0, chip_width / 2, 0, chip_height / 2, Gh, Gv, threshold, left_bottom_sparse);
 	}	
 
+	// Updates zero slack edges
+	while(Gh.longest_path(true) > chip_width){
+		vector<edge*> h_zero_slack;
+		h_zero_slack = Gh.zero_slack();
+		for(int i = 0; i < h_zero_slack.size(); i++){
+			if(h_zero_slack[i]->from != 0 && h_zero_slack[i]->to != macro.size() + 1){
+				if(h_zero_slack[i]->weight == (macro[h_zero_slack[i]->from - 1]->w() + macro[h_zero_slack[i]->to - 1]->w()) / 2 + powerplan_width){
+					// cout << macro[h_zero_slack[i]->from - 1]->name() << " " << macro[h_zero_slack[i]->to - 1]->name() << " go back" << endl;
+					h_zero_slack[i]->weight = (macro[h_zero_slack[i]->from - 1]->w() + macro[h_zero_slack[i]->to - 1]->w()) / 2 + min_spacing;
+					// Also set reverse constraint graph
+					for(int j = 0; j < r_h_edge_list[h_zero_slack[i]->to].size(); j++){
+						if(r_h_edge_list[h_zero_slack[i]->to][j].from == h_zero_slack[i]->from)
+							r_h_edge_list[h_zero_slack[i]->to][j].weight = (macro[h_zero_slack[i]->from - 1]->w() + macro[h_zero_slack[i]->to - 1]->w()) / 2 + min_spacing;
+					}
+				}
+				if(h_zero_slack[i]->weight == (macro[h_zero_slack[i]->from - 1]->w() + macro[h_zero_slack[i]->to - 1]->w()) / 2){
+					Gh.remove_edge(h_zero_slack[i]->from, h_zero_slack[i]->to);
+				}
+			}
+			// ================================
+			// needs also update reversed graph
+			// ================================
+		}
+	}
+	while(Gv.longest_path(false) > chip_height){
+		vector<edge*> v_zero_slack;
+		v_zero_slack = Gv.zero_slack();
+		for(int i = 0; i < v_zero_slack.size(); i++){
+			if(v_zero_slack[i]->from != 0 && v_zero_slack[i]->to != macro.size() + 1){
+				if(v_zero_slack[i]->weight == (macro[v_zero_slack[i]->from - 1]->h() + macro[v_zero_slack[i]->to - 1]->h()) / 2 + powerplan_width){
+					// cout << macro[v_zero_slack[i]->from - 1]->name() << " " << macro[v_zero_slack[i]->to - 1]->name() << " go back" << endl;
+					v_zero_slack[i]->weight = (macro[v_zero_slack[i]->from - 1]->h() + macro[v_zero_slack[i]->to - 1]->h()) / 2 + min_spacing;
+					// Also set reverse constraint graph
+					for(int j = 0; j < r_v_edge_list[v_zero_slack[i]->to].size(); j++){
+						if(r_v_edge_list[v_zero_slack[i]->to][j].from == v_zero_slack[i]->from)
+							r_v_edge_list[v_zero_slack[i]->to][j].weight = (macro[v_zero_slack[i]->from - 1]->h() + macro[v_zero_slack[i]->to - 1]->h()) / 2 + min_spacing;
+					}					
+				}
+				if(v_zero_slack[i]->weight == (macro[v_zero_slack[i]->from - 1]->h() + macro[v_zero_slack[i]->to - 1]->h()) / 2){
+					Gv.remove_edge(v_zero_slack[i]->from, v_zero_slack[i]->to);
+				}
+			}
+			// ================================
+			// needs also update reversed graph
+			// ================================
+		}
+	}
 }

@@ -118,7 +118,6 @@ struct DICNIC // O(V^2 E) -> O(VlogV E) // O(VE)
 	void dfs_cut(int u)
 	{
 		vis[u] = 1; //表示u屬於source的最小割集
-		// std::cout << u << '\n';
 		for (int i = g[u]; ~i; i = e[i].pre)
 		{
 			if (e[i].flow < e[i].cap && !vis[e[i].v])
@@ -143,7 +142,6 @@ struct DICNIC // O(V^2 E) -> O(VlogV E) // O(VE)
 				}
 			}
 		}
-		// std::cout << ans << "\n";
 		return ans >= DBL_MAX;
 	}
 };
