@@ -382,19 +382,14 @@ double total_cost(double displace, double powerplan){
 	return alpha * displace + beta * sqrt(powerplan);
 }
 
+bool **modified;
 void perturb_strategy(double P, Graph& Gv_next, Graph& Gh_next, vector<Macro *>& macros_next){
 	vector<edge>* h_edge_list = Gh_next.get_edge_list();
 	vector<edge>* v_edge_list = Gv_next.get_edge_list();
 	vector<edge>* r_h_edge_list = Gh_next.get_reverse_edge_list();
 	vector<edge>* r_v_edge_list = Gv_next.get_reverse_edge_list();
-	bool **modified = new bool*[V+5];
-	for(int i=0;i<V+5;i++){
-		modified[i] = new bool[V+5];
-		for(int j=0;j<V+5;j++){
-			modified[i][j] = false;
-		}
-	}
 	int from, to, w;
+	int cnt = 0;
 	for(int i=0;i<V;i++){
 		for(int j=0;j<h_edge_list[i].size();j++){
 			if(modified[i][h_edge_list[i][j].to]==true)
@@ -412,6 +407,7 @@ void perturb_strategy(double P, Graph& Gv_next, Graph& Gh_next, vector<Macro *>&
 					Gv_next.add_edge(to, from, w);
 				modified[from][to] = true;
 				modified[to][from] = true;
+				cnt++;
 			}
 		}
 
@@ -431,6 +427,7 @@ void perturb_strategy(double P, Graph& Gv_next, Graph& Gh_next, vector<Macro *>&
 					Gh_next.add_edge(to, from, w);
 				modified[from][to] = true;
 				modified[to][from] = true;
+				cnt++;
 			}
 		}
 	}
@@ -578,6 +575,13 @@ int main(int argc, char *argv[])
 		macros_best[j] = new Macro(*og_macros[j]);
 	}
 	cost_best = cost_now;
+	modified = new bool*[V+5]; //modified
+	for(int i=0;i<V+5;i++){
+		modified[i] = new bool[V+5];
+		for(int j=0;j<V+5;j++){
+			modified[i][j] = false;
+		}
+	}
 	while(T_cur>T_end){
 		cout<<"Temp:"<<T_cur<<" begin"<<endl;
 		for(int i=0;i<num_perturb_per_T;i++){
