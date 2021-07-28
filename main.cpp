@@ -255,6 +255,8 @@ bool adjustment_helper(Graph &G, DICNIC<double> &Gc, Graph &G_the_other_dir, boo
 	return false;
 }
 
+
+
 bool rebuild_critical(Graph& G, bool is_horizontal) {
 	double boundry = (is_horizontal) ? chip_width : chip_height;
 	vector<edge> critical_edges = G.zero_slack_edges();
@@ -271,7 +273,6 @@ bool rebuild_critical(Graph& G, bool is_horizontal) {
 		G.remove_edge(e.from, e.to);
 		G.add_edge(e.from, e.to, dist+min_spacing);
 	}
-	cout << candidates.size();
 	return candidates.size();
 }
 
@@ -400,6 +401,7 @@ void adjustment(Graph &Gh, Graph &Gv)
 	cout << "Vertical constraint graph has longest path: " << longest_path_v << " less than chip_height: " << copy_of_chip_height << '\n';
 	chip_height = copy_of_chip_height;
 }
+
 
 void rebuild_constraint_graph(Graph &Gh, Graph &Gv)
 {

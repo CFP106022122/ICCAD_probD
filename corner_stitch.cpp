@@ -67,14 +67,14 @@ bool Horizontal_update(Plane* horizontal_plane, Plane* vertical_plane,
 		if(right - left < powerplan_width){
 			Rect horizontal_cost_tile = { {left, BOTTOM(horizontal_tiles[i])}, {right, TOP(horizontal_tiles[i])} };
 			if (InsertTile(&horizontal_cost_tile, horizontal_plane, SOLID_TILE, -1) == NULL) {
-				printf("(Horizontal)Invalid insertion due to the overlapping with existing rectangles: (%d, %d) - (%d, %d).\n",
+				printf("(Horizontal)Invalid insertion due to the overlapping with existing rectangles: (%lf, %lf) - (%lf, %lf).\n",
 						left, BOTTOM(horizontal_tiles[i]), right, TOP(horizontal_tiles[i]));
 			}
 
 			// Needs to add corresponding tile into vertical corner_stitch data structure at the same time
 			Rect vertical_cost_tile = { {-TOP(horizontal_tiles[i]), left}, {-BOTTOM(horizontal_tiles[i]), right} };
 			if (InsertTile(&vertical_cost_tile, vertical_plane, SOLID_TILE, -1) == NULL) {
-				printf("(Vertical)Invalid insertion due to the overlapping with existing rectangles: (%d, %d) - (%d, %d).\n",
+				printf("(Vertical)Invalid insertion due to the overlapping with existing rectangles: (%lf, %lf) - (%lf, %lf).\n",
 						-TOP(horizontal_tiles[i]), left, -BOTTOM(horizontal_tiles[i]), right);
 			}
 
@@ -115,12 +115,12 @@ bool Vertical_update(Plane* horizontal_plane, Plane* vertical_plane,
 			// Needs to add corresponding tile into horizontal corner_stitch data structure at the same time
 			Rect horizontal_cost_tile = { {BOTTOM(vertical_tiles[i]), -right}, {TOP(vertical_tiles[i]), -left} };
 			if (InsertTile(&horizontal_cost_tile, horizontal_plane, SOLID_TILE, -1) == NULL) {
-				printf("(Horizontal)Invalid insertion due to the overlapping with existing rectangles: (%d, %d) - (%d, %d).\n",
+				printf("(Horizontal)Invalid insertion due to the overlapping with existing rectangles: (%lf, %lf) - (%lf, %lf).\n",
 						BOTTOM(vertical_tiles[i]), -right, TOP(vertical_tiles[i]), -left);
 			}		
 			Rect vertical_cost_tile = { {left, BOTTOM(vertical_tiles[i])}, {right, TOP(vertical_tiles[i])} };
 			if (InsertTile(&vertical_cost_tile, vertical_plane, SOLID_TILE, -1) == NULL) {
-				printf("(Vertical)Invalid insertion due to the overlapping with existing rectangles: (%d, %d) - (%d, %d).\n",
+				printf("(Vertical)Invalid insertion due to the overlapping with existing rectangles: (%lf, %lf) - (%lf, %lf).\n",
 						left, BOTTOM(vertical_tiles[i]), right, TOP(vertical_tiles[i]));
 			}
 
@@ -150,11 +150,11 @@ double cost_evaluation(vector<Macro*>& macro, Plane* horizontal_plane, Plane* ve
 		Rect vertical_rect = { {-macro[i]->y2(), macro[i]->x1()}, {-macro[i]->y1(), macro[i]->x2()} };
 
 		if (InsertTile(&horizontal_rect, horizontal_plane, SOLID_TILE, i) == NULL) {
-			printf("(Horizontal)Invalid insertion due to the overlapping with existing rectangles: (%d, %d) - (%d, %d).\n",
+			printf("(Horizontal)Invalid insertion due to the overlapping with existing rectangles: (%lf, %lf) - (%lf, %lf).\n",
 					macro[i]->x1(), macro[i]->y1(), macro[i]->x2(), macro[i]->y2());
 		}
 		if (InsertTile(&vertical_rect, vertical_plane, SOLID_TILE, i) == NULL) {
-			printf("(Vertical)Invalid insertion due to the overlapping with existing rectangles: (%d, %d) - (%d, %d).\n",
+			printf("(Vertical)Invalid insertion due to the overlapping with existing rectangles: (%lf, %lf) - (%lf, %lf).\n",
 					-macro[i]->y2(), macro[i]->x1(), -macro[i]->y1(), macro[i]->x2());
 		}
 	}
@@ -515,16 +515,17 @@ bool search_area(vector<Macro*>& macro, Plane* horizontal_plane, Rect& region,
 		// for each cost tile in suregion, find macros which cause this cost_tile
 		// And adjust edge's weight which connect to these two macros
 		for(int i = 0; i < cost_tile.size(); i++){
-			// if(rand() % 10 > int(threshold * 10) + 2)
-			// 	continue;
 			if(TiGetBody(BL(cost_tile[i])) == SOLID_TILE && TiGetBody(TR(cost_tile[i])) == SOLID_TILE &&
 				TiGetClient(BL(cost_tile[i])) != -1 && TiGetClient(TR(cost_tile[i])) != -1){
+				//============================
+				//============TODO============
+				// Do not space e(macro, null)
+				//============================
 				bool pre = false;
 				if(macro[TiGetClient(TR(cost_tile[i]))]->y2() > macro[TiGetClient(BL(cost_tile[i]))]->y2()){
 					if(macro[TiGetClient(BL(cost_tile[i]))]->y2() - macro[TiGetClient(TR(cost_tile[i]))]->y1() <
 						powerplan_width - (macro[TiGetClient(TR(cost_tile[i]))]->x1() - macro[TiGetClient(BL(cost_tile[i]))]->x2())){
 						Gv.add_edge(TiGetClient(BL(cost_tile[i])) + 1, TiGetClient(TR(cost_tile[i])) + 1, (macro[TiGetClient(BL(cost_tile[i]))]->h() + macro[TiGetClient(TR(cost_tile[i]))]->h()) / 2);
-						// cout << "move " << macro[TiGetClient(BL(cost_tile[i]))]->name() << " " << macro[TiGetClient(TR(cost_tile[i]))]->name() << endl;
 						pre = true;
 					}
 				}
@@ -536,7 +537,6 @@ bool search_area(vector<Macro*>& macro, Plane* horizontal_plane, Rect& region,
 					}
 				}
 				if(!pre){
-					// cout << "space h " << macro[TiGetClient(BL(cost_tile[i]))]->name() << " " << macro[TiGetClient(TR(cost_tile[i]))]->name() << endl;
 					for(int j = 0; j < h_edge_list[TiGetClient(BL(cost_tile[i])) + 1].size(); j++){
 						if(h_edge_list[TiGetClient(BL(cost_tile[i])) + 1][j].to - 1 == TiGetClient(TR(cost_tile[i]))){
 							h_edge_list[TiGetClient(BL(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(BL(cost_tile[i]))]->w() + macro[TiGetClient(TR(cost_tile[i]))]->w()) / 2 + powerplan_width;
@@ -556,7 +556,6 @@ bool search_area(vector<Macro*>& macro, Plane* horizontal_plane, Rect& region,
 					if(macro[TiGetClient(LB(cost_tile[i]))]->x2() - macro[TiGetClient(RT(cost_tile[i]))]->x1() <
 						powerplan_width - (macro[TiGetClient(RT(cost_tile[i]))]->y1() - macro[TiGetClient(LB(cost_tile[i]))]->y2())){
 						Gh.add_edge(TiGetClient(LB(cost_tile[i])) + 1, TiGetClient(RT(cost_tile[i])) + 1, (macro[TiGetClient(LB(cost_tile[i]))]->w() + macro[TiGetClient(RT(cost_tile[i]))]->h()) / 2);
-						// cout << "move " << macro[TiGetClient(LB(cost_tile[i]))]->name() << " " << macro[TiGetClient(RT(cost_tile[i]))]->name() << endl;
 						pre = true;
 					}
 				}
@@ -566,16 +565,17 @@ bool search_area(vector<Macro*>& macro, Plane* horizontal_plane, Rect& region,
 						Gh.add_edge(TiGetClient(RT(cost_tile[i])) + 1, TiGetClient(LB(cost_tile[i])) + 1, (macro[TiGetClient(RT(cost_tile[i]))]->w() + macro[TiGetClient(LB(cost_tile[i]))]->w()) / 2);
 						pre = true;
 					}
-				}					
-				// cout << "space v " << macro[TiGetClient(LB(cost_tile[i]))]->name() << " " << macro[TiGetClient(RT(cost_tile[i]))]->name() << endl;
-				for(int j = 0; j < v_edge_list[TiGetClient(LB(cost_tile[i])) + 1].size(); j++){
-					if(v_edge_list[TiGetClient(LB(cost_tile[i])) + 1][j].to - 1 == TiGetClient(RT(cost_tile[i]))){
-						v_edge_list[TiGetClient(LB(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(LB(cost_tile[i]))]->h() + macro[TiGetClient(RT(cost_tile[i]))]->h()) / 2 + powerplan_width;
-					}
 				}
-				for(int j = 0; j < r_v_edge_list[TiGetClient(RT(cost_tile[i])) + 1].size(); j++){
-					if(r_v_edge_list[TiGetClient(RT(cost_tile[i])) + 1][j].from - 1 == TiGetClient(LB(cost_tile[i]))){
-						r_v_edge_list[TiGetClient(RT(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(LB(cost_tile[i]))]->h() + macro[TiGetClient(RT(cost_tile[i]))]->h()) / 2 + powerplan_width;
+				if(!pre){
+					for(int j = 0; j < v_edge_list[TiGetClient(LB(cost_tile[i])) + 1].size(); j++){
+						if(v_edge_list[TiGetClient(LB(cost_tile[i])) + 1][j].to - 1 == TiGetClient(RT(cost_tile[i]))){
+							v_edge_list[TiGetClient(LB(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(LB(cost_tile[i]))]->h() + macro[TiGetClient(RT(cost_tile[i]))]->h()) / 2 + powerplan_width;
+						}
+					}
+					for(int j = 0; j < r_v_edge_list[TiGetClient(RT(cost_tile[i])) + 1].size(); j++){
+						if(r_v_edge_list[TiGetClient(RT(cost_tile[i])) + 1][j].from - 1 == TiGetClient(LB(cost_tile[i]))){
+							r_v_edge_list[TiGetClient(RT(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(LB(cost_tile[i]))]->h() + macro[TiGetClient(RT(cost_tile[i]))]->h()) / 2 + powerplan_width;
+						}
 					}
 				}
 			}
@@ -653,7 +653,6 @@ void improve_strategy2(vector<Macro*>& macro, Plane* horizontal_plane, Graph& Gh
 		for(int i = 0; i < h_zero_slack.size(); i++){
 			if(h_zero_slack[i]->from != 0 && h_zero_slack[i]->to != macro.size() + 1){
 				if(h_zero_slack[i]->weight == (macro[h_zero_slack[i]->from - 1]->w() + macro[h_zero_slack[i]->to - 1]->w()) / 2 + powerplan_width){
-					// cout << macro[h_zero_slack[i]->from - 1]->name() << " " << macro[h_zero_slack[i]->to - 1]->name() << " go back" << endl;
 					h_zero_slack[i]->weight = (macro[h_zero_slack[i]->from - 1]->w() + macro[h_zero_slack[i]->to - 1]->w()) / 2 + min_spacing;
 					// Also set reverse constraint graph
 					for(int j = 0; j < r_h_edge_list[h_zero_slack[i]->to].size(); j++){
@@ -661,7 +660,8 @@ void improve_strategy2(vector<Macro*>& macro, Plane* horizontal_plane, Graph& Gh
 							r_h_edge_list[h_zero_slack[i]->to][j].weight = (macro[h_zero_slack[i]->from - 1]->w() + macro[h_zero_slack[i]->to - 1]->w()) / 2 + min_spacing;
 					}
 				}
-				if(h_zero_slack[i]->weight == (macro[h_zero_slack[i]->from - 1]->w() + macro[h_zero_slack[i]->to - 1]->w()) / 2){
+				if(h_zero_slack[i]->weight == (macro[h_zero_slack[i]->from - 1]->w() + macro[h_zero_slack[i]->to - 1]->w()) / 2 &&
+					macro[h_zero_slack[i]->from - 1]->name() != "null" && macro[h_zero_slack[i]->to - 1]->name() != "null"){
 					Gh.remove_edge(h_zero_slack[i]->from, h_zero_slack[i]->to);
 				}
 			}
@@ -676,7 +676,6 @@ void improve_strategy2(vector<Macro*>& macro, Plane* horizontal_plane, Graph& Gh
 		for(int i = 0; i < v_zero_slack.size(); i++){
 			if(v_zero_slack[i]->from != 0 && v_zero_slack[i]->to != macro.size() + 1){
 				if(v_zero_slack[i]->weight == (macro[v_zero_slack[i]->from - 1]->h() + macro[v_zero_slack[i]->to - 1]->h()) / 2 + powerplan_width){
-					// cout << macro[v_zero_slack[i]->from - 1]->name() << " " << macro[v_zero_slack[i]->to - 1]->name() << " go back" << endl;
 					v_zero_slack[i]->weight = (macro[v_zero_slack[i]->from - 1]->h() + macro[v_zero_slack[i]->to - 1]->h()) / 2 + min_spacing;
 					// Also set reverse constraint graph
 					for(int j = 0; j < r_v_edge_list[v_zero_slack[i]->to].size(); j++){
@@ -684,7 +683,8 @@ void improve_strategy2(vector<Macro*>& macro, Plane* horizontal_plane, Graph& Gh
 							r_v_edge_list[v_zero_slack[i]->to][j].weight = (macro[v_zero_slack[i]->from - 1]->h() + macro[v_zero_slack[i]->to - 1]->h()) / 2 + min_spacing;
 					}					
 				}
-				if(v_zero_slack[i]->weight == (macro[v_zero_slack[i]->from - 1]->h() + macro[v_zero_slack[i]->to - 1]->h()) / 2){
+				if(v_zero_slack[i]->weight == (macro[v_zero_slack[i]->from - 1]->h() + macro[v_zero_slack[i]->to - 1]->h()) / 2 &&
+					macro[v_zero_slack[i]->from - 1]->name() != "null" && macro[v_zero_slack[i]->to - 1]->name() != "null"){
 					Gv.remove_edge(v_zero_slack[i]->from, v_zero_slack[i]->to);
 				}
 			}
