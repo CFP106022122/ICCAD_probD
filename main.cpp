@@ -147,7 +147,9 @@ bool build_Gc(Graph &G, DICNIC<double> *Gc, Graph &G_the_other_dir, bool test_g_
 {
 	vector<edge> &zero_slack_edges = G.zero_slack_edges();
 	// G.show();
+	bool from_to_to;
 	int cnt = 0;
+	double w, Rvj, Lvi, test_longest_path, boundry, coord_from, coord_to, avg;
 	for (auto &e : zero_slack_edges)
 	{
 		if (e.from != 0)
@@ -168,8 +170,7 @@ bool build_Gc(Graph &G, DICNIC<double> *Gc, Graph &G_the_other_dir, bool test_g_
 		else
 		{
 			cout << "2";
-			double w = determine_edge_weight(macros[e.from], macros[e.to], test_g_is_horizontal);
-			bool from_to_to;
+			w = determine_edge_weight(macros[e.from], macros[e.to], test_g_is_horizontal);
 			if (test_g_is_horizontal) {
 				if (macros[e.from]->cx() < macros[e.to]->cx()) {
 					from_to_to = true;
@@ -188,10 +189,10 @@ bool build_Gc(Graph &G, DICNIC<double> *Gc, Graph &G_the_other_dir, bool test_g_
 			else
 				G_the_other_dir.add_edge(e.to, e.from, w);
 
-			double Rvj = G.R[e.to];
-			double Lvi = G.L[e.from];
-			double test_longest_path = G_the_other_dir.longest_path(test_g_is_horizontal);
-			double boundry = (test_g_is_horizontal) ? chip_width : chip_height;
+			Rvj = G.R[e.to];
+			Lvi = G.L[e.from];
+			test_longest_path = G_the_other_dir.longest_path(test_g_is_horizontal);
+			boundry = (test_g_is_horizontal) ? chip_width : chip_height;
 			if (test_longest_path > boundry)
 			{
 				Gc->add_edge(e.from, e.to, DBL_MAX, true);
@@ -200,9 +201,9 @@ bool build_Gc(Graph &G, DICNIC<double> *Gc, Graph &G_the_other_dir, bool test_g_
 			}
 			else
 			{
-				double avg = determine_edge_weight(macros[e.from], macros[e.to], test_g_is_horizontal);
-				double coord_from = (test_g_is_horizontal) ? macros[e.from]->cx() : macros[e.from]->cy();
-				double coord_to = (test_g_is_horizontal) ? macros[e.to]->cx() : macros[e.to]->cy();
+				avg = determine_edge_weight(macros[e.from], macros[e.to], test_g_is_horizontal);
+				coord_from = (test_g_is_horizontal) ? macros[e.from]->cx() : macros[e.from]->cy();
+				coord_to = (test_g_is_horizontal) ? macros[e.to]->cx() : macros[e.to]->cy();
 				w = max(coord_from - Rvj + avg, 0) + max(Lvi + avg - coord_to, 0); //??
 				Gc->add_edge(e.from, e.to, w, true);
 				cout << "b " << w << endl;
@@ -220,6 +221,7 @@ bool build_Gc(Graph &G, DICNIC<double> *Gc, Graph &G_the_other_dir, bool test_g_
 
 bool adjustment_helper(Graph &G, DICNIC<double> *Gc, Graph &G_the_other_dir, bool adjust_g_is_horizontal) //using macros
 {
+	cout<<"In adjustment_helper"<<endl;
 	if (Gc->min_cut(0, V + 1))
 	{
 		return true;
@@ -253,10 +255,10 @@ bool adjustment_helper(Graph &G, DICNIC<double> *Gc, Graph &G_the_other_dir, boo
 		}
 		G.remove_edge(e.pre, e.v);
 	}
-	if (G_the_other_dir.hasCycle()) {
-		cout < "Adjustment induces cycle";
-		return true;
-	}
+	// if (G_the_other_dir.hasCycle()) {
+	// 	cout << "Adjustment induces cycle";
+	// 	return true;
+	// }
 	return false;
 }
 
@@ -397,14 +399,14 @@ void perturb_strategy(double P, Graph& Gv_next, Graph& Gh_next, vector<Macro *>&
 		for(int j=0;j<h_edge_list[i].size();j++){
 			if(modified[i][h_edge_list[i][j].to]==true)
 				continue;
-			if(unif(rng)<=P){
+			if(unif(rng)<=0.005){
 				from = h_edge_list[i][j].from;
 				to = h_edge_list[i][j].to;
 				w = h_edge_list[i][j].weight;
-				if(from==0 || from>=V || to==0 || to>=V)
+				if(from==0 || from>V || to==0 || to>V)
 					continue;
 				Gh_next.remove_edge(from, to);
-				if(macros_next[from]->cy()<macros_next[to]->cy())
+				if(macros_next[from]->cy()<=macros_next[to]->cy())
 					Gv_next.add_edge(from, to, w);
 				else
 					Gv_next.add_edge(to, from, w);
@@ -416,14 +418,14 @@ void perturb_strategy(double P, Graph& Gv_next, Graph& Gh_next, vector<Macro *>&
 		for(int j=0;j<v_edge_list[i].size();j++){
 			if(modified[i][v_edge_list[i][j].to]==true)
 				continue;
-			if(unif(rng)<=P){
+			if(unif(rng)<=0.005){
 				from = v_edge_list[i][j].from;
 				to = v_edge_list[i][j].to;
 				w = v_edge_list[i][j].weight;
-				if(from==0 || from>=V || to==0 || to>=V)
+				if(from==0 || from>V || to==0 || to>V)
 					continue;
 				Gv_next.remove_edge(from, to);
-				if(macros_next[from]->cx()<macros_next[to]->cx())
+				if(macros_next[from]->cx()<=macros_next[to]->cx())
 					Gh_next.add_edge(from, to, w);
 				else
 					Gh_next.add_edge(to, from, w);
@@ -517,8 +519,8 @@ int main(int argc, char *argv[])
 		// improvement strategy :
 		// 1. force macros near boundary to align boundary
 		// 2. reduce powerplan cost in sparse region
-		//improve_strategy1(og_macros, native_macros, horizontal_plane, Gh, Gv);
-		//improve_strategy2(og_macros, horizontal_plane, Gh, Gv);
+		improve_strategy1(og_macros, native_macros, horizontal_plane, Gh, Gv);
+		improve_strategy2(og_macros, horizontal_plane, Gh, Gv);
 	}
 
 	// Remove tile plane
