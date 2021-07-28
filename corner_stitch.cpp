@@ -485,7 +485,7 @@ void improve_strategy1(vector<Macro*>& macro, vector<Macro*>& native_macro, Plan
 }
 
 bool search_area(vector<Macro*>& macro, Plane* horizontal_plane, Rect& region,
-					double left, double right, double top, double bottom, Graph& Gh, Graph& Gv){
+					double left, double right, double top, double bottom, Graph& Gh, Graph& Gv, double threshold){
 	vector<edge>* h_edge_list = Gh.get_edge_list();
 	vector<edge>* v_edge_list = Gv.get_edge_list();
 	vector<edge>* r_h_edge_list = Gh.get_reverse_edge_list();
@@ -510,34 +510,63 @@ bool search_area(vector<Macro*>& macro, Plane* horizontal_plane, Rect& region,
 			solid_area += (tile_right - tile_left) * (tile_top - tile_bottom);
 		}
 	}
-	double threshold;
-	if(horizontal_tiles.size() < 20) threshold = 0.6;
-	else if(horizontal_tiles.size() < 100) threshold = 0.4;
-	else if(horizontal_tiles.size() < 200) threshold = 0.2;
-	else threshold = 0.1;
 	// Check if the subregion is sparse
 	if(solid_area <= threshold * (right - left) * (top - bottom)){
 		// for each cost tile in suregion, find macros which cause this cost_tile
 		// And adjust edge's weight which connect to these two macros
 		for(int i = 0; i < cost_tile.size(); i++){
-			if(rand() % 10 > int(threshold * 10) + 2)
-				continue;
+			// if(rand() % 10 > int(threshold * 10) + 2)
+			// 	continue;
 			if(TiGetBody(BL(cost_tile[i])) == SOLID_TILE && TiGetBody(TR(cost_tile[i])) == SOLID_TILE &&
 				TiGetClient(BL(cost_tile[i])) != -1 && TiGetClient(TR(cost_tile[i])) != -1){
-				// cout << "space h " << macro[TiGetClient(BL(cost_tile[i]))]->name() << " " << macro[TiGetClient(TR(cost_tile[i]))]->name() << endl;
-				for(int j = 0; j < h_edge_list[TiGetClient(BL(cost_tile[i])) + 1].size(); j++){
-					if(h_edge_list[TiGetClient(BL(cost_tile[i])) + 1][j].to - 1 == TiGetClient(TR(cost_tile[i]))){
-						h_edge_list[TiGetClient(BL(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(BL(cost_tile[i]))]->w() + macro[TiGetClient(TR(cost_tile[i]))]->w()) / 2 + powerplan_width;
+				bool pre = false;
+				if(macro[TiGetClient(TR(cost_tile[i]))]->y2() > macro[TiGetClient(BL(cost_tile[i]))]->y2()){
+					if(macro[TiGetClient(BL(cost_tile[i]))]->y2() - macro[TiGetClient(TR(cost_tile[i]))]->y1() <
+						powerplan_width - (macro[TiGetClient(TR(cost_tile[i]))]->x1() - macro[TiGetClient(BL(cost_tile[i]))]->x2())){
+						Gv.add_edge(TiGetClient(BL(cost_tile[i])) + 1, TiGetClient(TR(cost_tile[i])) + 1, (macro[TiGetClient(BL(cost_tile[i]))]->h() + macro[TiGetClient(TR(cost_tile[i]))]->h()) / 2);
+						// cout << "move " << macro[TiGetClient(BL(cost_tile[i]))]->name() << " " << macro[TiGetClient(TR(cost_tile[i]))]->name() << endl;
+						pre = true;
 					}
 				}
-				for(int j = 0; j < r_h_edge_list[TiGetClient(TR(cost_tile[i])) + 1].size(); j++){
-					if(r_h_edge_list[TiGetClient(TR(cost_tile[i])) + 1][j].from - 1 == TiGetClient(BL(cost_tile[i]))){
-						r_h_edge_list[TiGetClient(TR(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(BL(cost_tile[i]))]->w() + macro[TiGetClient(TR(cost_tile[i]))]->w()) / 2 + powerplan_width;
+				else if(macro[TiGetClient(BL(cost_tile[i]))]->y2() > macro[TiGetClient(TR(cost_tile[i]))]->y2()){
+					if(macro[TiGetClient(TR(cost_tile[i]))]->y2() - macro[TiGetClient(BL(cost_tile[i]))]->y1() <
+						powerplan_width - (macro[TiGetClient(TR(cost_tile[i]))]->x1() - macro[TiGetClient(BL(cost_tile[i]))]->x2())){
+						Gv.add_edge(TiGetClient(TR(cost_tile[i])) + 1, TiGetClient(BL(cost_tile[i])) + 1, (macro[TiGetClient(TR(cost_tile[i]))]->h() + macro[TiGetClient(BL(cost_tile[i]))]->h()) / 2);
+						pre = true;
+					}
+				}
+				if(!pre){
+					// cout << "space h " << macro[TiGetClient(BL(cost_tile[i]))]->name() << " " << macro[TiGetClient(TR(cost_tile[i]))]->name() << endl;
+					for(int j = 0; j < h_edge_list[TiGetClient(BL(cost_tile[i])) + 1].size(); j++){
+						if(h_edge_list[TiGetClient(BL(cost_tile[i])) + 1][j].to - 1 == TiGetClient(TR(cost_tile[i]))){
+							h_edge_list[TiGetClient(BL(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(BL(cost_tile[i]))]->w() + macro[TiGetClient(TR(cost_tile[i]))]->w()) / 2 + powerplan_width;
+						}
+					}
+					for(int j = 0; j < r_h_edge_list[TiGetClient(TR(cost_tile[i])) + 1].size(); j++){
+						if(r_h_edge_list[TiGetClient(TR(cost_tile[i])) + 1][j].from - 1 == TiGetClient(BL(cost_tile[i]))){
+							r_h_edge_list[TiGetClient(TR(cost_tile[i])) + 1][j].weight = (macro[TiGetClient(BL(cost_tile[i]))]->w() + macro[TiGetClient(TR(cost_tile[i]))]->w()) / 2 + powerplan_width;
+						}
 					}
 				}
 			}
 			if(TiGetBody(LB(cost_tile[i])) == SOLID_TILE && TiGetBody(RT(cost_tile[i])) == SOLID_TILE &&
 				TiGetClient(LB(cost_tile[i])) != -1 && TiGetClient(RT(cost_tile[i])) != -1){
+				bool pre = false;
+				if(macro[TiGetClient(LB(cost_tile[i]))]->x2() > macro[TiGetClient(RT(cost_tile[i]))]->x2()){
+					if(macro[TiGetClient(LB(cost_tile[i]))]->x2() - macro[TiGetClient(RT(cost_tile[i]))]->x1() <
+						powerplan_width - (macro[TiGetClient(RT(cost_tile[i]))]->y1() - macro[TiGetClient(LB(cost_tile[i]))]->y2())){
+						Gh.add_edge(TiGetClient(LB(cost_tile[i])) + 1, TiGetClient(RT(cost_tile[i])) + 1, (macro[TiGetClient(LB(cost_tile[i]))]->w() + macro[TiGetClient(RT(cost_tile[i]))]->h()) / 2);
+						// cout << "move " << macro[TiGetClient(LB(cost_tile[i]))]->name() << " " << macro[TiGetClient(RT(cost_tile[i]))]->name() << endl;
+						pre = true;
+					}
+				}
+				else if(macro[TiGetClient(LB(cost_tile[i]))]->x2() > macro[TiGetClient(RT(cost_tile[i]))]->x2()){
+					if(macro[TiGetClient(RT(cost_tile[i]))]->y2() - macro[TiGetClient(LB(cost_tile[i]))]->y1() <
+						powerplan_width - (macro[TiGetClient(RT(cost_tile[i]))]->y1() - macro[TiGetClient(LB(cost_tile[i]))]->y2())){
+						Gh.add_edge(TiGetClient(RT(cost_tile[i])) + 1, TiGetClient(LB(cost_tile[i])) + 1, (macro[TiGetClient(RT(cost_tile[i]))]->w() + macro[TiGetClient(LB(cost_tile[i]))]->w()) / 2);
+						pre = true;
+					}
+				}					
 				// cout << "space v " << macro[TiGetClient(LB(cost_tile[i]))]->name() << " " << macro[TiGetClient(RT(cost_tile[i]))]->name() << endl;
 				for(int j = 0; j < v_edge_list[TiGetClient(LB(cost_tile[i])) + 1].size(); j++){
 					if(v_edge_list[TiGetClient(LB(cost_tile[i])) + 1][j].to - 1 == TiGetClient(RT(cost_tile[i]))){
@@ -557,27 +586,27 @@ bool search_area(vector<Macro*>& macro, Plane* horizontal_plane, Rect& region,
 }
 
 void search_sparse(vector<Macro*>& macro, Plane* horizontal_plane, double left, double right, double bottom, double top,
-						Graph& Gh, Graph& Gv, bool& pre_found){
+						Graph& Gh, Graph& Gv, double threshold, bool& pre_found){
 	Rect left_top = { {left, (top + bottom) / 2}, {(left + right) / 2, top} };
 	Rect right_top = { {(left + right) / 2, (top + bottom) / 2}, {right, top} };
 	Rect right_bottom = { {(left + right) / 2, bottom}, {right, (top + bottom) / 2} };
 	Rect left_bottom = { {left, bottom}, {(left + right) / 2, (top + bottom) / 2} };
 
 	if(!pre_found){
-		pre_found = search_area(macro, horizontal_plane, left_top, left, (left + right) / 2, top, (top + bottom) / 2, Gh, Gv);
+		pre_found = search_area(macro, horizontal_plane, left_top, left, (left + right) / 2, top, (top + bottom) / 2, Gh, Gv, threshold);
 	}
 	if(!pre_found){
-		pre_found = search_area(macro, horizontal_plane, right_top, (left + right) / 2, right, top, (top + bottom) / 2, Gh, Gv);
+		pre_found = search_area(macro, horizontal_plane, right_top, (left + right) / 2, right, top, (top + bottom) / 2, Gh, Gv, threshold);
 	}
 	if(!pre_found){
-		pre_found = search_area(macro, horizontal_plane, right_bottom, (left + right) / 2, right, (top + bottom) / 2, bottom, Gh, Gv);
+		pre_found = search_area(macro, horizontal_plane, right_bottom, (left + right) / 2, right, (top + bottom) / 2, bottom, Gh, Gv, threshold);
 	}
 	if(!pre_found){
-		pre_found = search_area(macro, horizontal_plane, left_bottom, left, (left + right) / 2, (top + bottom) / 2, bottom, Gh, Gv);
+		pre_found = search_area(macro, horizontal_plane, left_bottom, left, (left + right) / 2, (top + bottom) / 2, bottom, Gh, Gv, threshold);
 	}
 }
 
-void improve_strategy2(vector<Macro*>& macro, Plane* horizontal_plane, Graph& Gh, Graph& Gv){
+void improve_strategy2(vector<Macro*>& macro, Plane* horizontal_plane, Graph& Gh, Graph& Gv, int SA_COUNT){
 
 	vector<edge>* h_edge_list = Gh.get_edge_list();
 	vector<edge>* v_edge_list = Gv.get_edge_list();
@@ -587,33 +616,34 @@ void improve_strategy2(vector<Macro*>& macro, Plane* horizontal_plane, Graph& Gh
 	Rect right_top = { {chip_width / 2, chip_height / 2}, {chip_width, chip_height} };
 	Rect right_bottom = { {chip_width / 2, 0}, {chip_width, chip_height / 2} };
 	Rect left_bottom = { {0, 0}, {chip_width / 2, chip_height / 2} };
-
+	
+	double threshold = 0.1 * double(SA_COUNT);
 	// Check if left_top subregion is sparse. If yes, set left_top_sparse = true. And do not search into next level
 	bool left_top_sparse = false;
-	left_top_sparse = search_area(macro, horizontal_plane, left_top, 0, chip_width / 2, chip_height, chip_height / 2, Gh, Gv);
+	left_top_sparse = search_area(macro, horizontal_plane, left_top, 0, chip_width / 2, chip_height, chip_height / 2, Gh, Gv, threshold);
 	if(!left_top_sparse){
-		search_sparse(macro, horizontal_plane, 0, chip_width / 2, chip_height / 2, chip_height, Gh, Gv, left_top_sparse);
+		search_sparse(macro, horizontal_plane, 0, chip_width / 2, chip_height / 2, chip_height, Gh, Gv, threshold, left_top_sparse);
 	}
 
 	// Check if right_top subregion is sparse. If yes, set right_top_sparse = true. And do not search into next level
 	bool right_top_sparse = false;
-	right_top_sparse = search_area(macro, horizontal_plane, right_top, chip_width / 2, chip_width, chip_height, chip_height / 2, Gh, Gv);
+	right_top_sparse = search_area(macro, horizontal_plane, right_top, chip_width / 2, chip_width, chip_height, chip_height / 2, Gh, Gv, threshold);
 	if(!right_top_sparse){
-		search_sparse(macro, horizontal_plane, chip_width / 2, chip_width, chip_height / 2, chip_height, Gh, Gv, right_top_sparse);
+		search_sparse(macro, horizontal_plane, chip_width / 2, chip_width, chip_height / 2, chip_height, Gh, Gv, threshold, right_top_sparse);
 	}
 
 	// Check if right_bottom subregion is sparse. If yes, set right_bottom_sparse = true. And do not search into next level
 	bool right_bottom_sparse = false;
-	right_bottom_sparse = search_area(macro, horizontal_plane, right_bottom, chip_width / 2, chip_width, chip_height / 2, 0, Gh, Gv);
+	right_bottom_sparse = search_area(macro, horizontal_plane, right_bottom, chip_width / 2, chip_width, chip_height / 2, 0, Gh, Gv, threshold);
 	if(!right_bottom_sparse){
-		search_sparse(macro, horizontal_plane, chip_width / 2, chip_width, 0, chip_height / 2, Gh, Gv, right_bottom_sparse);
+		search_sparse(macro, horizontal_plane, chip_width / 2, chip_width, 0, chip_height / 2, Gh, Gv, threshold, right_bottom_sparse);
 	}
 
 	// Check if left_bottom subregion is sparse. If yes, set left_bottom_sparse = true. And do not search into next level
 	bool left_bottom_sparse = false;
-	left_bottom_sparse = search_area(macro, horizontal_plane, left_bottom, 0, chip_width / 2, chip_height / 2, 0, Gh, Gv);
+	left_bottom_sparse = search_area(macro, horizontal_plane, left_bottom, 0, chip_width / 2, chip_height / 2, 0, Gh, Gv, threshold);
 	if(!left_bottom_sparse){
-		search_sparse(macro, horizontal_plane, 0, chip_width / 2, 0, chip_height / 2, Gh, Gv, left_bottom_sparse);
+		search_sparse(macro, horizontal_plane, 0, chip_width / 2, 0, chip_height / 2, Gh, Gv, threshold, left_bottom_sparse);
 	}	
 
 	// Updates zero slack edges
@@ -630,6 +660,9 @@ void improve_strategy2(vector<Macro*>& macro, Plane* horizontal_plane, Graph& Gh
 						if(r_h_edge_list[h_zero_slack[i]->to][j].from == h_zero_slack[i]->from)
 							r_h_edge_list[h_zero_slack[i]->to][j].weight = (macro[h_zero_slack[i]->from - 1]->w() + macro[h_zero_slack[i]->to - 1]->w()) / 2 + min_spacing;
 					}
+				}
+				if(h_zero_slack[i]->weight == (macro[h_zero_slack[i]->from - 1]->w() + macro[h_zero_slack[i]->to - 1]->w()) / 2){
+					Gh.remove_edge(h_zero_slack[i]->from, h_zero_slack[i]->to);
 				}
 			}
 			// ================================
@@ -650,6 +683,9 @@ void improve_strategy2(vector<Macro*>& macro, Plane* horizontal_plane, Graph& Gh
 						if(r_v_edge_list[v_zero_slack[i]->to][j].from == v_zero_slack[i]->from)
 							r_v_edge_list[v_zero_slack[i]->to][j].weight = (macro[v_zero_slack[i]->from - 1]->h() + macro[v_zero_slack[i]->to - 1]->h()) / 2 + min_spacing;
 					}					
+				}
+				if(v_zero_slack[i]->weight == (macro[v_zero_slack[i]->from - 1]->h() + macro[v_zero_slack[i]->to - 1]->h()) / 2){
+					Gv.remove_edge(v_zero_slack[i]->from, v_zero_slack[i]->to);
 				}
 			}
 			// ================================

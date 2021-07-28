@@ -471,8 +471,8 @@ int main(int argc, char *argv[])
 	// args
 	P = 0.8;//possibility of accepting worse solution at begining
 	T_cur = -10000/log(P);//delta(avg) / ln(P)
-	rate = 0.1;
-	num_perturb_per_T = 5;
+	rate = 0.2;
+	num_perturb_per_T = 2;
 	T_end = 1;
 	Gv_best.Copy(Gv);
 	Gh_best.Copy(Gh);
@@ -481,6 +481,7 @@ int main(int argc, char *argv[])
 		macros_best[j] = new Macro(*og_macros[j]);
 	}
 	cost_best = cost_now;
+	int SA_COUNT = 1;
 	while(T_cur>T_end){
 		cout<<"Temp:"<<T_cur<<" begin"<<endl;
 		for(int i=0;i<num_perturb_per_T;i++){
@@ -504,7 +505,7 @@ int main(int argc, char *argv[])
 				// 1. force macros near boundary to align boundary
 				// 2. reduce powerplan cost in sparse region
 				improve_strategy1(macros_next, native_macros, horizontal_plane, Gh_next, Gv_next);
-				improve_strategy2(macros_next, horizontal_plane, Gh_next, Gv_next);
+				improve_strategy2(macros_next, horizontal_plane, Gh_next, Gv_next, SA_COUNT);
 			}
 
 			adjustment(Gh_next, Gv_next);
@@ -563,7 +564,7 @@ int main(int argc, char *argv[])
 			}
 			cout<<"SA after copy, cur_T:"<<T_cur<<", costNow:"<<cost_now<<", costBest:"<<cost_best<<endl;
 		}
-
+		SA_COUNT++;
 		T_cur*=rate;
 	}
 	iodatas->macros = macros_best;

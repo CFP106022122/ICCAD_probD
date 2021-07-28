@@ -303,6 +303,21 @@ public:
 		}
 	}
 
+	bool hasCycle() {
+		bool onStack[n+2];
+		for (int i=0; i<=n+1; ++i) {
+			visited[i] = false;
+			onStack[i] = false;
+		}	
+		for (int i=0; i<=n+1; ++i) {
+			if (!visited[i]) {
+				if (visit(i, onStack))
+					return true;
+			}
+		}
+		return false;
+	}
+
 	void transitive_reduction()
 	{
 		for (int i = 0; i <= n; i++)
