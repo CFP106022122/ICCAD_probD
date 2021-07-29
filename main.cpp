@@ -391,6 +391,8 @@ void perturb_strategy(double P, Graph& Gv_next, Graph& Gh_next, vector<Macro *>&
 	int from, to, w;
 	int cnt = 0;
 	for(int i=0;i<V;i++){
+		if(cnt>=10)
+			return;
 		for(int j=0;j<h_edge_list[i].size();j++){
 			if(modified[i][h_edge_list[i][j].to]==true)
 				continue;
@@ -405,6 +407,17 @@ void perturb_strategy(double P, Graph& Gv_next, Graph& Gh_next, vector<Macro *>&
 					Gv_next.add_edge(from, to, w);
 				else
 					Gv_next.add_edge(to, from, w);
+				modified[from][to] = true;
+				modified[to][from] = true;
+				cnt++;
+			}else if(unif(rng)<=0.005){
+				from = h_edge_list[i][j].from;
+				to = h_edge_list[i][j].to;
+				w = h_edge_list[i][j].weight;
+				if(from==0 || from>V || to==0 || to>V)
+					continue;
+				if(w==macros_next[from]->w()/2+macros_next[to]->w()/2+min_spacing)
+					h_edge_list[i][j].weight = macros_next[from]->w()/2+macros_next[to]->w()/2+powerplan_width;
 				modified[from][to] = true;
 				modified[to][from] = true;
 				cnt++;
@@ -425,6 +438,17 @@ void perturb_strategy(double P, Graph& Gv_next, Graph& Gh_next, vector<Macro *>&
 					Gh_next.add_edge(from, to, w);
 				else
 					Gh_next.add_edge(to, from, w);
+				modified[from][to] = true;
+				modified[to][from] = true;
+				cnt++;
+			}else if(unif(rng)<=0.005){
+				from = v_edge_list[i][j].from;
+				to = v_edge_list[i][j].to;
+				w = v_edge_list[i][j].weight;
+				if(from==0 || from>V || to==0 || to>V)
+					continue;
+				if(w==macros_next[from]->h()/2+macros_next[to]->h()/2+min_spacing)
+					v_edge_list[i][j].weight = macros_next[from]->h()/2+macros_next[to]->h()/2+powerplan_width;
 				modified[from][to] = true;
 				modified[to][from] = true;
 				cnt++;
