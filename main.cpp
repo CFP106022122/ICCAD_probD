@@ -28,6 +28,7 @@ double powerplan_width; // = 0.0,
 double min_spacing;		// = 0.0;
 Macro **macros;
 vector<Macro *> og_macros;
+vector<Macro*> native_macros;
 IoData *shoatingMain(int argc, char *argv[]);
 void output();
 double hyper_parameter = 0.1;
@@ -90,6 +91,65 @@ void build_init_constraint_graph(Graph &Gh, Graph &Gv, vector<Macro *> macros) /
 			if (macros[i]->cy() < macros[j]->cy())
 				i_is_at_the_bottom = true;
 
+			//null handel----
+			bool skip = false;
+			if(macros[i]->name()=="null" && macros[j]->name()!="null"){
+				if(macros[i]->x1()==0 && !i_is_at_the_left){
+					if(macros[i]->y1()==0 && !i_is_at_the_bottom){
+						(macros[i]->x2()-macros[j]->x1() < macros[i]->y2()-macros[j]->y1()) ?
+							Gh.add_edge(macros[i]->id(), macros[j]->id(), h_weight) :
+							Gv.add_edge(macros[i]->id(), macros[j]->id(), v_weight);
+						skip = true;
+					}else if(macros[i]->y2()==chip_height && i_is_at_the_bottom){
+						(macros[i]->x2()-macros[j]->x1() < macros[j]->y2()-macros[i]->y1()) ?
+							Gh.add_edge(macros[i]->id(), macros[j]->id(), h_weight) :
+							Gv.add_edge(macros[j]->id(), macros[i]->id(), v_weight);
+						skip = true;
+					}
+				}else if(macros[i]->x2()==chip_width && i_is_at_the_left){
+					if(macros[i]->y1()==0 && !i_is_at_the_bottom){
+						(macros[j]->x2()-macros[i]->x1() < macros[i]->y2()-macros[j]->y1()) ?
+							Gh.add_edge(macros[j]->id(), macros[i]->id(), h_weight) :
+							Gv.add_edge(macros[i]->id(), macros[j]->id(), v_weight);
+						skip = true;
+					}else if(macros[i]->y2()==chip_height && i_is_at_the_bottom){
+						(macros[j]->x2()-macros[i]->x1() < macros[j]->y2()-macros[i]->y1()) ?
+							Gh.add_edge(macros[j]->id(), macros[i]->id(), h_weight) :
+							Gv.add_edge(macros[j]->id(), macros[i]->id(), v_weight);
+						skip = true;
+					}
+				}
+			}
+			else if(macros[j]->name()=="null" && macros[i]->name()!="null"){
+				if(macros[j]->x1()==0 && i_is_at_the_left){
+					if(macros[j]->y1()==0 && i_is_at_the_bottom){
+						(macros[j]->x2()-macros[i]->x1() < macros[j]->y2()-macros[i]->y1()) ?
+							Gh.add_edge(macros[j]->id(), macros[i]->id(), h_weight) :
+							Gv.add_edge(macros[j]->id(), macros[i]->id(), v_weight);
+						skip = true;
+					}else if(macros[j]->y2()==chip_height && !i_is_at_the_bottom){
+						(macros[j]->x2()-macros[i]->x1() < macros[i]->y2()-macros[j]->y1()) ?
+							Gh.add_edge(macros[j]->id(), macros[i]->id(), h_weight) :
+							Gv.add_edge(macros[i]->id(), macros[j]->id(), v_weight);
+						skip = true;
+					}
+				}else if(macros[j]->x2()==chip_width && !i_is_at_the_left){
+					if(macros[j]->y1()==0 && i_is_at_the_bottom){
+						(macros[i]->x2()-macros[j]->x1() < macros[j]->y2()-macros[i]->y1()) ?
+							Gh.add_edge(macros[i]->id(), macros[j]->id(), h_weight) :
+							Gv.add_edge(macros[j]->id(), macros[i]->id(), v_weight);
+						skip = true;
+					}else if(macros[j]->y2()==chip_height && !i_is_at_the_bottom){
+						(macros[i]->x2()-macros[j]->x1() < macros[i]->y2()-macros[j]->y1()) ?
+							Gh.add_edge(macros[i]->id(), macros[j]->id(), h_weight) :
+							Gv.add_edge(macros[i]->id(), macros[j]->id(), v_weight);
+						skip = true;
+					}
+				}
+			}
+			if(skip)
+				continue;
+			//----------
 			if (is_overlapped(*macros[i], *macros[j]))
 			{
 				if (x_dir_is_overlapped_less(*macros[i], *macros[j]))
@@ -262,6 +322,27 @@ bool adjustment_helper(Graph &G, DICNIC<double> *Gc, Graph &G_the_other_dir, boo
 	return false;
 }
 
+
+
+bool rebuild_critical(Graph& G, bool is_horizontal) {
+	double boundry = (is_horizontal) ? chip_width : chip_height;
+	vector<edge> critical_edges = G.zero_slack_edges();
+	vector<edge> candidates;
+	for (auto& e : critical_edges) {
+		if (e.from == 0 || e.to == V+1)
+			continue;
+		double dist = (is_horizontal) ? ((macros[e.from]->w()+macros[e.to]->w())/2) : ((macros[e.from]->h()+macros[e.to]->h())/2);
+		if (e.weight == dist+powerplan_width)
+			candidates.push_back(e);
+	}	
+	for (auto& e: candidates) {
+		double dist = (is_horizontal) ? ((macros[e.from]->w()+macros[e.to]->w())/2) : ((macros[e.from]->h()+macros[e.to]->h())/2);
+		G.remove_edge(e.from, e.to);
+		G.add_edge(e.from, e.to, dist+min_spacing);
+	}
+	return candidates.size();
+}
+
 void adjustment(Graph &Gh, Graph &Gv)
 {
 	bool has_changed_chip_height = false;
@@ -286,26 +367,48 @@ void adjustment(Graph &Gh, Graph &Gv)
 		{
 			if (build_Gc(Gh, Gc, Gv, false))
 			{
-				cout << "???\n";
-				chip_height = copy_of_chip_height;
-				rebuild_constraint_graph(Gh, Gv);
-				return;
+				cout << "1\n";
+				if (!rebuild_critical(Gh, true)) {
+					chip_height = copy_of_chip_height;
+					rebuild_constraint_graph(Gh, Gv);
+					return;
+				}
+				longest_path_h = Gh.longest_path(true);
+				if (has_changed_chip_height)
+				{
+					has_changed_chip_height = false;
+					chip_height = tmp;
+				}
+				continue;
+		
 			}
 			if (adjustment_helper(Gh, Gc, Gv, true))
 			{
-				cout << "123213\n";
-				chip_height = copy_of_chip_height;
-				rebuild_constraint_graph(Gh, Gv);
-				return;
+				cout << "2\n";
+				if (!rebuild_critical(Gh, true)) {	
+					chip_height = copy_of_chip_height;
+					rebuild_constraint_graph(Gh, Gv);
+					return;
+				}
+				longest_path_h = Gh.longest_path(true);
+				if (has_changed_chip_height)
+				{
+					has_changed_chip_height = false;
+					chip_height = tmp;
+				}
+				continue;
 			}
 			longest_path_h = Gh.longest_path(true);
 			longest_path_v = Gv.longest_path(false);
 			if (longest_path_h == prev_longest_path_h)
 			{
-				cout << "456456\n";
-				chip_height = copy_of_chip_height;
-				rebuild_constraint_graph(Gh, Gv);
-				return;
+				cout << "3\n";
+				if (!rebuild_critical(Gh, true)) {
+					chip_height = copy_of_chip_height;
+					rebuild_constraint_graph(Gh, Gv);
+					return;
+				}
+				longest_path_h = Gh.longest_path(true);
 			}
 			if (has_changed_chip_height)
 			{
@@ -317,23 +420,37 @@ void adjustment(Graph &Gh, Graph &Gv)
 		{
 			if (build_Gc(Gv, Gc, Gh, true))
 			{
-				chip_height = copy_of_chip_height;
-				rebuild_constraint_graph(Gh, Gv);
-				return;
+				cout << "4\n";
+				if (!rebuild_critical(Gv, false)) {
+					chip_height = copy_of_chip_height;
+					rebuild_constraint_graph(Gh, Gv);
+					return;
+				}
+				longest_path_v = Gv.longest_path(false);
+				continue;
 			}
 			if (adjustment_helper(Gv, Gc, Gh, false))
 			{
-				chip_height = copy_of_chip_height;
-				rebuild_constraint_graph(Gh, Gv);
-				return;
+				cout << "5\n";
+				if (!rebuild_critical(Gv, false)) {
+					chip_height = copy_of_chip_height;
+					rebuild_constraint_graph(Gh, Gv);
+					return;
+				}
+				longest_path_v = Gv.longest_path(false);
+				continue;
 			}
 			longest_path_h = Gh.longest_path(true);
 			longest_path_v = Gv.longest_path(false);
 			if (longest_path_v >= prev_longest_path_v)
 			{
-				chip_height = copy_of_chip_height;
-				rebuild_constraint_graph(Gh, Gv);
-				return;
+				cout << "6\n";
+				if (!rebuild_critical(Gv, false)) {
+					chip_height = copy_of_chip_height;
+					rebuild_constraint_graph(Gh, Gv);
+					return;
+				}	
+				longest_path_v = Gv.longest_path(false);
 			}
 		}
 		else
@@ -353,14 +470,12 @@ void adjustment(Graph &Gh, Graph &Gv)
 	chip_height = copy_of_chip_height;
 }
 
+
 void rebuild_constraint_graph(Graph &Gh, Graph &Gv)
 {
-	if (++rebuild_cnt > 10)
-	{
-		cout << "End of the world\n";
+	if (++rebuild_cnt > 10){
 		return;
 	}
-	// cout << rebuild_cnt << "th time rebuild\n";
 	Gh.rebuild();
 	Gv.rebuild();
 	build_init_constraint_graph(Gh, Gv, og_macros);
@@ -391,7 +506,7 @@ void perturb_strategy(double P, Graph& Gv_next, Graph& Gh_next, vector<Macro *>&
 	int from, to, w;
 	int cnt = 0;
 	for(int i=0;i<V;i++){
-		if(cnt>=10)
+		if(cnt>=P)
 			return;
 		for(int j=0;j<h_edge_list[i].size();j++){
 			if(modified[i][h_edge_list[i][j].to]==true)
@@ -403,12 +518,13 @@ void perturb_strategy(double P, Graph& Gv_next, Graph& Gh_next, vector<Macro *>&
 				if(from==0 || from>V || to==0 || to>V)
 					continue;
 				Gh_next.remove_edge(from, to);
-				if(macros_next[from]->cy()<=macros_next[to]->cy())
+				if(native_macros[from]->cy()<=native_macros[to]->cy())
 					Gv_next.add_edge(from, to, w);
 				else
 					Gv_next.add_edge(to, from, w);
 				modified[from][to] = true;
 				modified[to][from] = true;
+				j--;
 				cnt++;
 			}else if(unif(rng)<=0.005){
 				from = h_edge_list[i][j].from;
@@ -434,12 +550,13 @@ void perturb_strategy(double P, Graph& Gv_next, Graph& Gh_next, vector<Macro *>&
 				if(from==0 || from>V || to==0 || to>V)
 					continue;
 				Gv_next.remove_edge(from, to);
-				if(macros_next[from]->cx()<=macros_next[to]->cx())
+				if(native_macros[from]->cx()<=native_macros[to]->cx())
 					Gh_next.add_edge(from, to, w);
 				else
 					Gh_next.add_edge(to, from, w);
 				modified[from][to] = true;
 				modified[to][from] = true;
+				j--;
 				cnt++;
 			}else if(unif(rng)<=0.005){
 				from = v_edge_list[i][j].from;
@@ -487,11 +604,8 @@ int main(int argc, char *argv[])
 	buffer_constraint = (double)iodatas->buffer_constraint;
 	powerplan_width = (double)iodatas->powerplan_width_constraint; // = 0.0,
 	min_spacing = (double)iodatas->minimum_spacing;				  // = 0.0;
-	vector<Macro*> native_macros;
 	for(int i = 0; i < iodatas->macros.size(); i++){
-		native_macros.push_back(new Macro(iodatas->macros[i]->w(), iodatas->macros[i]->h(),
-											iodatas->macros[i]->x1(), iodatas->macros[i]->y1(),
-											iodatas->macros[i]->is_fixed(), iodatas->macros[i]->id()));
+		native_macros.push_back(new Macro(*iodatas->macros[i]));
 	}
 	og_macros = iodatas->macros;
 	macros = new Macro *[V + 5];
@@ -499,24 +613,11 @@ int main(int argc, char *argv[])
 		macros[m->id()] = m;
 	Graph Gh(V), Gv(V);
 	build_init_constraint_graph(Gh, Gv, og_macros);
-	//Gh.transitive_reduction();
-	//Gv.transitive_reduction();
-	adjustment(Gh, Gv);
-	
-	// Gh, Gv are ready.
-	// To change this function to return vector<pair<double, double>>
-	// Please refer the annotation in bottom of LP.cpp
-	// I also can modify macro[i].x, macro[i].y directly
-	// If you want to do so, wellcom to contact me
-	
-	// ====================Important====================
-	// Return values represent macros' "center" position
-	// =================================================
 
+	adjustment(Gh, Gv);
 	Linear_Program(og_macros, Gv, Gh);
 
 	double displacement = displacement_evaluation(og_macros, native_macros);
-	printf("Total displacement = %lf\n", displacement);
 
 	// Create horizontal, vertical corner stitch data structure
 	Plane* horizontal_plane = CreateTilePlane(), *vertical_plane = CreateTilePlane();
@@ -529,57 +630,10 @@ int main(int argc, char *argv[])
 	vector<int> invalid_macros;
 	invalid_macros = invalid_check(og_macros, horizontal_plane);
 
-	printf("Total cost = %lf\n", total_cost(displacement, powerplan_cost));
-
-	// If exist any invalid macros, then we only try to legalize placement result in this round
-	if(!invalid_macros.empty()){
-		fix_invalid(og_macros, invalid_macros, Gh, Gv);
-	}
-	// If current placement result is legal, then we try to improve our result
-	else{
-		// improvement strategy :
-		// 1. force macros near boundary to align boundary
-		// 2. reduce powerplan cost in sparse region
-		improve_strategy1(og_macros, native_macros, horizontal_plane, Gh, Gv);
-		improve_strategy2(og_macros, horizontal_plane, Gh, Gv);
-	}
-
-	// Remove tile plane
-	RemoveTilePlane(horizontal_plane);
-	RemoveTilePlane(vertical_plane);
-
-	// ======================
-	// end of post processing
-	// ======================
-
-	// ==============
-	// run next round
-	// ==============
-	
-	adjustment(Gh, Gv);
-	Linear_Program(og_macros, Gv, Gh);
-
-	displacement = displacement_evaluation(og_macros, native_macros);
-	printf("Total displacement = %lf\n", displacement);
-
-	horizontal_plane = CreateTilePlane();
-	vertical_plane = CreateTilePlane();
-
-	// Calculate powerplan cost
-	//double powerplan_cost;
-	powerplan_cost = 0;
-	powerplan_cost = cost_evaluation(og_macros, horizontal_plane, vertical_plane);
-
-	// Vector stores invalid macros found by corner stitch data structure
-	//vector<int> invalid_macros;
-	invalid_macros.clear();
-	invalid_macros = invalid_check(og_macros, horizontal_plane);
-
+	// Should add invalid penalty into cost
 	double cost_now = total_cost(displacement, powerplan_cost);
-	printf("Total cost = %lf\n", cost_now);
+	printf("Initial cost = %lf\n", cost_now);
 
-	//RemoveTilePlane(horizontal_plane);// if no SA un-comment these
-	//RemoveTilePlane(vertical_plane);
 //------------------------------------------------------------------------------  SA
 	double T_cur, T_end, P, rate, cost_best, cost_next;
 	int num_perturb_per_T;
@@ -589,8 +643,8 @@ int main(int argc, char *argv[])
 	// args
 	P = 0.8;//possibility of accepting worse solution at begining
 	T_cur = -10000/log(P);//delta(avg) / ln(P)
-	rate = 0.1;
-	num_perturb_per_T = 2;
+	rate = 0;
+	num_perturb_per_T = 1;
 	T_end = 1;
 	Gv_best.Copy(Gv);
 	Gh_best.Copy(Gh);
@@ -598,14 +652,15 @@ int main(int argc, char *argv[])
 		macros_next[j] = new Macro(*og_macros[j]);
 		macros_best[j] = new Macro(*og_macros[j]);
 	}
-	cost_best = cost_now;
-	modified = new bool*[V+5]; //modified
-	for(int i=0;i<V+5;i++){
-		modified[i] = new bool[V+5];
-		for(int j=0;j<V+5;j++){
-			modified[i][j] = false;
+	modified = new bool*[V+5];
+	for(int j=0;j<=V;j++){
+		modified[j] = new bool[V+5];
+		for(int k=0;k<=V;k++){
+			modified[j][k] = false;
 		}
 	}
+	cost_best = cost_now;
+	int SA_COUNT = 1;
 	while(T_cur>T_end){
 		cout<<"Temp:"<<T_cur<<" begin"<<endl;
 		for(int i=0;i<num_perturb_per_T;i++){
@@ -620,19 +675,33 @@ int main(int argc, char *argv[])
 			}
 
 			//   perturb
-			perturb_strategy(T_cur/T_end, Gv_next, Gh_next, macros_next);
+			// perturb_strategy(10, Gv_next, Gh_next, macros_next);
+			if(!invalid_macros.empty()){
+				fix_invalid(macros_next, invalid_macros, Gh, Gv);
+			}
+			// If current placement result is legal, then we try to improve our result
+			else{
+				// improvement strategy :
+				// 1. force macros near boundary to align boundary
+				// 2. reduce powerplan cost in sparse region
+				improve_strategy1(macros_next, native_macros, horizontal_plane, Gh_next, Gv_next);
+				improve_strategy2(macros_next, horizontal_plane, Gh_next, Gv_next, SA_COUNT);
+			}
 
 			adjustment(Gh_next, Gv_next);
 			Linear_Program(macros_next, Gv_next, Gh_next);
-			//if (cost(sNext) < cost(sNow)){
+
 			displacement = displacement_evaluation(macros_next, native_macros);
+
 			RemoveTilePlane(horizontal_plane);
 			RemoveTilePlane(vertical_plane);
+
 			horizontal_plane = CreateTilePlane();
 			vertical_plane = CreateTilePlane();
-			powerplan_cost = 0;
+
 			powerplan_cost = cost_evaluation(macros_next, horizontal_plane, vertical_plane);
-			cost_next = total_cost(displacement, powerplan_cost);//unif(rng)*100;//
+			cost_next = total_cost(displacement, powerplan_cost);
+			
 			cout<<"SA before copy, cost(next, now):"<<cost_next<<", "<<cost_now<<endl;
 			if(cost_next<cost_now){
 				//sNow = sNext;
@@ -675,7 +744,7 @@ int main(int argc, char *argv[])
 			}
 			cout<<"SA after copy, cur_T:"<<T_cur<<", costNow:"<<cost_now<<", costBest:"<<cost_best<<endl;
 		}
-
+		SA_COUNT++;
 		T_cur*=rate;
 	}
 	iodatas->macros = macros_best;

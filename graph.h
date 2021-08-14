@@ -32,7 +32,7 @@ private:
 	bool **adj_matrix;
 
 public:
-void Copy(Graph& G_copy){
+	void Copy(Graph& G_copy){
 		MAX_N = G_copy.MAX_N;
 		n = G_copy.n;
 		// g = new vector<edge>[MAX_N];
@@ -60,7 +60,6 @@ void Copy(Graph& G_copy){
 				adj_matrix[i][j] = G_copy.adj_matrix[i][j];
 		}		
 	}
-
 	Graph(int _n) : n{_n}
 	{
 		MAX_N = n + 5;
@@ -103,17 +102,17 @@ void Copy(Graph& G_copy){
 		}
 		delete[] adj_matrix;
 	}
-	vector<edge*> zero_slack(){
-		vector<edge*> zero_slack;
-		for(int i = 0; i <= n; i++){
-			for(int j = 0; j < g[i].size(); j++){
-				if(R[g[i][j].to] - L[g[i][j].from] - g[i][j].weight == 0){
-					zero_slack.push_back(&g[i][j]);
-				}
-			}
-		}
-		return zero_slack;
-	}
+	// vector<edge*> zero_slack(){
+	// 	vector<edge*> zero_slack;
+	// 	for(int i = 0; i <= n; i++){
+	// 		for(int j = 0; j < g[i].size(); j++){
+	// 			if(R[g[i][j].to] - L[g[i][j].from] - g[i][j].weight == 0){
+	// 				zero_slack.push_back(&g[i][j]);
+	// 			}
+	// 		}
+	// 	}
+	// 	return zero_slack;
+	// }
 
 	void add_edge(int u, int v, double w)
 	{
@@ -184,6 +183,18 @@ void Copy(Graph& G_copy){
 				if (R[e.to] - L[e.from] - e.weight <= 0)
 					_zero_slack_edges.push_back(e);
 		return _zero_slack_edges;
+	}
+
+	vector<edge*> zero_slack(){
+		vector<edge*> zero_slack;
+		for(int i = 0; i <= n; i++){
+			for(int j = 0; j < g[i].size(); j++){
+				if(R[g[i][j].to] - L[g[i][j].from] - g[i][j].weight == 0){
+					zero_slack.push_back(&g[i][j]);
+				}
+			}
+		}
+		return zero_slack;
 	}
 
 	double *L, *R; // as required in UCLA paper
@@ -302,6 +313,21 @@ void Copy(Graph& G_copy){
 			}
 		}
 	}
+
+	// bool hasCycle() {
+	// 	bool onStack[n+2];
+	// 	for (int i=0; i<=n+1; ++i) {
+	// 		visited[i] = false;
+	// 		onStack[i] = false;
+	// 	}	
+	// 	for (int i=0; i<=n+1; ++i) {
+	// 		if (!visited[i]) {
+	// 			if (visit(i, onStack))
+	// 				return true;
+	// 		}
+	// 	}
+	// 	return false;
+	// }
 
 	void transitive_reduction()
 	{

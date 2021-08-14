@@ -37,7 +37,7 @@ static bool canMergeVertical(const Tile *tile1, const Tile *tile2)
 	if (TiGetBody(tile2) == SOLID_TILE) { return false; }
 	if (LEFT(tile1) != LEFT(tile2)) { return false; }
 	if (RIGHT(tile1) != RIGHT(tile2)) { return false; }
-	return true;
+	return false;
 }
 
 
