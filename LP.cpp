@@ -195,9 +195,9 @@ void Linear_Program(vector<Macro*>& macro, Graph& Gv, Graph& Gh){
     }
     
     // Show the x, y position for each mocro
-    for(int i = 0; i < n; i++){
-        printf("macro %d: x = %lf, y = %lf\n", i + 1, solution[i].first, solution[i].second);
-    }
+    // for(int i = 0; i < n; i++){
+    //     printf("macro %d: x = %lf, y = %lf\n", i + 1, solution[i].first, solution[i].second);
+    // }
 
     // update macros' position by result from LP
     for(int i = 0; i < n; i++){
@@ -207,7 +207,7 @@ void Linear_Program(vector<Macro*>& macro, Graph& Gv, Graph& Gh){
     // get total displacement
     double total_displacement = 0;
     total_displacement = get_objective(model);
-    printf("Total displacement = %lf\n", total_displacement);
+    // printf("Total displacement = %lf\n", total_displacement);
 
     delete_lp(model);
 

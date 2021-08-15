@@ -2,9 +2,9 @@ src='./lp_solve_5.5/lp_MDO.c ./lp_solve_5.5/shared/commonlib.c ./lp_solve_5.5/co
 
 cs_src='./corner_stitch/tiles/tile.cpp ./corner_stitch/tiles/search.cpp ./corner_stitch/tiles/search2.cpp ./corner_stitch/utils/malloc.cpp ./corner_stitch/utils/update.cpp ./corner_stitch.cpp'
 
-c=g++
+c=/project/cad/cad50/gcc-10.1.0/bin/gcc
 
-std='-std=c++11'
+std='-lstdc++'
 
 math=-lm
 

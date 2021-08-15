@@ -37,7 +37,7 @@ static bool canMergeVertical(const Tile *tile1, const Tile *tile2)
 	if (TiGetBody(tile2) == SOLID_TILE) { return false; }
 	if (LEFT(tile1) != LEFT(tile2)) { return false; }
 	if (RIGHT(tile1) != RIGHT(tile2)) { return false; }
-	return true;
+	return false;
 }
 
 
@@ -67,7 +67,7 @@ Tile* CreateTile(int x, int y)
 }
 
  
-Tile* InsertTile(Rect *rect, Plane *plane)
+Tile* InsertTile(Rect *rect, Plane *plane, int type, int id)
 {
 	// enumerate all the tiles which intersect with the given tiles
 	// Then split those tiles.
@@ -125,7 +125,10 @@ Tile* InsertTile(Rect *rect, Plane *plane)
 	#undef DOWN_MERGE
 	#undef SPLIT_AND_MERGE
 	
-	TiSetBody(target, SOLID_TILE);
+	TiSetBody(target, type);
+	if(type == SOLID_TILE){
+		TiSetClient(target, id);
+	}
 	return target;
 }
 

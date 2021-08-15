@@ -32,6 +32,34 @@ private:
 	bool **adj_matrix;
 
 public:
+	void Copy(Graph& G_copy){
+		MAX_N = G_copy.MAX_N;
+		n = G_copy.n;
+		// g = new vector<edge>[MAX_N];
+		// g_reversed = new vector<edge>[MAX_N];
+		// L = new double[MAX_N];
+		// R = new double[MAX_N];
+		// visited = new bool[MAX_N];
+		// adj_matrix = new bool *[MAX_N];
+
+		for (int i = 0; i < MAX_N; ++i){
+			//adj_matrix[i] = new bool[MAX_N];
+			L[i] = G_copy.L[i];
+			R[i] = G_copy.R[i];
+			visited[i] = G_copy.visited[i];
+		}
+
+		for (int i = 0; i < MAX_N; ++i){
+			for(int j=0;j<G_copy.g[i].size();j++)
+				g[i].push_back(G_copy.g[i][j]);
+			for(int j=0;j<G_copy.g_reversed[i].size();j++)
+				g_reversed[i].push_back(G_copy.g_reversed[i][j]);
+		}
+		for (int i = 0; i < MAX_N; ++i){
+			for(int j = 0; j < MAX_N; ++j)
+				adj_matrix[i][j] = G_copy.adj_matrix[i][j];
+		}		
+	}
 	Graph(int _n) : n{_n}
 	{
 		MAX_N = n + 5;
@@ -146,6 +174,18 @@ public:
 		return _zero_slack_edges;
 	}
 
+	vector<edge*> zero_slack(){
+		vector<edge*> zero_slack;
+		for(int i = 0; i <= n; i++){
+			for(int j = 0; j < g[i].size(); j++){
+				if(R[g[i][j].to] - L[g[i][j].from] - g[i][j].weight == 0){
+					zero_slack.push_back(&g[i][j]);
+				}
+			}
+		}
+		return zero_slack;
+	}
+
 	double *L, *R; // as required in UCLA paper
 	double longest_path(bool is_horizontal)
 	{
@@ -214,61 +254,91 @@ public:
 
 	void dfs(int u, int v, vector<int> &delete_to_nodes)
 	{
-		if (u == 0)
-		{ // u is source, can't remove edge(source, fixed macro)
-			for (int i = 0; i < g[v].size(); i++)
-			{
-				if (adj_matrix[u][g[v][i].to] == true && !macros[g[v][i].to]->is_fixed())
+		if(v <= n){
+			if (u == 0)
+			{ // u is source, can't remove edge(source, fixed macro)
+				for (int i = 0; i < g[v].size(); i++)
 				{
-					// store node which will be deleted
-					delete_to_nodes.push_back(g[v][i].to);
-					adj_matrix[u][g[v][i].to] = false;
+					if (adj_matrix[u][g[v][i].to] == true && !(macros[g[v][i].to]->is_fixed()))
+					{
+						// store node which will be deleted
+						delete_to_nodes.push_back(g[v][i].to);
+						adj_matrix[u][g[v][i].to] = false;
+					}
+					dfs(u, g[v][i].to, delete_to_nodes);
 				}
-				dfs(u, g[v][i].to, delete_to_nodes);
 			}
-		}
-		else if (macros[u]->is_fixed())
-		{ // u is a fixed macro, can't remove edge(fixed macro, sink)
-			for (int i = 0; i < g[v].size(); i++)
-			{
-				if (adj_matrix[u][g[v][i].to] == true && g[v][i].to != n + 1)
+			else if (macros[u]->is_fixed())
+			{ // u is a fixed macro, can't remove edge(fixed macro, sink)
+				for (int i = 0; i < g[v].size(); i++)
 				{
-					// store node which will be deleted
-					delete_to_nodes.push_back(g[v][i].to);
-					adj_matrix[u][g[v][i].to] = false;
+					if (adj_matrix[u][g[v][i].to] == true && g[v][i].to != n + 1)
+					{
+						// store node which will be deleted
+						delete_to_nodes.push_back(g[v][i].to);
+						adj_matrix[u][g[v][i].to] = false;
+					}
+					dfs(u, g[v][i].to, delete_to_nodes);
 				}
-				dfs(u, g[v][i].to, delete_to_nodes);
 			}
-		}
-		else
-		{ // normal case
-			for (int i = 0; i < g[v].size(); i++)
-			{
-				if (adj_matrix[u][g[v][i].to] == true)
+			else
+			{ // normal case
+				for (int i = 0; i < g[v].size(); i++)
 				{
-					// store node which will be deleted
-					delete_to_nodes.push_back(g[v][i].to);
-					adj_matrix[u][g[v][i].to] = false;
+					// if(u == 145)
+					// 	cout << v << " has edge to " << g[v][i].to << endl;
+					if (adj_matrix[u][g[v][i].to] == true)
+					{
+						// if(u == 145)
+						// 	cout << "remove " << g[v][i].to << endl;
+						// store node which will be deleted
+						delete_to_nodes.push_back(g[v][i].to);
+						adj_matrix[u][g[v][i].to] = false;
+					}
+					// if(u == 145)
+					// 	cout << "run v = " << g[v][i].to << endl;
+					dfs(u, g[v][i].to, delete_to_nodes);
 				}
-				dfs(u, g[v][i].to, delete_to_nodes);
 			}
 		}
 	}
 
+	bool hasCycle() {
+		bool onStack[n+2];
+		for (int i=0; i<=n+1; ++i) {
+			visited[i] = false;
+			onStack[i] = false;
+		}	
+		for (int i=0; i<=n+1; ++i) {
+			if (!visited[i]) {
+				if (visit(i, onStack))
+					return true;
+			}
+		}
+		return false;
+	}
+
 	void transitive_reduction()
 	{
-		for (int i = 0; i <= n; ++i)
+		for (int i = 0; i <= n; i++)
 		{
 			// Create vector store deleted nodes
 			vector<int> delete_to_nodes;
 			for (int j = 0; j < g[i].size(); j++)
 			{
 				// Run DFS to find out nodes needed to remove
+				// if(i == 145){
+				// 	cout << macros[i]->name() << " starts run DFS on edge " << g[i][j].from << " to " << g[i][j].to << endl;
+				// }
 				dfs(g[i][j].from, g[i][j].to, delete_to_nodes);
 			}
 			// Remove stored nodes
 			for (int j = 0; j < delete_to_nodes.size(); j++)
 			{
+				// if(i == 145){
+				// 	cout << macros[i]->name() << " to " << delete_to_nodes[j] << " is removed" << endl;
+				// 	//printf("%s to %d is removed\n", macros[i]->name(), delete_to_nodes[j]);
+				// }
 				remove_edge(i, delete_to_nodes[j]);
 			}
 		}
@@ -285,21 +355,6 @@ public:
 				return true;
 		}
 		onStack[u] = false;
-		return false;
-	}
-		
-	bool hasCycle() {
-		bool onStack[n+2];
-		for (int i=0; i<=n+1; ++i) {
-			visited[i] = false;
-			onStack[i] = false;
-		}	
-		for (int i=0; i<=n+1; ++i) {
-			if (!visited[i]) {
-				if (visit(i, onStack))
-					return true;
-			}
-		}
 		return false;
 	}
 
