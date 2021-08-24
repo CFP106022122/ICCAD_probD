@@ -14,5 +14,5 @@
 # update_log parallel,cs_double,four_improve,check_invalid
   parallel: divide LP model into two models with x, y direction respectly.  
   cs_double: solve the bug of converting type between 'int' and 'double'.  
-  four_improve: introduce four kinds of improve strategies.
+  four_improve: introduce four kinds of improve strategies.  
   check_invalid: in previous version(beta sbmission), we forgot to update invalid macros during SA processing. The bug now solved.
