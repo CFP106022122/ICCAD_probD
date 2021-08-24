@@ -170,8 +170,8 @@ typedef struct
 
 extern Plane* TiNewPlane(Tile* tile);
 extern void TiFreePlane(Plane* plane);
-extern Tile *TiSplitX(Tile* tile, int x);
-extern Tile *TiSplitY(Tile* tile, int y);
+extern Tile *TiSplitX(Tile* tile, double x);
+extern Tile *TiSplitY(Tile* tile, double y);
 extern void  TiJoinX(Tile* tile1, Tile* tile2, Plane* plane);
 extern void  TiJoinY(Tile* tile1, Tile* tile2, Plane* plane);
 extern int   TiSrArea(Tile* hintTile, Plane* plane, Rect* rect, int (*func)(Tile *tile, ClientData cdata), ClientData arg);

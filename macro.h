@@ -26,7 +26,7 @@ private:
 	string macro_name;
 
 public:
-	Macro(Macro& m_copy){
+	Macro(const Macro& m_copy){
 		width = m_copy.width;
 		height = m_copy.height;
 		_x1 = m_copy._x1;
@@ -67,6 +67,8 @@ public:
 	double h() const { return height; }
 
 	bool is_fixed() const { return _is_fixed; }
+
+	void set_is_fixed(bool b) { _is_fixed = b; } // Dangerous!! Only for issue case.
 
 	double cx() const { return _x1 + width / 2; }
 

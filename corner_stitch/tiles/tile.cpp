@@ -154,7 +154,7 @@ void TiFreePlane(Plane* plane){
  * --------------------------------------------------------------------
  */
 
-Tile* TiSplitX(Tile* tile, int x){
+Tile* TiSplitX(Tile* tile, double x){
     Tile *newtile;
     Tile *tp;
 
@@ -222,7 +222,7 @@ Tile* TiSplitX(Tile* tile, int x){
  * --------------------------------------------------------------------
  */
 
-Tile* TiSplitY(Tile* tile, int y){
+Tile* TiSplitY(Tile* tile, double y){
     Tile *newtile;
     Tile *tp;
 

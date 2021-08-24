@@ -141,8 +141,8 @@ void RemoveTile(Tile *tile, Plane *plane)
 	
 	// Firstly, search the dead tile in the tile plane
 	tile = TiSrPoint(nullptr, plane, &(tile->ti_ll));
-	const int del_ytop = TOP(tile);
-	const int del_ybot = BOTTOM(tile);
+	const double del_ytop = TOP(tile);
+	const double del_ybot = BOTTOM(tile);
 	
 	// change the type of dead tile into space tile (initial value)
 	TiSetBody(tile, 0);

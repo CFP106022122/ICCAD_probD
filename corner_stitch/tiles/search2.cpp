@@ -42,9 +42,9 @@
  * --------------------------------------------------------------------
  */
 
-int tiSrAreaEnum(Tile* enumRT, int enumBottom, Rect* rect, int (*func)(Tile *tile, ClientData cdata), ClientData arg){
+int tiSrAreaEnum(Tile* enumRT, double enumBottom, Rect* rect, int (*func)(Tile *tile, ClientData cdata), ClientData arg){
     Tile *tp, *tpLB, *tpTR;
-    int tpRight, tpNextTop, tpBottom, srchBottom;
+    double tpRight, tpNextTop, tpBottom, srchBottom;
     int atBottom = (enumBottom <= rect->r_ll.p_y);
 
 
@@ -151,7 +151,7 @@ int tiSrAreaEnum(Tile* enumRT, int enumBottom, Rect* rect, int (*func)(Tile *til
 int TiSrArea(Tile* hintTile, Plane* plane, Rect* rect, int (*func)(Tile *tile, ClientData cdata), ClientData arg){
     Point here;
     Tile *tp, *enumTR, *enumTile;
-    int enumRight, enumBottom;
+    double enumRight, enumBottom;
 
     /*
      * We will scan from top to bottom along the left hand edge
