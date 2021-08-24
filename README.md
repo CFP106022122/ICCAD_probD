@@ -12,7 +12,7 @@
   .\cadb0065 case1/caseSample.lef case1/caseSample.def case1/caseSample.txt outSample.def
 
 # update_log parallel,cs_double,four_improve,check_invalid
-  parallel: Divide LP model into two models with x, y direction respectly. Use pthread for parallel(add -pthread into script).
+  parallel: Divide LP model into two models with x, y direction respectly. Use pthread for parallel(add -pthread into script).  
   cs_double: Solve the bug of converting type between 'int' and 'double'.  
   four_improve: Introduce four kinds of improve strategies.  
   check_invalid: In previous version(beta sbmission), we forgot to update invalid macros during SA processing. The bug now solved.
