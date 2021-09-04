@@ -17,8 +17,8 @@ fi
 
 opts='-O3'
 
-target='main.cpp macro.cpp LP.cpp io.cpp shaotingMain.cpp'
+target='main.cpp macro.cpp LP.cpp io.cpp shaotingMain.cpp transitive_reduction.cpp'
 
 output='cadb0065'
 
-$c $std -I./ -I./lp_solve_5.5 -I./lp_solve_5.5/bfp -I./lp_solve_5.5/bfp/bfp_LUSOL -I./lp_solve_5.5/bfp/bfp_LUSOL/LUSOL -I./lp_solve_5.5/colamd -I./lp_solve_5.5/shared $opts $def -DYY_NEVER_INTERACTIVE -DPARSER_LP -DINVERSE_ACTIVE=INVERSE_LUSOL -DRoleIsExternalInvEngine -DSYSV -DHAVE_VA_COPY $target $cs_src $src -o $output $math $dl
+$c $std -I./ -I./lp_solve_5.5 -I./lp_solve_5.5/bfp -I./lp_solve_5.5/bfp/bfp_LUSOL -I./lp_solve_5.5/bfp/bfp_LUSOL/LUSOL -I./lp_solve_5.5/colamd -I./lp_solve_5.5/shared -I./tr $opts $def -DYY_NEVER_INTERACTIVE -DPARSER_LP -DINVERSE_ACTIVE=INVERSE_LUSOL -DRoleIsExternalInvEngine -DSYSV -DHAVE_VA_COPY -pthread $target $cs_src $src -o $output $math $dl

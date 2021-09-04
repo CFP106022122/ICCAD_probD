@@ -2110,7 +2110,7 @@ Leave:
     test = 100;
     if(lp->total_iter > 0)
       test *= (REAL) lp->total_bswap/lp->total_iter;
-    report(lp, NORMAL, "\n ");
+    /*report(lp, NORMAL, "\n ");
     report(lp, NORMAL, "MEMO: lp_solve version %d.%d.%d.%d for %d bit OS, with %d bit REAL variables.\n",
                         MAJORVERSION, MINORVERSION, RELEASE, BUILD, 8*sizeof(void *), 8*sizeof(REAL));
     report(lp, NORMAL, "      In the total iteration count %.0f, %.0f (%.1f%%) were bound flips.\n",
@@ -2142,7 +2142,7 @@ Leave:
     report(lp, NORMAL, "      Time to load data was %.3f seconds, presolve used %.3f seconds,\n",
                         lp->timestart-lp->timecreate, lp->timepresolved-lp->timestart);
     report(lp, NORMAL, "       ... %.3f seconds in simplex solver, in total %.3f seconds.\n",
-                        lp->timeend-lp->timepresolved, lp->timeend-lp->timecreate);
+                        lp->timeend-lp->timepresolved, lp->timeend-lp->timecreate);*/
   }
   return( lp->spx_status );
 

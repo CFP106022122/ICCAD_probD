@@ -157,8 +157,8 @@ void* pthread_Linear_Program(void* _param){
         add_constraintex(model, 3, sparserow_3, colno_3, GE, 0);
     }
 
-    // // Set objective function
-    // // Minimize summation of dxa1 ~ dxan, dxb1 ~ dxbn(dya1 ~ dyan, dyb1 ~ dybn)
+    // Set objective function
+    // Minimize summation of dxa1 ~ dxan, dxb1 ~ dxbn(dya1 ~ dyan, dyb1 ~ dybn)
     double* obj_fn_sparse = new double[2 * n];
     int* obj_fn_colno = new int[2 * n];
     for(int i = 0; i < 2 * n; i++){
@@ -203,4 +203,6 @@ void Linear_Program(vector<Macro*>& macro, Graph& Gv, Graph& Gh){
     for(int i = 0; i < macro.size(); i++){
         macro[i]->updateXY(make_pair(x_solution[i], y_solution[i]));
     }
+    delete horizontal_params;
+    delete vertical_params;
 }

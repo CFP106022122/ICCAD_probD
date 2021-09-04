@@ -178,7 +178,7 @@ public:
 		vector<edge*> zero_slack;
 		for(int i = 0; i <= n; i++){
 			for(int j = 0; j < g[i].size(); j++){
-				if(R[g[i][j].to] - L[g[i][j].from] - g[i][j].weight == 0){
+				if(R[g[i][j].to] - L[g[i][j].from] - g[i][j].weight <= 0){
 					zero_slack.push_back(&g[i][j]);
 				}
 			}

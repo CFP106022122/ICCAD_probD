@@ -208,7 +208,9 @@ vector<int> invalid_check(vector<Macro*>& macro, Plane* horizontal_plane){
 	}
 
 	// Show all invalid macros
-	printf("Invalid macros:\n");
+	if(!invalid_macros.empty()){
+		printf("Invalid macros:\n");
+	}
 	for(int i = 0; i < invalid_macros.size(); i++){
 		cout << "macro " << macro[invalid_macros[i]]->name() << " is invalid" << endl;
 	}
@@ -516,12 +518,12 @@ void improve_strategy2(vector<Macro*>& macro, Plane* horizontal_plane, Plane* ve
 								Rect right_ = { {right_l, right_b}, {right_r, right_t} };
 								TiSrArea(NULL, horizontal_plane, &right_, empty_region, (ClientData)&right_e);
 							}
-							if(left_e){
+							if(left_e && !macro[TiGetClient(BL(h_cost_tile[i]))]->is_fixed()){
 								// If left macro can move up(left macro is higher)
 								macro[TiGetClient(BL(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(h_cost_tile[i]))]->cx(), macro[TiGetClient(BL(h_cost_tile[i]))]->cy() + diff_v));
 								break;
 							}
-							else if(right_e){
+							else if(right_e && !macro[TiGetClient(TR(h_cost_tile[i]))]->is_fixed()){
 								// If right macro can move down
 								macro[TiGetClient(TR(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(TR(h_cost_tile[i]))]->cx(), macro[TiGetClient(TR(h_cost_tile[i]))]->cy() - diff_v));
 								break;
@@ -563,12 +565,12 @@ void improve_strategy2(vector<Macro*>& macro, Plane* horizontal_plane, Plane* ve
 								Rect right_ = { {right_l, right_b}, {right_r, right_t} };
 								TiSrArea(NULL, horizontal_plane, &right_, empty_region, (ClientData)&right_e);
 							}
-							if(left_e){
+							if(left_e && !macro[TiGetClient(BL(h_cost_tile[i]))]->is_fixed()){
 								// If left macro can move down(left macro is higher)
 								macro[TiGetClient(BL(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(h_cost_tile[i]))]->cx(), macro[TiGetClient(BL(h_cost_tile[i]))]->cy() - diff_v));
 								break;
 							}
-							else if(right_e){
+							else if(right_e && !macro[TiGetClient(TR(h_cost_tile[i]))]->is_fixed()){
 								// If right macro can move up(right macro is higher)
 								macro[TiGetClient(TR(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(TR(h_cost_tile[i]))]->cx(), macro[TiGetClient(TR(h_cost_tile[i]))]->cy() + diff_v));
 								break;
@@ -639,12 +641,12 @@ void improve_strategy2(vector<Macro*>& macro, Plane* horizontal_plane, Plane* ve
 								Rect top_ = { {top_l, top_b}, {top_r, top_t} };
 								TiSrArea(NULL, vertical_plane, &top_, empty_region, (ClientData)&top_e);
 							}
-							if(bottom_e){
+							if(bottom_e && !macro[TiGetClient(TR(v_cost_tile[i]))]->is_fixed()){
 								// If bottom macro can move right(bottom macro is more close to right hand side)
 								macro[TiGetClient(TR(v_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(TR(v_cost_tile[i]))]->cx() + diff_h, macro[TiGetClient(TR(v_cost_tile[i]))]->cy()));
 								break;
 							}
-							else if(top_e){
+							else if(top_e && !macro[TiGetClient(BL(v_cost_tile[i]))]->is_fixed()){
 								// If top macro can move left
 								macro[TiGetClient(BL(v_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(v_cost_tile[i]))]->cx() - diff_h, macro[TiGetClient(BL(v_cost_tile[i]))]->cy()));
 								break;
@@ -686,12 +688,12 @@ void improve_strategy2(vector<Macro*>& macro, Plane* horizontal_plane, Plane* ve
 								Rect top_ = { {top_l, top_b}, {top_r, top_t} };
 								TiSrArea(NULL, vertical_plane, &top_, empty_region, (ClientData)&top_e);
 							}
-							if(bottom_e){
+							if(bottom_e && !macro[TiGetClient(TR(v_cost_tile[i]))]->is_fixed()){
 								// If bottom macro can move left(bottom macro is more close to left hand side)
 								macro[TiGetClient(TR(v_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(TR(v_cost_tile[i]))]->cx() - diff_h, macro[TiGetClient(TR(v_cost_tile[i]))]->cy()));
 								break;
 							}
-							else if(top_e){
+							else if(top_e && !macro[TiGetClient(BL(v_cost_tile[i]))]->is_fixed()){
 								// If top macro can move right
 								macro[TiGetClient(BL(v_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(v_cost_tile[i]))]->cx() + diff_h, macro[TiGetClient(BL(v_cost_tile[i]))]->cy()));
 								break;
@@ -830,7 +832,8 @@ void improve_strategy3(vector<Macro*>& macro, Plane* horizontal_plane, Plane* ve
 					bool left_empty = true, right_empty = true;
 					if(left_right - left_left < powerplan_width){
 						left_empty = false;
-						if(alpha * (left_right - left_left) < beta * sqrt((left_right - left_left) * macro[TiGetClient(BL(h_cost_tile[i]))]->h())){
+						if(alpha * (left_right - left_left) < beta * sqrt((left_right - left_left) * macro[TiGetClient(BL(h_cost_tile[i]))]->h())
+							&& !macro[TiGetClient(BL(h_cost_tile[i]))]->is_fixed()){
 							macro[TiGetClient(BL(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(h_cost_tile[i]))]->w() / 2, macro[TiGetClient(BL(h_cost_tile[i]))]->cy()));
 						}
 					}
@@ -840,7 +843,8 @@ void improve_strategy3(vector<Macro*>& macro, Plane* horizontal_plane, Plane* ve
 					}
 					if(right_right - right_left < powerplan_width){
 						right_empty = false;
-						if(alpha * (right_right - right_left) < beta * sqrt((right_right - right_left) * macro[TiGetClient(TR(h_cost_tile[i]))]->h())){
+						if(alpha * (right_right - right_left) < beta * sqrt((right_right - right_left) * macro[TiGetClient(TR(h_cost_tile[i]))]->h())
+							&& !macro[TiGetClient(TR(h_cost_tile[i]))]->is_fixed()){
 							macro[TiGetClient(TR(h_cost_tile[i]))]->updateXY(make_pair(chip_width - macro[TiGetClient(TR(h_cost_tile[i]))]->w() / 2, macro[TiGetClient(TR(h_cost_tile[i]))]->cy()));
 						}
 					}
@@ -864,11 +868,11 @@ void improve_strategy3(vector<Macro*>& macro, Plane* horizontal_plane, Plane* ve
 						double diff_v =  macro[TiGetClient(TR(h_cost_tile[i]))]->y2() - macro[TiGetClient(BL(h_cost_tile[i]))]->y1();
 						if(powerplan_width - diff_h < diff_v){
 							if(alpha * (powerplan_width - diff_h) < beta * sqrt(diff_h * diff_v)){
-								if(left_empty){
+								if(left_empty && !macro[TiGetClient(BL(h_cost_tile[i]))]->is_fixed()){
 									macro[TiGetClient(BL(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(h_cost_tile[i]))]->cx() - (powerplan_width - diff_h), macro[TiGetClient(BL(h_cost_tile[i]))]->cy()));
 									break;
 								}
-								else if(right_empty){
+								else if(right_empty && !macro[TiGetClient(TR(h_cost_tile[i]))]->is_fixed()){
 									macro[TiGetClient(TR(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(TR(h_cost_tile[i]))]->cx() + (powerplan_width - diff_h), macro[TiGetClient(TR(h_cost_tile[i]))]->cy()));
 									break;
 								}
@@ -905,11 +909,11 @@ void improve_strategy3(vector<Macro*>& macro, Plane* horizontal_plane, Plane* ve
 									Rect right_ = { {right_l, right_b}, {right_r, right_t} };
 									TiSrArea(NULL, horizontal_plane, &right_, empty_region, (ClientData)&right_e);
 								}
-								if(left_e){
+								if(left_e && !macro[TiGetClient(BL(h_cost_tile[i]))]->is_fixed()){
 									macro[TiGetClient(BL(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(h_cost_tile[i]))]->cx(), macro[TiGetClient(BL(h_cost_tile[i]))]->cy() + diff_v));
 									break;
 								}
-								else if(right_e){
+								else if(right_e && !macro[TiGetClient(TR(h_cost_tile[i]))]->is_fixed()){
 									macro[TiGetClient(TR(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(TR(h_cost_tile[i]))]->cx(), macro[TiGetClient(TR(h_cost_tile[i]))]->cy() - diff_v));
 									break;
 								}
@@ -920,11 +924,11 @@ void improve_strategy3(vector<Macro*>& macro, Plane* horizontal_plane, Plane* ve
 						double diff_v =  macro[TiGetClient(BL(h_cost_tile[i]))]->y2() - macro[TiGetClient(TR(h_cost_tile[i]))]->y1();
 						if(powerplan_width - diff_h < diff_v){
 							if(alpha * (powerplan_width - diff_h) < beta * sqrt(diff_h * diff_v)){
-								if(left_empty){
+								if(left_empty && !macro[TiGetClient(BL(h_cost_tile[i]))]->is_fixed()){
 									macro[TiGetClient(BL(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(h_cost_tile[i]))]->cx() - (powerplan_width - diff_h), macro[TiGetClient(BL(h_cost_tile[i]))]->cy()));
 									break;
 								}
-								else if(right_empty){
+								else if(right_empty && !macro[TiGetClient(TR(h_cost_tile[i]))]->is_fixed()){
 									macro[TiGetClient(TR(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(TR(h_cost_tile[i]))]->cx() + (powerplan_width - diff_h), macro[TiGetClient(TR(h_cost_tile[i]))]->cy()));
 									break;
 								}
@@ -961,11 +965,11 @@ void improve_strategy3(vector<Macro*>& macro, Plane* horizontal_plane, Plane* ve
 									Rect right_ = { {right_l, right_b}, {right_r, right_t} };
 									TiSrArea(NULL, horizontal_plane, &right_, empty_region, (ClientData)&right_e);
 								}
-								if(left_e){
+								if(left_e && !macro[TiGetClient(BL(h_cost_tile[i]))]->is_fixed()){
 									macro[TiGetClient(BL(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(h_cost_tile[i]))]->cx(), macro[TiGetClient(BL(h_cost_tile[i]))]->cy() - diff_v));
 									break;
 								}
-								else if(right_e){
+								else if(right_e && !macro[TiGetClient(TR(h_cost_tile[i]))]->is_fixed()){
 									macro[TiGetClient(TR(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(TR(h_cost_tile[i]))]->cx(), macro[TiGetClient(TR(h_cost_tile[i]))]->cy() + diff_v));
 									break;
 								}
@@ -1002,7 +1006,8 @@ void improve_strategy3(vector<Macro*>& macro, Plane* horizontal_plane, Plane* ve
 					bool bottom_empty = true, top_empty = true;
 					if(bottom_top - bottom_bottom < powerplan_width){
 						bottom_empty = false;
-						if(alpha * (bottom_top - bottom_bottom) < beta * sqrt((bottom_top - bottom_bottom) * macro[TiGetClient(TR(v_cost_tile[i]))]->w())){
+						if(alpha * (bottom_top - bottom_bottom) < beta * sqrt((bottom_top - bottom_bottom) * macro[TiGetClient(TR(v_cost_tile[i]))]->w())
+							&& !macro[TiGetClient(TR(v_cost_tile[i]))]->is_fixed()){
 							macro[TiGetClient(TR(v_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(TR(v_cost_tile[i]))]->cx(), macro[TiGetClient(TR(v_cost_tile[i]))]->h() / 2));
 						}
 					}
@@ -1012,7 +1017,8 @@ void improve_strategy3(vector<Macro*>& macro, Plane* horizontal_plane, Plane* ve
 					}
 					if(top_top - top_bottom < powerplan_width){
 						top_empty = false;
-						if(alpha * (top_top - top_bottom) < beta * sqrt((top_top - top_bottom) * macro[TiGetClient(BL(v_cost_tile[i]))]->w())){
+						if(alpha * (top_top - top_bottom) < beta * sqrt((top_top - top_bottom) * macro[TiGetClient(BL(v_cost_tile[i]))]->w())
+							&& !macro[TiGetClient(BL(v_cost_tile[i]))]->is_fixed()){
 							macro[TiGetClient(BL(v_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(v_cost_tile[i]))]->cx(), chip_height - macro[TiGetClient(BL(v_cost_tile[i]))]->h() / 2));
 						}
 					}
@@ -1036,11 +1042,11 @@ void improve_strategy3(vector<Macro*>& macro, Plane* horizontal_plane, Plane* ve
 						double diff_h = macro[TiGetClient(BL(v_cost_tile[i]))]->x2() - macro[TiGetClient(TR(v_cost_tile[i]))]->x1();
 						if(powerplan_width - diff_v < diff_h){
 							if(alpha * (powerplan_width - diff_v) < beta * sqrt(diff_h * diff_v)){
-								if(top_empty){
+								if(top_empty && !macro[TiGetClient(BL(v_cost_tile[i]))]->is_fixed()){
 									macro[TiGetClient(BL(v_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(v_cost_tile[i]))]->cx(), macro[TiGetClient(BL(v_cost_tile[i]))]->cy() + (powerplan_width - diff_v)));
 									break;
 								}
-								else if(bottom_empty){
+								else if(bottom_empty && !macro[TiGetClient(TR(v_cost_tile[i]))]->is_fixed()){
 									macro[TiGetClient(TR(v_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(TR(v_cost_tile[i]))]->cx(), macro[TiGetClient(TR(v_cost_tile[i]))]->cy() - (powerplan_width - diff_v)));
 									break;
 								}
@@ -1077,11 +1083,11 @@ void improve_strategy3(vector<Macro*>& macro, Plane* horizontal_plane, Plane* ve
 									Rect top_ = { {top_l, top_b}, {top_r, top_t} };
 									TiSrArea(NULL, vertical_plane, &top_, empty_region, (ClientData)&top_e);
 								}
-								if(bottom_e){
+								if(bottom_e && !macro[TiGetClient(TR(v_cost_tile[i]))]->is_fixed()){
 									macro[TiGetClient(TR(v_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(TR(v_cost_tile[i]))]->cx() + diff_h, macro[TiGetClient(TR(v_cost_tile[i]))]->cy()));
 									break;
 								}
-								else if(top_e){
+								else if(top_e && !macro[TiGetClient(BL(v_cost_tile[i]))]->is_fixed()){
 									macro[TiGetClient(BL(v_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(v_cost_tile[i]))]->cx() - diff_h, macro[TiGetClient(BL(v_cost_tile[i]))]->cy()));
 									break;
 								}
@@ -1092,11 +1098,11 @@ void improve_strategy3(vector<Macro*>& macro, Plane* horizontal_plane, Plane* ve
 						double diff_h = macro[TiGetClient(TR(v_cost_tile[i]))]->x2() - macro[TiGetClient(BL(v_cost_tile[i]))]->x1();
 						if(powerplan_width - diff_v < diff_h){
 							if(alpha * (powerplan_width - diff_v) < beta * sqrt(diff_h * diff_v)){
-								if(top_empty){
+								if(top_empty && !macro[TiGetClient(BL(v_cost_tile[i]))]->is_fixed()){
 									macro[TiGetClient(BL(v_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(v_cost_tile[i]))]->cx(), macro[TiGetClient(BL(v_cost_tile[i]))]->cy() + (powerplan_width - diff_v)));
 									break;
 								}
-								else if(bottom_empty){
+								else if(bottom_empty && !macro[TiGetClient(TR(v_cost_tile[i]))]->is_fixed()){
 									macro[TiGetClient(TR(v_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(TR(v_cost_tile[i]))]->cx(), macro[TiGetClient(TR(v_cost_tile[i]))]->cy() - (powerplan_width - diff_v)));
 									break;
 								}
@@ -1133,11 +1139,11 @@ void improve_strategy3(vector<Macro*>& macro, Plane* horizontal_plane, Plane* ve
 									Rect top_ = { {top_l, top_b}, {top_r, top_t} };
 									TiSrArea(NULL, vertical_plane, &top_, empty_region, (ClientData)&top_e);
 								}
-								if(bottom_e){
+								if(bottom_e && !macro[TiGetClient(TR(v_cost_tile[i]))]->is_fixed()){
 									macro[TiGetClient(TR(v_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(TR(v_cost_tile[i]))]->cx() - diff_h, macro[TiGetClient(TR(v_cost_tile[i]))]->cy()));
 									break;
 								}
-								else if(top_e){
+								else if(top_e && !macro[TiGetClient(BL(v_cost_tile[i]))]->is_fixed()){
 									macro[TiGetClient(BL(v_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(v_cost_tile[i]))]->cx() + diff_h, macro[TiGetClient(BL(v_cost_tile[i]))]->cy()));
 									break;
 								}
@@ -1150,7 +1156,7 @@ void improve_strategy3(vector<Macro*>& macro, Plane* horizontal_plane, Plane* ve
 	}
 }
 
-void improve_strategy4(vector<Macro*>& macro, const vector<Macro*>& native_macro){
+int improve_strategy4(vector<Macro*>& macro, const vector<Macro*>& native_macro){
 	vector<double> displacement;
 	double mean = 0;
 	for(int i = 0; i < macro.size(); i++){
@@ -1171,14 +1177,22 @@ void improve_strategy4(vector<Macro*>& macro, const vector<Macro*>& native_macro
 	}
 	std::random_shuffle (access_order.begin(), access_order.end());
 	for(int i = 0; i < macro.size(); i++){
-		if(displacement[access_order[i]] - mean > SD){
-			macro[access_order[i]]->updateXY(make_pair(native_macro[access_order[i]]->cx(), native_macro[access_order[i]]->cy()));
-			break;
+		if(displacement[access_order[i]] - mean > 0 && !macro[access_order[i]]->is_fixed()){
+			return access_order[i];
+			// macro[access_order[i]]->updateXY(make_pair(native_macro[access_order[i]]->cx(), native_macro[access_order[i]]->cy()));
+			// break;
 		}
 	}
+	return -1;
 }
 
-void independent_improve(vector<Macro*>& macro, Plane* horizontal_plane, Plane* vertical_plane){
+void improve_strategy5(vector<Macro*>& macro, Plane* horizontal_plane, Plane* vertical_plane, Graph& Gh, Graph& Gv){
+
+	vector<edge>* h_edge_list = Gh.get_edge_list();
+	vector<edge>* v_edge_list = Gv.get_edge_list();
+	vector<edge>* r_h_edge_list = Gh.get_reverse_edge_list();
+	vector<edge>* r_v_edge_list = Gv.get_reverse_edge_list();
+
 	vector<Tile*> horizontal_tiles;
 	vector<Tile*> vertical_tiles;
 
@@ -1202,530 +1216,111 @@ void independent_improve(vector<Macro*>& macro, Plane* horizontal_plane, Plane* 
 	}
 	// std::sort(v_cost_tile.begin(), v_cost_tile.end(), cost_tile_cmp);
 	std::random_shuffle (v_cost_tile.begin(), v_cost_tile.end());
-
-	for(int i = 0; i < h_cost_tile.size(); i++){
-		// This cost tile is generated by two macros(left - right)
-		if(TiGetBody(BL(h_cost_tile[i])) == SOLID_TILE && TiGetBody(TR(h_cost_tile[i])) == SOLID_TILE &&
-			TiGetClient(BL(h_cost_tile[i])) != -1 && TiGetClient(TR(h_cost_tile[i])) != -1){
-			// Do not space e(macro, null)
-			if(macro[TiGetClient(BL(h_cost_tile[i]))]->name() != "null" && macro[TiGetClient(TR(h_cost_tile[i]))]->name() != "null"){
-				double diff_h = macro[TiGetClient(TR(h_cost_tile[i]))]->x1() - macro[TiGetClient(BL(h_cost_tile[i]))]->x2();
-				
-				double left_left = macro[TiGetClient(BL(h_cost_tile[i]))]->x1() - powerplan_width - diff_h,
-						left_right = macro[TiGetClient(BL(h_cost_tile[i]))]->x1(),
-						left_top = macro[TiGetClient(BL(h_cost_tile[i]))]->y2() + powerplan_width,
-						left_bottom = macro[TiGetClient(BL(h_cost_tile[i]))]->y1() - powerplan_width;
-				if(left_left < 0) left_left = 0;
-				if(left_top > chip_height) left_top = chip_height;
-				if(left_bottom < 0) left_bottom = 0;
-				double right_left = macro[TiGetClient(TR(h_cost_tile[i]))]->x2(),
-						right_right = macro[TiGetClient(TR(h_cost_tile[i]))]->x2() + powerplan_width + diff_h,
-						right_top = macro[TiGetClient(TR(h_cost_tile[i]))]->y2() + powerplan_width,
-						right_bottom = macro[TiGetClient(TR(h_cost_tile[i]))]->y1() - powerplan_width;
-				if(right_right > chip_width) right_right = chip_width;
-				if(right_top > chip_height) right_top = chip_height;
-				if(right_bottom < 0) right_bottom = 0;
-				bool left_empty = true, right_empty = true;
-
-				Rect left = { {left_left, left_bottom}, {left_right, left_top} };
-				TiSrArea(NULL, horizontal_plane, &left, empty_region, (ClientData)&left_empty);
-
-				Rect right = { {right_left, right_bottom}, {right_right, right_top} };
-				TiSrArea(NULL, horizontal_plane, &right, empty_region, (ClientData)&right_empty);
-
-				bool left_higher = macro[TiGetClient(BL(h_cost_tile[i]))]->y1() > macro[TiGetClient(TR(h_cost_tile[i]))]->y1() && 
-									macro[TiGetClient(BL(h_cost_tile[i]))]->y2() > macro[TiGetClient(TR(h_cost_tile[i]))]->y2(),
-						right_higher = macro[TiGetClient(TR(h_cost_tile[i]))]->y1() > macro[TiGetClient(BL(h_cost_tile[i]))]->y1() && 
-									macro[TiGetClient(TR(h_cost_tile[i]))]->y2() > macro[TiGetClient(BL(h_cost_tile[i]))]->y2();
-				
-				if(left_higher){
-					double diff_v =  macro[TiGetClient(TR(h_cost_tile[i]))]->y2() - macro[TiGetClient(BL(h_cost_tile[i]))]->y1();
-					bool push_horizontal = false;
-					// =================================
-					// =================================
-					// =================================
-					if(left_right - left_left < powerplan_width){
-						// left macro near boundary
-						if(left_empty && right_empty){
-							if(powerplan_width - diff_h <= left_right - left_left){
-								// After left one go to wall, right one don't need move
-								if(alpha * (left_right - left_left) < beta * (sqrt(diff_h * diff_v) + sqrt(macro[TiGetClient(BL(h_cost_tile[i]))]->x1() * macro[TiGetClient(BL(h_cost_tile[i]))]->h()))){
-									macro[TiGetClient(BL(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(h_cost_tile[i]))]->w() / 2, macro[TiGetClient(BL(h_cost_tile[i]))]->cy()));
-									break;
-								}
-							}
-							else{
-								// After left one go to wall, the right one still need move right
-								if(alpha * (powerplan_width - diff_h) < beta * (sqrt(diff_h * diff_v) + sqrt(macro[TiGetClient(BL(h_cost_tile[i]))]->x1() * macro[TiGetClient(BL(h_cost_tile[i]))]->h()))){
-									macro[TiGetClient(BL(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(h_cost_tile[i]))]->w() / 2, macro[TiGetClient(BL(h_cost_tile[i]))]->cy()));
-									macro[TiGetClient(TR(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(TR(h_cost_tile[i]))]->cx() + (powerplan_width - diff_h) - (left_right - left_left) , macro[TiGetClient(TR(h_cost_tile[i]))]->cy()));
-									break;
-								}
-							}
-						}
-						else if(left_empty){
-							if(powerplan_width - diff_h < left_right - left_left){
-								// can only move left macro, we can solve cost after moving left macro to wall
-								if(alpha * (left_right - left_left) < beta * (sqrt(diff_h * diff_v) + sqrt((left_right - left_left) * macro[TiGetClient(BL(h_cost_tile[i]))]->h()))){
-									macro[TiGetClient(BL(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(h_cost_tile[i]))]->w() / 2, macro[TiGetClient(BL(h_cost_tile[i]))]->cy()));
-									break;
-								}
-							}
-							else{
-								// can only move left macro, the cost caused by macros still exist.
-								if(alpha * (left_right - left_left) + beta * (sqrt((diff_h + (left_right - left_left)) * diff_v) - sqrt(diff_h * diff_v)) < beta * sqrt((left_right - left_left) * macro[TiGetClient(BL(h_cost_tile[i]))]->h())){
-									macro[TiGetClient(BL(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(h_cost_tile[i]))]->w() / 2, macro[TiGetClient(BL(h_cost_tile[i]))]->cy()));
-									break;
-								}
-							}
-						}
-						else if(right_empty){
-							if(alpha * (powerplan_width - diff_h) < beta * sqrt(diff_h * diff_v)){
-								macro[TiGetClient(TR(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(TR(h_cost_tile[i]))]->cx() + (powerplan_width - diff_h), macro[TiGetClient(TR(h_cost_tile[i]))]->cy()));
-								break;
-							}
+	bool found = false;
+	if(rand() % 2){
+		for(int i = 0; i < h_cost_tile.size(); i++){
+			// This cost tile is generated by two macros(left - right)
+			if(TiGetBody(BL(h_cost_tile[i])) == SOLID_TILE && TiGetBody(TR(h_cost_tile[i])) == SOLID_TILE &&
+				TiGetClient(BL(h_cost_tile[i])) != -1 && TiGetClient(TR(h_cost_tile[i])) != -1){
+				// Do not space e(macro, null)
+				if(macro[TiGetClient(BL(h_cost_tile[i]))]->name() != "null" && macro[TiGetClient(TR(h_cost_tile[i]))]->name() != "null"){		
+					for(int j = 0; j < h_edge_list[TiGetClient(BL(h_cost_tile[i])) + 1].size(); j++){
+						if(h_edge_list[TiGetClient(BL(h_cost_tile[i])) + 1][j].to - 1 == TiGetClient(TR(h_cost_tile[i]))){
+							h_edge_list[TiGetClient(BL(h_cost_tile[i])) + 1][j].weight = (macro[TiGetClient(BL(h_cost_tile[i]))]->w() + macro[TiGetClient(TR(h_cost_tile[i]))]->w()) / 2 + powerplan_width;
 						}
 					}
-					else if(right_right - right_left < powerplan_width){
-						// right macro near boundary
-						if(left_empty && right_empty){
-							if(powerplan_width - diff_h <= right_right - right_left){
-								// After right one go to wall, left one don't need move
-								if(alpha * (right_right - right_left) < beta * (sqrt(diff_h * diff_v) + sqrt((chip_width - macro[TiGetClient(TR(h_cost_tile[i]))]->x2()) * macro[TiGetClient(TR(h_cost_tile[i]))]->h()))){
-									macro[TiGetClient(TR(h_cost_tile[i]))]->updateXY(make_pair(chip_width - macro[TiGetClient(TR(h_cost_tile[i]))]->w() / 2, macro[TiGetClient(TR(h_cost_tile[i]))]->cy()));
-									break;
-								}
-							}
-							else{
-								// After right one go to wall, the left one still need move right
-								if(alpha * (powerplan_width - diff_h) < beta * (sqrt(diff_h * diff_v) + sqrt((chip_width - macro[TiGetClient(TR(h_cost_tile[i]))]->x2()) * macro[TiGetClient(TR(h_cost_tile[i]))]->h()))){
-									macro[TiGetClient(BL(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(h_cost_tile[i]))]->cx() - (powerplan_width - diff_h) + (right_right - right_left), macro[TiGetClient(BL(h_cost_tile[i]))]->cy()));
-									macro[TiGetClient(TR(h_cost_tile[i]))]->updateXY(make_pair(chip_width - macro[TiGetClient(TR(h_cost_tile[i]))]->w() / 2, macro[TiGetClient(TR(h_cost_tile[i]))]->cy()));
-									break;
-								}
-							}
-						}
-						else if(right_empty){
-							if(powerplan_width - diff_h < right_right - right_left){
-								// can only move right macro, we can solve cost after moving right macro to wall
-								if(alpha * (right_right - right_left) < beta * (sqrt(diff_h * diff_v) + sqrt((right_right - right_left) * macro[TiGetClient(TR(h_cost_tile[i]))]->h()))){
-									macro[TiGetClient(TR(h_cost_tile[i]))]->updateXY(make_pair(chip_width - macro[TiGetClient(TR(h_cost_tile[i]))]->w() / 2, macro[TiGetClient(TR(h_cost_tile[i]))]->cy()));
-									break;
-								}
-							}
-							else{
-								// can only move right macro, the cost caused by macros still exist.
-								if(alpha * (right_right - right_left) + beta * (sqrt((diff_h + (right_right - right_left)) * diff_v) - sqrt(diff_h * diff_v)) < beta * sqrt((right_right - right_left) * macro[TiGetClient(TR(h_cost_tile[i]))]->h())){
-									macro[TiGetClient(TR(h_cost_tile[i]))]->updateXY(make_pair(chip_width - macro[TiGetClient(TR(h_cost_tile[i]))]->w() / 2, macro[TiGetClient(TR(h_cost_tile[i]))]->cy()));
-									break;
-								}
-							}
-						}
-						else if(left_empty){
-							if(alpha * (powerplan_width - diff_h) < beta * sqrt(diff_h * diff_v)){
-								macro[TiGetClient(BL(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(h_cost_tile[i]))]->cx() - (powerplan_width - diff_h), macro[TiGetClient(BL(h_cost_tile[i]))]->cy()));
-								break;
-							}
+					for(int j = 0; j < r_h_edge_list[TiGetClient(TR(h_cost_tile[i])) + 1].size(); j++){
+						if(r_h_edge_list[TiGetClient(TR(h_cost_tile[i])) + 1][j].from - 1 == TiGetClient(BL(h_cost_tile[i]))){
+							r_h_edge_list[TiGetClient(TR(h_cost_tile[i])) + 1][j].weight = (macro[TiGetClient(BL(h_cost_tile[i]))]->w() + macro[TiGetClient(TR(h_cost_tile[i]))]->w()) / 2 + powerplan_width;
+							found = true;
 						}
 					}
-					else{
-						// Left and Right macro do not near boundary
-						if(alpha * (powerplan_width - diff_h) < beta * sqrt(diff_h * diff_v)){
-							if(left_empty && right_empty){
-								if(rand() % 2){
-									macro[TiGetClient(BL(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(h_cost_tile[i]))]->cx() - (powerplan_width - diff_h), macro[TiGetClient(BL(h_cost_tile[i]))]->cy()));
-								}
-								else{
-									macro[TiGetClient(TR(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(TR(h_cost_tile[i]))]->cx() + (powerplan_width - diff_h), macro[TiGetClient(TR(h_cost_tile[i]))]->cy()));
-								}
-								break;
-							}
-							else if(left_empty){
-								macro[TiGetClient(BL(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(h_cost_tile[i]))]->cx() - (powerplan_width - diff_h), macro[TiGetClient(BL(h_cost_tile[i]))]->cy()));
-								break;
-							}
-							else if(right_empty){
-								macro[TiGetClient(TR(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(TR(h_cost_tile[i]))]->cx() + (powerplan_width - diff_h), macro[TiGetClient(TR(h_cost_tile[i]))]->cy()));
-								break;
-							}
-						}
-					}
-					double left_l = macro[TiGetClient(BL(h_cost_tile[i]))]->x1() - powerplan_width,
-								left_r = macro[TiGetClient(BL(h_cost_tile[i]))]->x2() + powerplan_width,
-								left_t = macro[TiGetClient(BL(h_cost_tile[i]))]->y2() + powerplan_width + diff_v,
-								left_b = macro[TiGetClient(BL(h_cost_tile[i]))]->y2();
-					if(left_l < 0) left_l = 0;
-					if(left_r > chip_width) left_r = chip_width;
-					if(left_t > chip_height) left_t = chip_height;
-					double right_l = macro[TiGetClient(TR(h_cost_tile[i]))]->x1() - powerplan_width,
-							right_r = macro[TiGetClient(TR(h_cost_tile[i]))]->x2() + powerplan_width,
-							right_t = macro[TiGetClient(TR(h_cost_tile[i]))]->y1(),
-							right_b = macro[TiGetClient(TR(h_cost_tile[i]))]->y1() - powerplan_width - diff_v;
-					if(right_l < 0) right_l = 0;
-					if(right_r > chip_width) right_r = chip_width;
-					if(right_b < 0) right_b = 0;
-					bool left_e = true, right_e = true;
-
-					Rect left_ = { {left_l, left_b}, {left_r, left_t} };
-					TiSrArea(NULL, horizontal_plane, &left_, empty_region, (ClientData)&left_e);
-
-					Rect right_ = { {right_l, right_b}, {right_r, right_t} };
-					TiSrArea(NULL, horizontal_plane, &right_, empty_region, (ClientData)&right_e);
-				
-					if(left_t - left_b < powerplan_width){
-						// left macro near top boundary
-						if(left_e && right_e){
-							if(diff_v <= left_t - left_b){
-								// After left one go to top wall, right one don't need move
-								if(alpha * (left_t - left_b) < beta * (sqrt(diff_h * diff_v) + sqrt((left_t - left_b) * macro[TiGetClient(BL(h_cost_tile[i]))]->w()))){
-									macro[TiGetClient(BL(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(h_cost_tile[i]))]->cx(), chip_height - macro[TiGetClient(BL(h_cost_tile[i]))]->h() / 2));
-									break;
-								}
-							}
-							else{
-								// After left one go to top wall, the right one still need move down
-								if(alpha * diff_v < beta * (sqrt(diff_h * diff_v) + sqrt((left_t - left_b) * macro[TiGetClient(BL(h_cost_tile[i]))]->w()))){
-									macro[TiGetClient(BL(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(h_cost_tile[i]))]->cx(), chip_height - macro[TiGetClient(BL(h_cost_tile[i]))]->h() / 2));
-									macro[TiGetClient(TR(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(TR(h_cost_tile[i]))]->cx(), macro[TiGetClient(TR(h_cost_tile[i]))]->cy() - diff_v + (left_t - left_b)));
-									break;
-								}
-							}
-						}
-						else if(left_e){
-							if(diff_v < left_t - left_b){
-								// can only move left macro, we can solve cost after moving left macro to top wall
-								if(alpha * (left_t - left_b) < beta * (sqrt(diff_h * diff_v) + sqrt((left_t - left_b) * macro[TiGetClient(BL(h_cost_tile[i]))]->w()))){
-									macro[TiGetClient(BL(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(h_cost_tile[i]))]->cx(), chip_height - macro[TiGetClient(BL(h_cost_tile[i]))]->h() / 2));
-									break;
-								}
-							}
-							else{
-								// can only move left macro, the cost caused by macros still exist.
-								if(alpha * (left_t - left_b) < beta * ((sqrt(diff_h * diff_v) - sqrt(diff_h * (diff_v - (left_t - left_b)))) + sqrt((left_t - left_b) * macro[TiGetClient(BL(h_cost_tile[i]))]->w()))){
-									macro[TiGetClient(BL(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(h_cost_tile[i]))]->cx(), chip_height - macro[TiGetClient(BL(h_cost_tile[i]))]->h() / 2));
-									break;
-								}
-							}
-						}
-						else if(right_e){
-							if(alpha * diff_v < beta * sqrt(diff_h * diff_v)){
-								macro[TiGetClient(TR(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(TR(h_cost_tile[i]))]->cx(), macro[TiGetClient(TR(h_cost_tile[i]))]->cy() - diff_v));
-								break;
-							}
-						}
-					}
-					else if(right_t - right_b < powerplan_width){
-						// right macro near bottom boundary
-						if(left_e && right_e){
-							if(diff_v <= right_t - right_b){
-								// After right one go to bottom wall, left one don't need move
-								if(alpha * (right_t - right_b) < beta * (sqrt(diff_h * diff_v) + sqrt((right_t - right_b) * macro[TiGetClient(TR(h_cost_tile[i]))]->w()))){
-									macro[TiGetClient(TR(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(TR(h_cost_tile[i]))]->cx(), macro[TiGetClient(TR(h_cost_tile[i]))]->h() / 2));
-									break;
-								}
-							}
-							else{
-								// After right one go to bottom wall, the left one still need move up
-								if(alpha * diff_v < beta * (sqrt(diff_h * diff_v) + sqrt((right_t - right_b) * macro[TiGetClient(TR(h_cost_tile[i]))]->w()))){
-									macro[TiGetClient(BL(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(h_cost_tile[i]))]->cx(), macro[TiGetClient(BL(h_cost_tile[i]))]->cy() + diff_v - (right_t - right_b)));
-									macro[TiGetClient(TR(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(TR(h_cost_tile[i]))]->cx(), macro[TiGetClient(TR(h_cost_tile[i]))]->cy() - (left_t - left_b)));
-									break;
-								}
-							}
-						}
-						else if(right_e){
-							if(diff_v < right_t - right_b){
-								// can only move right macro, we can solve cost after moving left macro to top wall
-								if(alpha * (right_t - right_b) < beta * (sqrt(diff_h * diff_v) + sqrt((right_t - right_b) * macro[TiGetClient(TR(h_cost_tile[i]))]->w()))){
-									macro[TiGetClient(TR(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(TR(h_cost_tile[i]))]->cx(), macro[TiGetClient(TR(h_cost_tile[i]))]->h() / 2));
-									break;
-								}
-							}
-							else{
-								// can only move right macro, the cost caused by macros still exist.
-								if(alpha * (right_t - right_b) < beta * ((sqrt(diff_h * diff_v) - sqrt(diff_h * (diff_v - (right_t - right_b)))) + sqrt((right_t - right_b) * macro[TiGetClient(TR(h_cost_tile[i]))]->w()))){
-									macro[TiGetClient(TR(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(TR(h_cost_tile[i]))]->cx(), macro[TiGetClient(TR(h_cost_tile[i]))]->h() / 2));
-									break;
-								}
-							}
-						}
-						else if(left_e){
-							if(alpha * diff_v < beta * sqrt(diff_h * diff_v)){
-								macro[TiGetClient(BL(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(h_cost_tile[i]))]->cx(), macro[TiGetClient(BL(h_cost_tile[i]))]->cy() + diff_v));
-								break;
-							}
-						}
-					}
-					else{
-						// Left and Right macro do not near boundary
-						if(alpha * diff_v < beta * sqrt(diff_h * diff_v)){
-							if(left_e && right_e){
-								if(rand() % 2){
-									macro[TiGetClient(BL(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(h_cost_tile[i]))]->cx(), macro[TiGetClient(BL(h_cost_tile[i]))]->cy() + diff_v));
-								}
-								else{
-									macro[TiGetClient(TR(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(TR(h_cost_tile[i]))]->cx(), macro[TiGetClient(TR(h_cost_tile[i]))]->cy() - diff_v));
-								}
-								break;
-							}
-							else if(left_empty){
-								macro[TiGetClient(BL(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(h_cost_tile[i]))]->cx(), macro[TiGetClient(BL(h_cost_tile[i]))]->cy() + diff_v));
-								break;
-							}
-							else if(right_empty){
-								macro[TiGetClient(TR(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(TR(h_cost_tile[i]))]->cx(), macro[TiGetClient(TR(h_cost_tile[i]))]->cy() - diff_v));
-								break;
-							}
-						}
-					}
-					// =================================
-					// =================================
-					// =================================
 				}
-				else if(right_higher){
-					double diff_v =  macro[TiGetClient(BL(h_cost_tile[i]))]->y2() - macro[TiGetClient(TR(h_cost_tile[i]))]->y1();
-					// =================================
-					// =================================
-					// =================================
-					if(left_right - left_left < powerplan_width){
-						// left macro near boundary
-						if(left_empty && right_empty){
-							if(powerplan_width - diff_h <= left_right - left_left){
-								// After left one go to wall, right one don't need move
-								if(alpha * (left_right - left_left) < beta * (sqrt(diff_h * diff_v) + sqrt(macro[TiGetClient(BL(h_cost_tile[i]))]->x1() * macro[TiGetClient(BL(h_cost_tile[i]))]->h()))){
-									macro[TiGetClient(BL(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(h_cost_tile[i]))]->w() / 2, macro[TiGetClient(BL(h_cost_tile[i]))]->cy()));
-									break;
-								}
-							}
-							else{
-								// After left one go to wall, the right one still need move right
-								if(alpha * (powerplan_width - diff_h) < beta * (sqrt(diff_h * diff_v) + sqrt(macro[TiGetClient(BL(h_cost_tile[i]))]->x1() * macro[TiGetClient(BL(h_cost_tile[i]))]->h()))){
-									macro[TiGetClient(BL(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(h_cost_tile[i]))]->w() / 2, macro[TiGetClient(BL(h_cost_tile[i]))]->cy()));
-									macro[TiGetClient(TR(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(TR(h_cost_tile[i]))]->cx() + (powerplan_width - diff_h) - (left_right - left_left) , macro[TiGetClient(TR(h_cost_tile[i]))]->cy()));
-									break;
-								}
-							}
-						}
-						else if(left_empty){
-							if(powerplan_width - diff_h < left_right - left_left){
-								// can only move left macro, we can solve cost after moving left macro to wall
-								if(alpha * (left_right - left_left) < beta * (sqrt(diff_h * diff_v) + sqrt((left_right - left_left) * macro[TiGetClient(BL(h_cost_tile[i]))]->h()))){
-									macro[TiGetClient(BL(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(h_cost_tile[i]))]->w() / 2, macro[TiGetClient(BL(h_cost_tile[i]))]->cy()));
-									break;
-								}
-							}
-							else{
-								// can only move left macro, the cost caused by macros still exist.
-								if(alpha * (left_right - left_left) + beta * (sqrt((diff_h + (left_right - left_left)) * diff_v) - sqrt(diff_h * diff_v)) < beta * sqrt((left_right - left_left) * macro[TiGetClient(BL(h_cost_tile[i]))]->h())){
-									macro[TiGetClient(BL(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(h_cost_tile[i]))]->w() / 2, macro[TiGetClient(BL(h_cost_tile[i]))]->cy()));
-									break;
-								}
-							}
-						}
-						else if(right_empty){
-							if(alpha * (powerplan_width - diff_h) < beta * sqrt(diff_h * diff_v)){
-								macro[TiGetClient(TR(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(TR(h_cost_tile[i]))]->cx() + (powerplan_width - diff_h), macro[TiGetClient(TR(h_cost_tile[i]))]->cy()));
-								break;
-							}
+			}
+			if(found){
+				break;
+			}
+		}
+	}
+	else{
+		for(int i = 0; i < v_cost_tile.size(); i++){
+			if(TiGetBody(BL(v_cost_tile[i])) == SOLID_TILE && TiGetBody(TR(v_cost_tile[i])) == SOLID_TILE &&
+				TiGetClient(BL(v_cost_tile[i])) != -1 && TiGetClient(TR(v_cost_tile[i])) != -1){
+				// Do not space e(macro, null)
+				if(macro[TiGetClient(BL(v_cost_tile[i]))]->name() != "null" && macro[TiGetClient(TR(v_cost_tile[i]))]->name() != "null"){
+					for(int j = 0; j < v_edge_list[TiGetClient(TR(v_cost_tile[i])) + 1].size(); j++){
+						if(v_edge_list[TiGetClient(TR(v_cost_tile[i])) + 1][j].to - 1 == TiGetClient(BL(v_cost_tile[i]))){
+							v_edge_list[TiGetClient(TR(v_cost_tile[i])) + 1][j].weight = (macro[TiGetClient(TR(v_cost_tile[i]))]->h() + macro[TiGetClient(BL(v_cost_tile[i]))]->h()) / 2 + powerplan_width;
 						}
 					}
-					else if(right_right - right_left < powerplan_width){
-						// right macro near boundary
-						if(left_empty && right_empty){
-							if(powerplan_width - diff_h <= right_right - right_left){
-								// After right one go to wall, left one don't need move
-								if(alpha * (right_right - right_left) < beta * (sqrt(diff_h * diff_v) + sqrt((chip_width - macro[TiGetClient(TR(h_cost_tile[i]))]->x2()) * macro[TiGetClient(TR(h_cost_tile[i]))]->h()))){
-									macro[TiGetClient(TR(h_cost_tile[i]))]->updateXY(make_pair(chip_width - macro[TiGetClient(TR(h_cost_tile[i]))]->w() / 2, macro[TiGetClient(TR(h_cost_tile[i]))]->cy()));
-									break;
-								}
-							}
-							else{
-								// After right one go to wall, the left one still need move right
-								if(alpha * (powerplan_width - diff_h) < beta * (sqrt(diff_h * diff_v) + sqrt((chip_width - macro[TiGetClient(TR(h_cost_tile[i]))]->x2()) * macro[TiGetClient(TR(h_cost_tile[i]))]->h()))){
-									macro[TiGetClient(BL(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(h_cost_tile[i]))]->cx() - (powerplan_width - diff_h) + (right_right - right_left), macro[TiGetClient(BL(h_cost_tile[i]))]->cy()));
-									macro[TiGetClient(TR(h_cost_tile[i]))]->updateXY(make_pair(chip_width - macro[TiGetClient(TR(h_cost_tile[i]))]->w() / 2, macro[TiGetClient(TR(h_cost_tile[i]))]->cy()));
-									break;
-								}
-							}
-						}
-						else if(right_empty){
-							if(powerplan_width - diff_h < right_right - right_left){
-								// can only move right macro, we can solve cost after moving right macro to wall
-								if(alpha * (right_right - right_left) < beta * (sqrt(diff_h * diff_v) + sqrt((right_right - right_left) * macro[TiGetClient(TR(h_cost_tile[i]))]->h()))){
-									macro[TiGetClient(TR(h_cost_tile[i]))]->updateXY(make_pair(chip_width - macro[TiGetClient(TR(h_cost_tile[i]))]->w() / 2, macro[TiGetClient(TR(h_cost_tile[i]))]->cy()));
-									break;
-								}
-							}
-							else{
-								// can only move right macro, the cost caused by macros still exist.
-								if(alpha * (right_right - right_left) + beta * (sqrt((diff_h + (right_right - right_left)) * diff_v) - sqrt(diff_h * diff_v)) < beta * sqrt((right_right - right_left) * macro[TiGetClient(TR(h_cost_tile[i]))]->h())){
-									macro[TiGetClient(TR(h_cost_tile[i]))]->updateXY(make_pair(chip_width - macro[TiGetClient(TR(h_cost_tile[i]))]->w() / 2, macro[TiGetClient(TR(h_cost_tile[i]))]->cy()));
-									break;
-								}
-							}
-						}
-						else if(left_empty){
-							if(alpha * (powerplan_width - diff_h) < beta * sqrt(diff_h * diff_v)){
-								macro[TiGetClient(BL(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(h_cost_tile[i]))]->cx() - (powerplan_width - diff_h), macro[TiGetClient(BL(h_cost_tile[i]))]->cy()));
-								break;
-							}
+					for(int j = 0; j < r_v_edge_list[TiGetClient(BL(v_cost_tile[i])) + 1].size(); j++){
+						if(r_v_edge_list[TiGetClient(BL(v_cost_tile[i])) + 1][j].from - 1 == TiGetClient(TR(v_cost_tile[i]))){
+							r_v_edge_list[TiGetClient(BL(v_cost_tile[i])) + 1][j].weight = (macro[TiGetClient(TR(v_cost_tile[i]))]->h() + macro[TiGetClient(BL(v_cost_tile[i]))]->h()) / 2 + powerplan_width;
+							found = true;
 						}
 					}
-					else{
-						// Left and Right macro do not near boundary
-						if(alpha * (powerplan_width - diff_h) < beta * sqrt(diff_h * diff_v)){
-							if(left_empty && right_empty){
-								if(rand() % 2){
-									macro[TiGetClient(BL(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(h_cost_tile[i]))]->cx() - (powerplan_width - diff_h), macro[TiGetClient(BL(h_cost_tile[i]))]->cy()));
-								}
-								else{
-									macro[TiGetClient(TR(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(TR(h_cost_tile[i]))]->cx() + (powerplan_width - diff_h), macro[TiGetClient(TR(h_cost_tile[i]))]->cy()));
-								}
-								break;
-							}
-							else if(left_empty){
-								macro[TiGetClient(BL(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(h_cost_tile[i]))]->cx() - (powerplan_width - diff_h), macro[TiGetClient(BL(h_cost_tile[i]))]->cy()));
-								break;
-							}
-							else if(right_empty){
-								macro[TiGetClient(TR(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(TR(h_cost_tile[i]))]->cx() + (powerplan_width - diff_h), macro[TiGetClient(TR(h_cost_tile[i]))]->cy()));
-								break;
-							}
-						}
+				}
+			}
+			if(found){
+				break;
+			}
+		}
+	}
+	// Updates zero slack edges
+	while(Gh.longest_path(true) > chip_width){
+		vector<edge*> h_zero_slack;
+		h_zero_slack = Gh.zero_slack();
+		for(int i = 0; i < h_zero_slack.size(); i++){
+			// restore some of edges in critical path instead of restoring all.
+			if(rand() % 5)
+				continue;
+			if(h_zero_slack[i]->from == 0){
+				if(h_zero_slack[i]->weight == macro[h_zero_slack[i]->to - 1]->w() / 2 + powerplan_width){
+					h_zero_slack[i]->weight = macro[h_zero_slack[i]->to - 1]->w() / 2;
+				}
+			}			
+			if(h_zero_slack[i]->from != 0 && h_zero_slack[i]->to != macro.size() + 1){
+				if(h_zero_slack[i]->weight == (macro[h_zero_slack[i]->from - 1]->w() + macro[h_zero_slack[i]->to - 1]->w()) / 2 + powerplan_width){
+					h_zero_slack[i]->weight = (macro[h_zero_slack[i]->from - 1]->w() + macro[h_zero_slack[i]->to - 1]->w()) / 2 + min_spacing;
+					// Also set reverse constraint graph
+					for(int j = 0; j < r_h_edge_list[h_zero_slack[i]->to].size(); j++){
+						if(r_h_edge_list[h_zero_slack[i]->to][j].from == h_zero_slack[i]->from)
+							r_h_edge_list[h_zero_slack[i]->to][j].weight = (macro[h_zero_slack[i]->from - 1]->w() + macro[h_zero_slack[i]->to - 1]->w()) / 2 + min_spacing;
 					}
-					double left_l = macro[TiGetClient(BL(h_cost_tile[i]))]->x1() - powerplan_width,
-								left_r = macro[TiGetClient(BL(h_cost_tile[i]))]->x2() + powerplan_width,
-								left_t = macro[TiGetClient(BL(h_cost_tile[i]))]->y1(),
-								left_b = macro[TiGetClient(BL(h_cost_tile[i]))]->y1() - powerplan_width - diff_v;
-					if(left_l < 0) left_l = 0;
-					if(left_r > chip_width) left_r = chip_width;
-					if(left_b < 0) left_b = 0;
-					double right_l = macro[TiGetClient(TR(h_cost_tile[i]))]->x1() - powerplan_width,
-							right_r = macro[TiGetClient(TR(h_cost_tile[i]))]->x2() + powerplan_width,
-							right_t = macro[TiGetClient(TR(h_cost_tile[i]))]->y2() + powerplan_width + diff_v,
-							right_b = macro[TiGetClient(TR(h_cost_tile[i]))]->y2();
-					if(right_l < 0) right_l = 0;
-					if(right_r > chip_width) right_r = chip_width;
-					if(right_t > chip_height) right_t = chip_height;
-					bool left_e = true, right_e = true;
-
-					Rect left_ = { {left_l, left_b}, {left_r, left_t} };
-					TiSrArea(NULL, horizontal_plane, &left_, empty_region, (ClientData)&left_e);
-
-					Rect right_ = { {right_l, right_b}, {right_r, right_t} };
-					TiSrArea(NULL, horizontal_plane, &right_, empty_region, (ClientData)&right_e);
-				
-					if(left_t - left_b < powerplan_width){
-						// left macro near bottom boundary
-						if(left_e && right_e){
-							if(diff_v <= left_t - left_b){
-								// After left one go to bottom wall, right one don't need move
-								if(alpha * (left_t - left_b) < beta * (sqrt(diff_h * diff_v) + sqrt((left_t - left_b) * macro[TiGetClient(BL(h_cost_tile[i]))]->w()))){
-									macro[TiGetClient(BL(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(h_cost_tile[i]))]->cx(), macro[TiGetClient(BL(h_cost_tile[i]))]->h() / 2));
-									break;
-								}
-							}
-							else{
-								// After left one go to bottom wall, the right one still need move up
-								if(alpha * diff_v < beta * (sqrt(diff_h * diff_v) + sqrt((left_t - left_b) * macro[TiGetClient(BL(h_cost_tile[i]))]->w()))){
-									macro[TiGetClient(BL(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(h_cost_tile[i]))]->cx(), macro[TiGetClient(BL(h_cost_tile[i]))]->h() / 2));
-									macro[TiGetClient(TR(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(TR(h_cost_tile[i]))]->cx(), macro[TiGetClient(TR(h_cost_tile[i]))]->cy() + diff_v - (left_t - left_b)));
-									break;
-								}
-							}
-						}
-						else if(left_e){
-							if(diff_v < left_t - left_b){
-								// can only move left macro, we can solve cost after moving left macro to top wall
-								if(alpha * (left_t - left_b) < beta * (sqrt(diff_h * diff_v) + sqrt((left_t - left_b) * macro[TiGetClient(BL(h_cost_tile[i]))]->w()))){
-									macro[TiGetClient(BL(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(h_cost_tile[i]))]->cx(), macro[TiGetClient(BL(h_cost_tile[i]))]->h() / 2));
-									break;
-								}
-							}
-							else{
-								// can only move left macro, the cost caused by macros still exist.
-								if(alpha * (left_t - left_b) < beta * ((sqrt(diff_h * diff_v) - sqrt(diff_h * (diff_v - (left_t - left_b)))) + sqrt((left_t - left_b) * macro[TiGetClient(BL(h_cost_tile[i]))]->w()))){
-									macro[TiGetClient(BL(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(h_cost_tile[i]))]->cx(), macro[TiGetClient(BL(h_cost_tile[i]))]->h() / 2));
-									break;
-								}
-							}
-						}
-						else if(right_e){
-							if(alpha * diff_v < beta * sqrt(diff_h * diff_v)){
-								macro[TiGetClient(TR(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(TR(h_cost_tile[i]))]->cx(), macro[TiGetClient(TR(h_cost_tile[i]))]->cy() + diff_v));
-								break;
-							}
-						}
-					}
-					else if(right_t - right_b < powerplan_width){
-						// right macro near top boundary
-						if(left_e && right_e){
-							if(diff_v <= right_t - right_b){
-								// After right one go to top wall, left one don't need move
-								if(alpha * (right_t - right_b) < beta * (sqrt(diff_h * diff_v) + sqrt((right_t - right_b) * macro[TiGetClient(TR(h_cost_tile[i]))]->w()))){
-									macro[TiGetClient(TR(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(TR(h_cost_tile[i]))]->cx(), chip_height - macro[TiGetClient(TR(h_cost_tile[i]))]->h() / 2));
-									break;
-								}
-							}
-							else{
-								// After right one go to top wall, the left one still need move down
-								if(alpha * diff_v < beta * (sqrt(diff_h * diff_v) + sqrt((right_t - right_b) * macro[TiGetClient(TR(h_cost_tile[i]))]->w()))){
-									macro[TiGetClient(BL(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(h_cost_tile[i]))]->cx(), macro[TiGetClient(BL(h_cost_tile[i]))]->cy() - diff_v + (right_t - right_b)));
-									macro[TiGetClient(TR(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(TR(h_cost_tile[i]))]->cx(), chip_height - macro[TiGetClient(TR(h_cost_tile[i]))]->h() / 2));
-									break;
-								}
-							}
-						}
-						else if(right_e){
-							if(diff_v < right_t - right_b){
-								// can only move right macro, we can solve cost after moving right macro to top wall
-								if(alpha * (right_t - right_b) < beta * (sqrt(diff_h * diff_v) + sqrt((right_t - right_b) * macro[TiGetClient(TR(h_cost_tile[i]))]->w()))){
-									macro[TiGetClient(TR(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(TR(h_cost_tile[i]))]->cx(), chip_height - macro[TiGetClient(TR(h_cost_tile[i]))]->h() / 2));
-									break;
-								}
-							}
-							else{
-								// can only move right macro, the cost caused by macros still exist.
-								if(alpha * (right_t - right_b) < beta * ((sqrt(diff_h * diff_v) - sqrt(diff_h * (diff_v - (right_t - right_b)))) + sqrt((right_t - right_b) * macro[TiGetClient(TR(h_cost_tile[i]))]->w()))){
-									macro[TiGetClient(TR(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(TR(h_cost_tile[i]))]->cx(), chip_height - macro[TiGetClient(TR(h_cost_tile[i]))]->h() / 2));
-									break;
-								}
-							}
-						}
-						else if(left_e){
-							if(alpha * diff_v < beta * sqrt(diff_h * diff_v)){
-								macro[TiGetClient(BL(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(h_cost_tile[i]))]->cx(), macro[TiGetClient(BL(h_cost_tile[i]))]->cy() - diff_v));
-								break;
-							}
-						}
-					}
-					else{
-						// Left and Right macro do not near boundary
-						if(alpha * diff_v < beta * sqrt(diff_h * diff_v)){
-							if(left_e && right_e){
-								if(rand() % 2){
-									macro[TiGetClient(BL(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(h_cost_tile[i]))]->cx(), macro[TiGetClient(BL(h_cost_tile[i]))]->cy() - diff_v));
-								}
-								else{
-									macro[TiGetClient(TR(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(TR(h_cost_tile[i]))]->cx(), macro[TiGetClient(TR(h_cost_tile[i]))]->cy() + diff_v));
-								}
-								break;
-							}
-							else if(left_empty){
-								macro[TiGetClient(BL(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(BL(h_cost_tile[i]))]->cx(), macro[TiGetClient(BL(h_cost_tile[i]))]->cy() - diff_v));
-								break;
-							}
-							else if(right_empty){
-								macro[TiGetClient(TR(h_cost_tile[i]))]->updateXY(make_pair(macro[TiGetClient(TR(h_cost_tile[i]))]->cx(), macro[TiGetClient(TR(h_cost_tile[i]))]->cy() + diff_v));
-								break;
-							}
-						}
-					}
-					// =================================
-					// =================================
-					// =================================
+				}
+				if(h_zero_slack[i]->weight == (macro[h_zero_slack[i]->from - 1]->w() + macro[h_zero_slack[i]->to - 1]->w()) / 2 &&
+					macro[h_zero_slack[i]->from - 1]->name() != "null" && macro[h_zero_slack[i]->to - 1]->name() != "null"){
+					Gh.remove_edge(h_zero_slack[i]->from, h_zero_slack[i]->to);
 				}
 			}
 		}
 	}
+	while(Gv.longest_path(false) > chip_height){
+		vector<edge*> v_zero_slack;
+		v_zero_slack = Gv.zero_slack();
+		for(int i = 0; i < v_zero_slack.size(); i++){
+			// restore some of edges in critical path instead of restoring all.
+			if(rand() % 5)
+				continue;
+			if(v_zero_slack[i]->from == 0){
+				if(v_zero_slack[i]->weight == macro[v_zero_slack[i]->to - 1]->h() / 2 + powerplan_width){
+					v_zero_slack[i]->weight = macro[v_zero_slack[i]->to - 1]->h() / 2;
+				}
+			}
+			if(v_zero_slack[i]->from != 0 && v_zero_slack[i]->to != macro.size() + 1){
+				if(v_zero_slack[i]->weight == (macro[v_zero_slack[i]->from - 1]->h() + macro[v_zero_slack[i]->to - 1]->h()) / 2 + powerplan_width){
+					v_zero_slack[i]->weight = (macro[v_zero_slack[i]->from - 1]->h() + macro[v_zero_slack[i]->to - 1]->h()) / 2 + min_spacing;
+					// Also set reverse constraint graph
+					for(int j = 0; j < r_v_edge_list[v_zero_slack[i]->to].size(); j++){
+						if(r_v_edge_list[v_zero_slack[i]->to][j].from == v_zero_slack[i]->from)
+							r_v_edge_list[v_zero_slack[i]->to][j].weight = (macro[v_zero_slack[i]->from - 1]->h() + macro[v_zero_slack[i]->to - 1]->h()) / 2 + min_spacing;
+					}					
+				}
+				if(v_zero_slack[i]->weight == (macro[v_zero_slack[i]->from - 1]->h() + macro[v_zero_slack[i]->to - 1]->h()) / 2 &&
+					macro[v_zero_slack[i]->from - 1]->name() != "null" && macro[v_zero_slack[i]->to - 1]->name() != "null"){
+					Gv.remove_edge(v_zero_slack[i]->from, v_zero_slack[i]->to);
+				}
+			}
+		}
+	}	
 }

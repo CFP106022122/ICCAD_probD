@@ -5450,8 +5450,8 @@ STATIC int presolve(lprec *lp)
     SOS_member_updatemap(lp->SOS);
     lp->sos_vars = SOS_memberships(lp->SOS, 0);
   }
-  REPORT_modelinfo(lp, TRUE, "SUBMITTED");
-  report(lp, NORMAL, " \n");
+  // REPORT_modelinfo(lp, TRUE, "SUBMITTED");
+  // report(lp, NORMAL, " \n");
   if(i > 0)
     lp->sos_vars = 0;
 
@@ -5779,7 +5779,7 @@ write_lp(lp, "test_in.lp");    /* Write to lp-formatted file for debugging */
         }
       }
     }
-    report(lp, NORMAL, " \n");
+    // report(lp, NORMAL, " \n");
 
     /* Clean up (but save counts of constraint types for display later) */
     j = psdata->LTmap->count;

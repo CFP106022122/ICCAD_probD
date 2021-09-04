@@ -7612,7 +7612,7 @@ STATIC MYBOOL is_sc_violated(lprec *lp, int column)
 {
   int  varno;
   REAL tmpreal;
-  REAL eps = lp->epsvalue;                                    /* ß adding eps here*/
+  REAL eps = lp->epsvalue;                                    /* ï¿½ adding eps here*/
 
   varno = lp->rows+column;
   tmpreal = unscaled_value(lp, lp->sc_lobound[column], varno);
@@ -8960,15 +8960,15 @@ STATIC int check_solution(lprec *lp, int  lastcolumn, REAL *solution,
   MATrec *mat = lp->matA;
   int    solveStatus = OPTIMAL;
 
-  report(lp, NORMAL, " \n");
+  // report(lp, NORMAL, " \n");
   if(MIP_count(lp) > 0)
     report(lp, NORMAL, "%s solution  " RESULTVALUEMASK " after %10.0f iter, %9.0f nodes (gap %.1f%%).\n",
                        my_if(lp->bb_break && !bb_better(lp, OF_DUALLIMIT, OF_TEST_BE) && bb_better(lp, OF_RELAXED, OF_TEST_NE), "Subopt.", "Optimal"),
                        solution[0], (double) lp->total_iter, (double) lp->bb_totalnodes,
                        100.0*fabs(my_reldiff(solution[0], lp->bb_limitOF)));
-  else
+  /*else
     report(lp, NORMAL, "Optimal solution  " RESULTVALUEMASK " after %10.0f iter.\n",
-                       solution[0], (double) lp->total_iter);
+                       solution[0], (double) lp->total_iter);*/
 
  /* Find the signed sums and the largest absolute product in the matrix (exclude the OF for speed) */
 #ifdef UseMaxValueInCheck
@@ -9182,7 +9182,7 @@ STATIC int check_solution(lprec *lp, int  lastcolumn, REAL *solution,
 #endif
 
 #ifdef RelativeAccuracyCheck
-  report(lp, NORMAL, "\nRelative numeric accuracy ||*|| = %g\n", maxdiff);
+  // report(lp, NORMAL, "\nRelative numeric accuracy ||*|| = %g\n", maxdiff);
   if (maxdiff > lp->accuracy_error)
   {
     report(lp, IMPORTANT, "\nUnacceptable accuracy found (worse than required %g)\n", lp->accuracy_error);
@@ -10090,17 +10090,17 @@ int preprocess(lprec *lp)
     else
       set_multiprice(lp, 1);
 
-    report(lp, NORMAL, "Using %s simplex for phase 1 and %s simplex for phase 2.\n",
-                       my_if(primal1, "PRIMAL", "DUAL"), my_if(primal2, "PRIMAL", "DUAL"));
+    /*report(lp, NORMAL, "Using %s simplex for phase 1 and %s simplex for phase 2.\n",
+                       my_if(primal1, "PRIMAL", "DUAL"), my_if(primal2, "PRIMAL", "DUAL"));*/
     i = get_piv_rule(lp);
     if((i == PRICER_STEEPESTEDGE) && is_piv_mode(lp, PRICE_PRIMALFALLBACK))
       report(lp, NORMAL, "The pricing strategy is set to '%s' for the dual and '%s' for the primal.\n",
                        get_str_piv_rule(i), get_str_piv_rule(i-1));
-    else
+    /*else
       report(lp, NORMAL, "The primal and dual simplex pricing strategy set to '%s'.\n",
-                       get_str_piv_rule(i));
+                       get_str_piv_rule(i));*/
 
-    report(lp, NORMAL, " \n");
+    // report(lp, NORMAL, " \n");
   }
 
   /* Compute a minimum step improvement step requirement */

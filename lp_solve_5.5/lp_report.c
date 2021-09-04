@@ -684,22 +684,22 @@ void REPORT_constraintinfo(lprec *lp, char *datainfo)
 void REPORT_modelinfo(lprec *lp, MYBOOL doName, char *datainfo)
 {
   if(doName) {
-    report(lp, NORMAL, "\nModel name:  '%s' - run #%-5d\n",
+    /*report(lp, NORMAL, "\nModel name:  '%s' - run #%-5d\n",
                        get_lp_name(lp), lp->solvecount);
     report(lp, NORMAL, "Objective:   %simize(%s)\n",
                        my_if(is_maxim(lp), "Max", "Min"), get_row_name(lp, 0));
-    report(lp, NORMAL, " \n");
+    report(lp, NORMAL, " \n");*/
   }
   if(datainfo != NULL)
     report(lp, NORMAL, "%s\n", datainfo);
 
-  report(lp, NORMAL, "Model size:  %7d constraints, %7d variables, %12d non-zeros.\n",
-         lp->rows, lp->columns, get_nonzeros(lp));
+  /*report(lp, NORMAL, "Model size:  %7d constraints, %7d variables, %12d non-zeros.\n",
+         lp->rows, lp->columns, get_nonzeros(lp));*/
   if(GUB_count(lp)+SOS_count(lp) > 0)
   report(lp, NORMAL, "Var-types:   %7d integer,     %7d semi-cont.,     %7d SOS.\n",
          lp->int_vars, lp->sc_vars, lp->sos_vars);
-  report(lp, NORMAL, "Sets:                             %7d GUB,            %7d SOS.\n",
-                         GUB_count(lp), SOS_count(lp));
+  /*report(lp, NORMAL, "Sets:                             %7d GUB,            %7d SOS.\n",
+                         GUB_count(lp), SOS_count(lp));*/
 }
 
 /* Save a matrix column subset to a MatrixMarket formatted file,

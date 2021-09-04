@@ -26,8 +26,10 @@ double beta;			// = 4.0;
 double buffer_constraint;
 double powerplan_width; // = 0.0,
 double min_spacing;		// = 0.0;
+bool do_SA = true;
 Macro **macros;
 vector<Macro *> og_macros;
+void transitive_reduction(Graph& G, vector<Macro*>& macro);
 IoData *shoatingMain(int argc, char *argv[]);
 void output();
 double hyper_parameter = 0.1;
@@ -268,6 +270,7 @@ bool adjustment_helper(Graph &G, DICNIC<double> &Gc, Graph &G_the_other_dir, boo
 	{
 		return true;
 	}
+	vector<edge>* edge_list = G_the_other_dir.get_edge_list();
 	for (auto &e : Gc.cut_e)
 	{
 		double w = determine_edge_weight(macros[e.pre], macros[e.v], !adjust_g_is_horizontal);
@@ -275,10 +278,20 @@ bool adjustment_helper(Graph &G, DICNIC<double> &Gc, Graph &G_the_other_dir, boo
 		{
 			if (macros[e.pre]->cy() < macros[e.v]->cy())
 			{
+				for(int i = 0; i < edge_list[e.pre].size(); i++){
+					if(edge_list[e.pre][i].to == e.v){
+						G_the_other_dir.remove_edge(e.pre, e.v);
+					}
+				}
 				G_the_other_dir.add_edge(e.pre, e.v, w);
 			}
 			else
 			{
+				for(int i = 0; i < edge_list[e.v].size(); i++){
+					if(edge_list[e.v][i].to == e.pre){
+						G_the_other_dir.remove_edge(e.v, e.pre);
+					}
+				}
 				G_the_other_dir.add_edge(e.v, e.pre, w);
 			}
 		}
@@ -286,10 +299,20 @@ bool adjustment_helper(Graph &G, DICNIC<double> &Gc, Graph &G_the_other_dir, boo
 		{
 			if (macros[e.pre]->cx() < macros[e.v]->cx())
 			{
+				for(int i = 0; i < edge_list[e.pre].size(); i++){
+					if(edge_list[e.pre][i].to == e.v){
+						G_the_other_dir.remove_edge(e.pre, e.v);
+					}
+				}
 				G_the_other_dir.add_edge(e.pre, e.v, w);
 			}
 			else
 			{
+				for(int i = 0; i < edge_list[e.v].size(); i++){
+					if(edge_list[e.v][i].to == e.pre){
+						G_the_other_dir.remove_edge(e.v, e.pre);
+					}
+				}
 				G_the_other_dir.add_edge(e.v, e.pre, w);
 			}
 		}
@@ -551,79 +574,34 @@ double total_cost(double displace, double powerplan){
 	return alpha * displace + beta * sqrt(powerplan);
 }
 
-void perturb_strategy(double P, Graph& Gv_next, Graph& Gh_next, vector<Macro *>& macros_next){
-	vector<edge>* h_edge_list = Gh_next.get_edge_list();
-	vector<edge>* v_edge_list = Gv_next.get_edge_list();
-	vector<edge>* r_h_edge_list = Gh_next.get_reverse_edge_list();
-	vector<edge>* r_v_edge_list = Gv_next.get_reverse_edge_list();
-	bool **modified = new bool*[V+5];
-	for(int i=0;i<V+5;i++){
-		modified[i] = new bool[V+5];
-		for(int j=0;j<V+5;j++){
-			modified[i][j] = false;
-		}
-	}
-	int from, to, w;
-	for(int i=0;i<V;i++){
-		for(int j=0;j<h_edge_list[i].size();j++){
-			if(modified[i][h_edge_list[i][j].to]==true)
-				continue;
-			if(unif(rng)<=P){
-				from = h_edge_list[i][j].from;
-				to = h_edge_list[i][j].to;
-				w = h_edge_list[i][j].weight;
-				if(from==0 || from>=V || to==0 || to>=V)
-					continue;
-				Gh_next.remove_edge(from, to);
-				if(macros_next[from]->cy()<macros_next[to]->cy())
-					Gv_next.add_edge(from, to, w);
-				else
-					Gv_next.add_edge(to, from, w);
-				modified[from][to] = true;
-				modified[to][from] = true;
-			}
-		}
-
-		for(int j=0;j<v_edge_list[i].size();j++){
-			if(modified[i][v_edge_list[i][j].to]==true)
-				continue;
-			if(unif(rng)<=P){
-				from = v_edge_list[i][j].from;
-				to = v_edge_list[i][j].to;
-				w = v_edge_list[i][j].weight;
-				if(from==0 || from>=V || to==0 || to>=V)
-					continue;
-				Gv_next.remove_edge(from, to);
-				if(macros_next[from]->cx()<macros_next[to]->cx())
-					Gh_next.add_edge(from, to, w);
-				else
-					Gh_next.add_edge(to, from, w);
-				modified[from][to] = true;
-				modified[to][from] = true;
-			}
-		}
-	}
-}
-
-
-	IoData *iodatas;
+IoData *iodatas;
 vector<Macro *> macros_best(V);
 void sigalrm_handler(int sig)
 {
     // This gets called when the timer runs out.  Try not to do too much here;
     // the recommended practice is to set a flag (of type sig_atomic_t), and have
     // code elsewhere check that flag (e.g. in the main loop of your program)
-	cout<<"time's up!!!!!!!!!!!!"<<endl;
-	iodatas->macros = macros_best;
-	output();
-	exit(sig);
+	do_SA = false;
+	// cout<<"time's up!!!!!!!!!!!!"<<endl;
+	// iodatas->macros = macros_best;
+	// output();
+	// exit(sig);
 }
+
+// void sigint_handler(int sig)
+// {
+// 	cout<<"ctrl C interrupt !"<<endl;
+// 	iodatas->macros = macros_best;
+// 	output();
+// 	exit(sig);
+// }
 
 int main(int argc, char *argv[])
 {
 	rng.seed(87);
+	// signal(SIGINT, &sigint_handler);
 	signal(SIGALRM, &sigalrm_handler);  // set a signal handler
-	alarm(900);  // set an alarm for 15*60 seconds from now
+	alarm(890);  // set an alarm for 15*60 seconds from now
 
 	iodatas = shoatingMain(argc, argv);
 	chip_width = (double)iodatas->die_width;						  // = 25.0;
@@ -648,15 +626,21 @@ int main(int argc, char *argv[])
 	Graph Gh(V), Gv(V);
 	build_init_constraint_graph(Gh, Gv, og_macros);
 	adjustment(Gh, Gv);
+	transitive_reduction(Gh, og_macros);
+	transitive_reduction(Gv, og_macros);	
 	Linear_Program(og_macros, Gv, Gh);
-	if (modified_fixed.size() != 0) {
+	while (modified_fixed.size()!=0 && !og_macros[modified_fixed[0].id()-1]->is_fixed()) {
 		restore_fixed();
 		Gh.rebuild();
 		Gv.rebuild();
 		build_init_constraint_graph(Gh, Gv, og_macros);
 		adjustment(Gh, Gv);
+		transitive_reduction(Gh, og_macros);
+		transitive_reduction(Gv, og_macros);
 		Linear_Program(og_macros, Gv, Gh);
 	}
+	issue = false;
+	modified_fixed.clear();
 
 	double displacement = displacement_evaluation(og_macros, native_macros);
 
@@ -676,18 +660,12 @@ int main(int argc, char *argv[])
 	printf("Initial cost = %lf\n", cost_now);
 
 //------------------------------------------------------------------------------  SA
-	double T_cur, T_end, P, rate, cost_best, cost_next;
-	int num_perturb_per_T;
+	double cost_best, cost_next;
+	int num_perturb_per_T = 10;
 	vector<Macro *> macros_next(V);
 	macros_best.resize(V);
 	Graph Gv_next(V), Gh_next(V), Gv_best(V), Gh_best(V);
 	// args
-	P = 0.9;//possibility of accepting worse solution at begining
-	T_cur = -10000/log(P);//delta(avg) / ln(P)
-	rate = 0.98;
-	num_perturb_per_T = 10;
-	T_end = 1;
-
 	// ===========================TO DO===========================
 	// if initial solution is invalid, do not accept this solution
 	// ===========================================================
@@ -700,12 +678,12 @@ int main(int argc, char *argv[])
 		cost_best = cost_now;
 	}
 	else{
+		cost_now = DBL_MAX;
 		cost_best = DBL_MAX;
 	}
-	int SA_COUNT = 1;
-	srand(59487);
-	while(T_cur>T_end){
-		cout<<"Temp:"<<T_cur<<" begin"<<endl;
+
+	srand(2598219);
+	while(do_SA){
 		for(int i=0;i<num_perturb_per_T;i++){
 			//sNext = Perturb(sNow);
 			Gv_next.rebuild();
@@ -716,11 +694,19 @@ int main(int argc, char *argv[])
 				delete macros_next[j];
 				macros_next[j] = new Macro(*og_macros[j]);
 			}
-
+			bool strategy4_flag = false;
+			int move_target = -1;
+			pair<double, double> strategy4_pos;
 			//   perturb
 			bool legalization = false;
 			if(!invalid_macros.empty()){
+				Gh_next.rebuild();
+				Gv_next.rebuild();
+				build_init_constraint_graph(Gh_next, Gv_next, macros_next);
 				fix_invalid(macros_next, invalid_macros, Gh_next, Gv_next);
+				adjustment(Gh_next, Gv_next);
+				transitive_reduction(Gh_next, macros_next);
+				transitive_reduction(Gv_next, macros_next);
 				legalization = true;
 			}
 			// If current placement result is legal, then we try to improve our result
@@ -730,26 +716,45 @@ int main(int argc, char *argv[])
 				// 2. find out pairs of two macros cause cost, seperate them by manipulating macros directly or changing edge weight.
 				// 3. move macros by checking if move the macro can get cost reduction detailly.
 				// 4. if the macro has displacement more than mean value by a standard deviation, try to move it back to origin position. 
-				int op = rand() % 20;
+				int op = rand() % 24;
 				if(op < 1){
 					improve_strategy1(macros_next, native_macros, horizontal_plane, Gh_next, Gv_next);
 				}
 				else if(op < 7){
-					improve_strategy4(macros_next, native_macros);
-					Gh_next.rebuild();
-					Gv_next.rebuild();
-					for (auto &m : macros_next)
-						macros[m->id()] = m;
-					build_init_constraint_graph(Gh_next, Gv_next, macros_next);
+					move_target = improve_strategy4(macros_next, native_macros);
+					if(move_target != -1){
+						strategy4_flag = true;
+						strategy4_pos = make_pair(macros_next[move_target]->cx(), macros_next[move_target]->cy());
+                    	og_macros[move_target]->updateXY(make_pair(native_macros[move_target]->cx(), native_macros[move_target]->cy()));
+                        macros_next[move_target]->updateXY(make_pair(native_macros[move_target]->cx(), native_macros[move_target]->cy()));
+						Gh_next.rebuild();
+						Gv_next.rebuild();
+						build_init_constraint_graph(Gh_next, Gv_next, macros_next);
+						adjustment(Gh_next, Gv_next);
+						transitive_reduction(Gh_next, macros_next);
+						transitive_reduction(Gv_next, macros_next);
+					}
 				}
 				else if(op < 16){
 					improve_strategy2(macros_next, horizontal_plane, vertical_plane, Gh_next, Gv_next);
 				}
-				else{
+				else if(op < 20){
 					improve_strategy3(macros_next, horizontal_plane, vertical_plane);
 				}
-			}
-			adjustment(Gh_next, Gv_next);
+				else{
+					improve_strategy5(macros_next, horizontal_plane, vertical_plane, Gh_next, Gv_next);			
+				}
+			}			
+			
+			if(strategy4_flag){
+				og_macros[move_target]->updateXY(strategy4_pos);
+				if(modified_fixed.size()!=0 && !og_macros[modified_fixed[0].id()-1]->is_fixed()){
+					restore_fixed();
+					issue = false;
+					modified_fixed.clear();
+					continue;
+				}
+            }
 			Linear_Program(macros_next, Gv_next, Gh_next);
 
 			displacement = displacement_evaluation(macros_next, native_macros);
@@ -773,15 +778,15 @@ int main(int argc, char *argv[])
 			if(cost_next < cost_best && invalid_macros.empty()){
 				Gv_best.rebuild();
 				Gh_best.rebuild();
-				Gv_best.Copy(Gv);
-				Gh_best.Copy(Gh);
+				Gv_best.Copy(Gv_next);
+				Gh_best.Copy(Gh_next);
 				cost_best = cost_next;
 				for(int k=0;k<V;k++){
 					delete macros_best[k];
-					macros_best[k] = new Macro(*og_macros[k]);
+					macros_best[k] = new Macro(*macros_next[k]);
 				}
 			}
-			if(cost_next < cost_now){
+			if((cost_next < cost_now && invalid_macros.empty()) || legalization){
 				// ===============================================
 				// After accepts a less cost but invalid solution
 				// Does we accept the next solution(has higher cost) which solve the invalid macros
@@ -796,31 +801,15 @@ int main(int argc, char *argv[])
 					delete og_macros[k];
 					og_macros[k] = new Macro(*macros_next[k]);
 				}
-				// if (cost(sNow) < cost(sBest))
-				// 	sBest = sNow;
-			//}
+				for (auto &m : og_macros)
+					macros[m->id()] = m;
 			}
-			//else if (Accept(T, cost(sNext)-cost(sNow)))
-			/*else if(exp(-(cost_next-cost_now)/T_cur)>unif(rng) && cost_next < cost_best * 1.1){
-				//sNow = sNext;
-				Gv.rebuild();
-				Gh.rebuild();
-				Gv.Copy(Gv_next);
-				Gh.Copy(Gh_next);
-				cost_now = cost_next;
-				for(int k=0;k<V;k++){
-					delete og_macros[k];
-					og_macros[k] = new Macro(*macros_next[k]);
-				}
-			}*/
 			else{
 				// if macro_next has invalid macros and macro_next is rejected, we need to clear the vector
 				invalid_macros.clear();
 			}
-			cout<<"SA after copy, cur_T:"<<T_cur<<", costNow:"<<cost_now<<", costBest:"<<cost_best<<endl;
+			cout<<"SA after copy, costNow:"<<cost_now<<", costBest:"<<cost_best<<endl;
 		}
-		SA_COUNT++;
-		T_cur*=rate;
 	}
 	iodatas->macros = macros_best;
 	//----------------------------------------------------------------- SA
